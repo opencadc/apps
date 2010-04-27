@@ -1,4 +1,4 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -65,38 +65,106 @@
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
-	
-<project default="build" basedir=".">
-  <property environment="env"/>
+package ca.nrc.cadc.vos.test;
 
-    <!-- site-specific build properties or overrides of values in opencadc.properties -->
-    <property file="${env.CADC_PREFIX}/etc/local.properties" />
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
-    <!-- site-specific targets, e.g. install, cannot duplicate those in opencadc.targets.xml -->
-    <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
+import javax.sql.DataSource;
 
-    <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-    <!-- developer convenience: place for extra targets and properties -->
-    <import file="extras.xml" optional="true" />
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.NodeAuthorizer;
+import ca.nrc.cadc.vos.NodeDAO;
 
-    <property name="project" value="cadcVOS" />
+/**
+ * Abstract class encompassing the logic behind running tests on the
+ * NodeDAO class.  Subclasses must provide dataSource and nodeAuthorizer
+ * implementations.
+ * 
+ * @author majorb
+ *
+ */
+public abstract class NodeDAOTests
+{
+    
+    private NodeDAO nodeDAO;
+    String runId;
+    DataSource dataSource;
+    
+    @Before
+    public void before()
+    {
+        dataSource = getDataSource();
+        nodeDAO = getNodeDAO(dataSource, getNodeAuthorizer());
+        runId = NodeDAOTests.class.getName() + System.currentTimeMillis();
+    }
+    
+    @After
+    public void after() throws Exception
+    {
+        Connection conn = dataSource.getConnection();
+        PreparedStatement prepStmt = conn.prepareStatement(
+            "delete from " + nodeDAO.getNodeTableName() + " where name like ?");
+        prepStmt.setString(1, runId + "%");
+        prepStmt.executeUpdate();
+        prepStmt.close();
+        conn.close();
+    }
+    
+    public abstract DataSource getDataSource();
+    
+    public abstract NodeAuthorizer getNodeAuthorizer();
+    
+    public abstract NodeDAO getNodeDAO(DataSource dataSource, NodeAuthorizer nodeAuthorizer);
+    
+    private String getNodeName(String identifier)
+    {
+        return runId + identifier;
+    }
 
-    <property name="cadc" value="${lib}/cadcUtil.jar" />
-    <property name="ext" value="${ext.lib}/log4j.jar:${ext.lib}/spring.jar:${ext.dev}/junit.jar" />
-
-    <property name="jars" value="${cadc}:${ext}" />
-
-    <target name="build" depends="compile">
-        <jar jarfile="${build}/lib/${project}.jar"
-            basedir="${build}/class"
-            update="no">
-            <include name="ca/nrc/cadc/**" />
-        </jar>
-    </target>
-
-</project>
+    @Test
+    public void testPutDataNode() throws Exception
+    {
+        String nodePath = null;
+        DataNode dataNode = null;
+        ContainerNode containerNode = null;
+        
+        // /a
+        nodePath = "/" + getNodeName("a");
+        dataNode = new DataNode(nodePath);
+        nodeDAO.put(dataNode);
+        
+        // /b
+        nodePath = "/" + getNodeName("b");
+        containerNode = new ContainerNode(nodePath);
+        nodeDAO.put(containerNode);
+        
+        // /c
+        nodePath = "/" + getNodeName("c");
+        containerNode = new ContainerNode(nodePath);
+        nodeDAO.put(containerNode);
+        
+        // /b/d
+        nodePath = "/" + getNodeName("b") + "/" + getNodeName("d");
+        dataNode = new DataNode(nodePath);
+        nodeDAO.put(dataNode);
+        
+        // /c/e
+        nodePath = "/" + getNodeName("c") + "/" + getNodeName("e");
+        containerNode = new ContainerNode(nodePath);
+        nodeDAO.put(containerNode);
+        
+        // /c/e/f
+        nodePath = "/" + getNodeName("c") + "/" + getNodeName("e") + "/" + getNodeName("f");
+        dataNode = new DataNode(nodePath);
+        nodeDAO.put(dataNode);
+    }
+    
+}
