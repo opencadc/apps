@@ -3,8 +3,9 @@
  * and open the template in the editor.
  */
 
-package ca.nrc.cadc.vos;
+package ca.nrc.cadc.vos.server;
 
+import ca.nrc.cadc.vos.server.RssFeed;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
@@ -24,6 +25,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.NodeProperty;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
 
 /**
  *

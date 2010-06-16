@@ -67,8 +67,15 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.vos;
+package ca.nrc.cadc.vos.server;
 
+import ca.nrc.cadc.vos.AbstractPersistenceTest;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.Node;
+import ca.nrc.cadc.vos.NodeProperty;
+import ca.nrc.cadc.vos.VOS;
+import ca.nrc.cadc.vos.VOSURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

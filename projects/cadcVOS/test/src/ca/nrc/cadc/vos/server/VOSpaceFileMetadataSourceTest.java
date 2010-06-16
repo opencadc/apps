@@ -1,5 +1,6 @@
-package ca.nrc.cadc.vos;
+package ca.nrc.cadc.vos.server;
 
+import ca.nrc.cadc.vos.server.VOSpaceFileMetadataSource;
 import static org.junit.Assert.assertEquals;
 
 import java.nio.charset.Charset;
@@ -9,6 +10,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ca.nrc.cadc.util.FileMetadata;
+import ca.nrc.cadc.vos.AbstractPersistenceTest;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.VOSURI;
 
 public abstract class VOSpaceFileMetadataSourceTest extends AbstractPersistenceTest
 {

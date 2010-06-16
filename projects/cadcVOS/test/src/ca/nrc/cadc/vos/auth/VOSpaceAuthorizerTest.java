@@ -66,13 +66,14 @@
  */
 package ca.nrc.cadc.vos.auth;
 
+import ca.nrc.cadc.vos.server.auth.VOSpaceAuthorizer;
 import static org.easymock.classextension.EasyMock.createMock;
 import static org.easymock.classextension.EasyMock.replay;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import ca.nrc.cadc.vos.NodeDAO;
+import ca.nrc.cadc.vos.server.NodeDAO;
 
 
 /**
