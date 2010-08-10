@@ -81,7 +81,7 @@ import ca.nrc.cadc.vos.View;
  * @author majorb
  *
  */
-public class ViewFactoryTest
+public class ViewsTest
 {
     
     @Test
@@ -89,15 +89,15 @@ public class ViewFactoryTest
     {
         try
         {
-            ViewFactory viewFactory = new ViewFactory();
+            Views views = new Views();
             View view = null;
-            view = viewFactory.getView("data");
+            view = views.getView("data");
             assertEquals(view.getClass(), TestDataView.class);
-            view = viewFactory.getView("ivo://cadc.nrc.ca/vospace/core#dataview");
+            view = views.getView("ivo://cadc.nrc.ca/vospace/core#dataview");
             assertEquals(view.getClass(), TestDataView.class);
-            view = viewFactory.getView("rss");
+            view = views.getView("rss");
             assertEquals(view.getClass(), RssView.class);
-            view = viewFactory.getView("ivo://cadc.nrc.ca/vospace/core#rssview");
+            view = views.getView("ivo://cadc.nrc.ca/vospace/core#rssview");
             assertEquals(view.getClass(), RssView.class);
         }
         catch (Exception e)
