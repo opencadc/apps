@@ -1,4 +1,4 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -65,54 +65,132 @@
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
+package ca.nrc.cadc.dlm;
 
-<%--
-    Simple JSP page to write out a JNLP file that launches the DownloadManager application.
---%>
-<%@ page contentType="application/x-java-jnlp-file" %>
-<% response.setHeader("Content-Disposition", "attachment; filename=DownloadManager.jnlp"); %>
-<?xml version="1.0" encoding="utf-8"?> 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import org.apache.log4j.Logger;
 
-<%
-    String uris = (String) request.getAttribute("uris");
-    String fragment = (String) request.getAttribute("fragment");
-    String codebase = (String) request.getAttribute("codebase");
-    String serverName = (String) request.getAttribute("serverName");
+/**
+ * Reads a download manifest. A download manifest is a tab-separated-value
+ * ascii file (content-type: <code>application/x-download-manifest+txt</code>)
+ * with 2 or 3 tokens per line:
+ * </p>
+ * <pre>
+ * OK    &lt;url&gt;     [&lt;destination&gt;]
+ * ERROR &lt;message&gt; [&lt;destination&gt;]
+ * </pre>
+ * If the first token is OK, the second must be a valud URL (practically, http or
+ * https). If the first token is ERROR, the second token is an error message. The
+ * third (optional) token is a relative path to store the downloaded file in; the
+ * last path element is the filename and all preceeding elements are assumed to be
+ * directory names. 
+ *
+ * @author pdowler
+ */
+public class ManifestReader implements Iterator<DownloadDescriptor>
+{
+    private static Logger log = Logger.getLogger(ManifestReader.class);
 
-    // this is XML: need to encode & in the uri and fragment
-    uris = uris.replaceAll("&", "&amp;");
-    fragment = fragment.replaceAll("&", "&amp;");
-%>
+    public static final String CONTENT_TYPE = "application/x-download-manifest+txt";
 
-<jnlp spec="1.0+" codebase="<%= codebase %>"> 
-  
-  <information> 
-    <title>DownloadManager</title> 
-    <vendor>Canadian Astronomy Data Centre</vendor> 
-    <homepage href="/"/> 
-    <description>Simple multithreaded download of data from the CADC</description>
-    </information>
+    private BufferedReader in;
+    private DownloadDescriptor cur;
 
-    <security> 
-        <all-permissions/> 
-    </security> 
+    public ManifestReader(InputStream in)
+    {
+        this(new InputStreamReader(in));
+    }
 
-    <resources> 
-        <j2se version="1.4+" initial-heap-size="64m" max-heap-size="128m" 
-            href="http://java.sun.com/products/autodl/j2se"/> 
-        <jar href="cadcUtil.jar"/> 
-        <jar href="cadcDownloadManagerClient.jar"/>
-        <jar href="log4j.jar"/>
-        <property name="ca.nrc.cadc.net.serverName" value="<%= serverName %>" />
-    </resources> 
+    public ManifestReader(Reader in)
+    {
+        this.in = new BufferedReader(in, 8192);
+        step(true);
+    }
 
-    <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
-        <argument>--verbose</argument>
-        <argument>--uris=<%= uris %></argument>
-        <argument>--fragment=<%= fragment %></argument>
-    </application-desc>
-    
-</jnlp>
+    public boolean hasNext()
+    {
+        return (cur != null);
+    }
 
+    public DownloadDescriptor next()
+    {
+        if (cur == null)
+            throw new NoSuchElementException();
+        DownloadDescriptor ret = cur;
+        step(false);
+        return ret;
+    }
+
+    public void remove()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    // assign the next descriptor to cur
+    private void step(boolean init)
+    {
+        if (!init && cur == null)
+            return;
+        
+        String arg = null;
+        String dest = null;
+        try
+        {
+            String line = in.readLine();
+            while (line != null) // skip blank lines
+            {
+                line = line.trim();
+                if (line.length() > 0)
+                    break; // found non-blank line
+                else
+                    line = in.readLine();
+            }
+            if (line == null)
+            {
+                cur = null;
+                try { in.close(); }
+                catch(IOException ignore) { }
+                return;
+            }
+            log.debug("line: " + line);
+            String[] tokens = line.split("[\t]"); // tab-separated-value
+            String status = tokens[0];
+            if (tokens.length > 1)
+                arg = tokens[1];
+            if (tokens.length > 2)
+                dest = tokens[2];
+            if (DownloadDescriptor.OK.equals(status))
+            {
+                URL url = new URL(arg);
+                cur = new DownloadDescriptor(null, url, dest);
+            }
+            else if (DownloadDescriptor.ERROR.equals(status))
+            {
+                cur = new DownloadDescriptor(null, arg, dest);
+            }
+            else
+            {
+                cur = new DownloadDescriptor(null, "illegal start of line: " + status);
+            }
+        }
+        catch(MalformedURLException ex)
+        {
+            cur = new DownloadDescriptor(null, "illegal URL: "+ arg, dest);
+        }
+        catch(IOException ex)
+        {
+            throw new NoSuchElementException("failed to read a DownloadDescriptor: " + ex);
+        }
+        log.debug("step: " + cur);
+    }
+}

@@ -1,4 +1,4 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -8,7 +8,7 @@
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -65,54 +65,101 @@
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
+package ca.nrc.cadc.dlm;
 
-<%--
-    Simple JSP page to write out a JNLP file that launches the DownloadManager application.
---%>
-<%@ page contentType="application/x-java-jnlp-file" %>
-<% response.setHeader("Content-Disposition", "attachment; filename=DownloadManager.jnlp"); %>
-<?xml version="1.0" encoding="utf-8"?> 
+import java.net.URL;
 
-<%
-    String uris = (String) request.getAttribute("uris");
-    String fragment = (String) request.getAttribute("fragment");
-    String codebase = (String) request.getAttribute("codebase");
-    String serverName = (String) request.getAttribute("serverName");
-
-    // this is XML: need to encode & in the uri and fragment
-    uris = uris.replaceAll("&", "&amp;");
-    fragment = fragment.replaceAll("&", "&amp;");
-%>
-
-<jnlp spec="1.0+" codebase="<%= codebase %>"> 
-  
-  <information> 
-    <title>DownloadManager</title> 
-    <vendor>Canadian Astronomy Data Centre</vendor> 
-    <homepage href="/"/> 
-    <description>Simple multithreaded download of data from the CADC</description>
-    </information>
-
-    <security> 
-        <all-permissions/> 
-    </security> 
-
-    <resources> 
-        <j2se version="1.4+" initial-heap-size="64m" max-heap-size="128m" 
-            href="http://java.sun.com/products/autodl/j2se"/> 
-        <jar href="cadcUtil.jar"/> 
-        <jar href="cadcDownloadManagerClient.jar"/>
-        <jar href="log4j.jar"/>
-        <property name="ca.nrc.cadc.net.serverName" value="<%= serverName %>" />
-    </resources> 
-
-    <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
-        <argument>--verbose</argument>
-        <argument>--uris=<%= uris %></argument>
-        <argument>--fragment=<%= fragment %></argument>
-    </application-desc>
+/**
+ * Description of a download.
+ * 
+ * @author pdowler
+ */
+public class DownloadDescriptor
+{
+    public static final String OK = "OK";
+    public static final String ERROR = "ERROR";
     
-</jnlp>
+    public String status;
+    public String uri;
+    public URL url;
+    public String destination;
+    public String error;
 
+    /**
+     * Constructor.
+     *
+     * @param url
+     */
+    public DownloadDescriptor(URL url)
+    {
+        this(null, url, null);
+    }
+
+    /**
+     * Constructor.
+     * 
+     * @param uri original URI (optional)
+     * @param url the URL to download the data from
+     */
+    public DownloadDescriptor(String uri, URL url)
+    {
+        this(uri, url, null);
+    }
+
+    /**
+     * Constructor. A download URL may be derived from a URI; the URI is
+     * not used but just attached to aid in error reporting.
+     * 
+     * @param uri original URI (optional)
+     * @param url the URL to download the data from
+     * @param destination the relative path where file should be stored (optional)
+     */
+    public DownloadDescriptor(String uri, URL url, String destination)
+    {
+        this.status = OK;
+        this.uri = uri;
+        this.url = url;
+        this.destination = destination;
+    }
+
+    /**
+     * Constructor for a download that could not be performed. The error message
+     * describes the reason for failure.
+     *
+     * @param uri original URI (optional)
+     * @param error message describing the failure
+     */
+    public DownloadDescriptor(String uri, String error)
+    {
+        this(uri, error, null);
+    }
+
+    /**
+     * Constructor for a download that could not be performed. The error message
+     * describes the reason for failure.
+     * 
+     * @param uri (optional)
+     * @param error message describing the failure
+     * @param destination the relative path where file would have been stored (optional)
+     */
+    public DownloadDescriptor(String uri, String error, String destination)
+    {
+        this.status = ERROR;
+        this.uri = uri;
+        this.error = error;
+        this.destination = destination;
+    }
+
+    @Override
+    public String toString()
+    {
+        if (url != null)
+            return this.getClass().getSimpleName() + "["
+                + status + "," + uri + "," + url + "," + destination + "]";
+        return this.getClass().getSimpleName() + "["
+                + status + "," + uri + "," + error + "," + destination + "]";
+    }
+
+}
