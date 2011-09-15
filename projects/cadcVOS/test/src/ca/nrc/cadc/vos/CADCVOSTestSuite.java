@@ -75,6 +75,7 @@ import ca.nrc.cadc.vos.server.DatabaseNodePersistenceTest;
 import ca.nrc.cadc.vos.server.NodeDAOTest;
 import ca.nrc.cadc.vos.server.RssFeedTest;
 import ca.nrc.cadc.vos.server.RssViewTest;
+import ca.nrc.cadc.vos.server.TransferInlineContentHandlerTest;
 import ca.nrc.cadc.vos.server.ViewsTest;
 import ca.nrc.cadc.vos.server.web.restlet.action.DeleteNodeActionTest;
 import ca.nrc.cadc.vos.server.web.restlet.action.GetNodeActionTest;
@@ -96,7 +97,8 @@ import ca.nrc.cadc.vos.server.web.restlet.resource.NodeResourceTest;
     NodeDAOTest.class,
     DatabaseNodePersistenceTest.class,
     RssViewTest.class,
-    RssFeedTest.class
+    RssFeedTest.class,
+    TransferInlineContentHandlerTest.class
 })
 public class CADCVOSTestSuite
 {
