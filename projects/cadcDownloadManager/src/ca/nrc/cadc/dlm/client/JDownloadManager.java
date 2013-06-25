@@ -562,7 +562,7 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
             }
             else
             {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 sb.append("failed to setup download: ");
                 if (dd.uri != null)
                     sb.append(dd.uri);
