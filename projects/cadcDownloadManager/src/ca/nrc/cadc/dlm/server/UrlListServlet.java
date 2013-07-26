@@ -145,7 +145,7 @@ public class UrlListServlet extends HttpServlet
             }
             else
             {
-                response.getOutputStream().println("ERROR\t" + dd.error);
+                response.getOutputStream().println("ERROR\t" + dd.uri + "\t" + dd.error);
                 countErrors++;
             }
         }

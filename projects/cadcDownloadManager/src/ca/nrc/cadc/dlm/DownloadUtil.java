@@ -197,6 +197,7 @@ public class DownloadUtil
         {
             boolean done = false;
             Iterator<ParsedURI> outer = parsed.iterator();
+            
             Iterator<DownloadDescriptor> inner = null;
 
             public boolean hasNext()
@@ -235,7 +236,12 @@ public class DownloadUtil
                 try
                 {
                     inner = gen.downloadIterator(cur.uri);
-                    return this.next(); // recursive
+                    if (inner.hasNext())
+                        return this.next(); // recursive
+                    // inner was empty
+                    inner = null;
+                    DownloadDescriptor dd = new DownloadDescriptor(cur.uri.toString(), "no matching files");
+                    return dd;
                 }
                 catch(Throwable t)
                 {

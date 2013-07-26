@@ -92,13 +92,14 @@
 
 <property name="jars" value="${lib}/cadcUtil.jar:${lib}/cadcRegistryClient.jar:${ext.lib}/servlet-api.jar:${ext.lib}/log4j.jar" />
 
-<target name="build" depends="client,servlet,resources" />
+<target name="build" depends="client,servlet,sample,resources" />
 
 <target name="client" depends="compile">
     <jar jarfile="${build}/lib/${project}Client.jar"
         basedir="${build}/class"
         update="no">
                 <exclude name="**/server/**" />
+                <exclude name="**/sample/**" />
                 <exclude name="**/test/**" />
     </jar>
 </target>
@@ -108,7 +109,19 @@
 		basedir="${build}/class" 
 		update="no">
             <exclude name="**/client/**" />
+            <exclude name="**/onfire/**" />
             <exclude name="**/test/**" />
+    </jar>
+    
+</target>
+
+<target name="sample" depends="compile">
+    <jar jarfile="${build}/lib/cadcJavaTest.jar"
+		basedir="${build}/class" 
+		update="no">
+            <exclude name="**/cadc/**" />
+            <exclude name="**/test/**" />
+            <include name="**/onfire/**" />
     </jar>
     
 </target>
