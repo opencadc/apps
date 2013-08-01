@@ -66,10 +66,7 @@
 *
 ************************************************************************
 -->
-
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
@@ -82,127 +79,162 @@
 %>
 
 <%
-String skin = (String) request.getParameter("skin");
-String skinParam = skin;
-if (skin == null || skin.trim().length() == 0)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-if (!skin.startsWith("http://"))
-{
-    if (!skin.startsWith("/"))
-        skin = "/" + skin;
-    skin = "http://localhost" + skin;
-}
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+
+String skin = "http://localhost/en/";
+String cadcHeader = skin + "_page_header.html";
+String cadcFooter = skin + "_page_footer.html";
+String cadcBanner = skin + "_cadc_banner.html";
+String cadcSiteMenu = skin + "_cadc_site_menu.html";
 %>
 
-<html>
-<head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
-</head>
-
+<c:catch><c:import url="<%= cadcHeader %>" /></c:catch>
 <body>
-    <c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
-    <h2>
-        Chose a download method:
-    </h2>
-    
-    <form action="/downloadManager/download" method="POST">
-        
-        <input type="hidden" name="uris" value="<%= uris %>" />
-        <input type="hidden" name="params" value="<%= params %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
-        
-        <div style="padding-left: 2em; padding-right: 2em">
-        <table width="66%">
-            <tbody>
-                <tr>
-                    <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.WEBSTART %>" /></td>
-                    <td valign="top">
-                    
-                    <jsp:include page='javaWebStartDescription.html' flush='true' />
-                    
-                    </td>
-                </tr>
-                <tr><td><br/></td></tr>
-                <tr>
-                    <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.URLS %>" /></td>
-                    <td valigh="top">
-                    
-                    <jsp:include page='urlListDescription.html' flush='true' />
+<!-- Always include wb-body at the top, even though it's not ended until the included footer. -->
+  <div id="wb-body">
 
-				    </td>
-                </tr>
-                <tr><td><br/></td></tr>
-                <tr>
-                    <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.HTMLLIST %>" /></td>
-                    <td valigh="top"> View the list of files in a Web page and click on individual files to download.
-				</td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- Accessibility to allow skipping to the content. -->
+    <div id="wb-skip">
+			<ul id="wb-tphp">
+        <li id="wb-skip1"><a href="#wb-cont">Skip to main content</a></li>
+        <li id="wb-skip2"><a href="#wb-nav">Skip to secondary menu</a></li>
+      </ul>
+    </div>
+  
+    <div id="wb-head">
+      <div id="wb-head-in">
+        <header>
+          <!-- HeaderStart -->
+
+          <c:catch><c:import url="<%= cadcBanner %>" /></c:catch>
+
+          <nav role="navigation">
+            <span lang="fr" class="lang-link-target">/fr</span>
+            <c:catch><c:import url="<%= cadcSiteMenu %>" /></c:catch>
+
+            <div id="gcwu-bc">
+              <h2>Breadcrumb trail</h2>
+              <div id="gcwu-bc-in">
+                <ol>
+                  <li><a href="/en">CADC Home</a></li>
+				  				<li>DownloadManager</li>
+                </ol>
+              </div>
+            </div>
+          </nav>
+          <!-- HeaderEnd -->
+        </header>
+      </div>
+    </div>
+
+    <div id="wb-core">
+      <div id="wb-core-in" class="equalize">
+        <div id="wb-main" role="main">
+          <div id="wb-main-in">
+            <!-- MainContentStart -->
+
+            <!--MAIN CONTENT begins here-->
+            
+            <h1 id="wb-cont" class="wb-invisible">Download Manager</h1>
+            <p><b>Choose a download method:</b></p>
+            
+            <form action="/downloadManager/download" method="POST">
+            
+            	<input type="hidden" name="uris" value="<%= uris %>" />
+							<input type="hidden" name="params" value="<%= params %>" />
+							<input type="hidden" name="skin" value="<%= skin %>" />
+							
+            	<div class="grid-12">
+            		
+								<div class="span-2">
+									<input class="button" type="submit" name="method" value="<%= DispatcherServlet.WEBSTART %>" />
+								</div>
+								<div class="span-6">
+									<jsp:include page='javaWebStartDescription.html' flush='true' />
+								</div>
+								<div class="span-4"></div>
+								<div class="clear"></div>
+								
+								<div class="span-2">
+									<input class="button" type="submit" name="method" value="<%= DispatcherServlet.URLS %>" />
+								</div>
+								<div class="span-6">
+									<jsp:include page='urlListDescription.html' flush='true' />
+								</div>
+								<div class="span-4"></div>
+								<div class="clear"></div>
+								
+								<div class="span-2">
+									<input class="button" type="submit" name="method" value="<%= DispatcherServlet.HTMLLIST %>" />
+								</div>
+								<div class="span-6">
+									<p>View the list of files in a Web page and click on individual files to download.</p>
+								</div>
+								<div class="span-4"></div>
+								<div class="clear"></div>
+								
+								<label class="form-checkbox" for="remember">
+									<input type="checkbox" id="remember" name="remember" value="true">
+									Remember my choice of download method (cookies required)
+								</label>
+									
+								<div class="span-1"></div>
+								<div class="span-10">
+									<p class="color-attention">
+										Individual download pages have "Chose one of the other download methods" buttons which, if pressed, remove the remembered download choice and return to the multiple choice page.
+									</p>
+								</div>
+								<div class="span-1"></div>
+								<div class="clear"></div>
+								
+							</div>
+            	<div class="clear"></div>								
+						</form>
+            
+						<h2>Help</h2>
+	
+						<h3>I want to use the Java option but it didn't work. How can I fix it?</h3>
+						<p>
+						For general help on getting applets or webstart working, we 
+						have a <a href="/JavaTest">Java Test Page</a> with instructions.
+						</p>
+						<h3><i>wget</i> is not working</h3>
+						<p>
+						The recommended usage above includes the <code>--content-disposition</code> option,
+						which is available in <i>wget</i> version 1.12 or later. This option improves the
+						likelhood that saved files will have the correct filenames when retrieved from services.
+						</p>
+						<p>
+						Please note that there are many versions of <i>wget</i> with a variety of
+						options and syntax.  Please consult your local help pages before contacting
+						us.&nbsp;   <code>wget --help</code> should reveal the arguments supported by
+						your version of <i>wget</i>.
+						</p>
+			
+						<p> 
+						The <i>wget</i> command should be available on most systems. If not, <i>wget</i>
+						can be downloaded from <a href="http://www.gnu.org/software/wget/">gnu.org</a>.
+						Alternately, you can try one of the several other web download utilities
+						such as: curl, HTTrack, leech (mozilla add-on), pavuk, lftp, etc.
+						</p>    
+						<h3>common options used with <i>wget</i></h3>
+						<p>
+						For downloading large number of files with <i>wget</i>, the following options might come handy:
+						</p>
+						<ul>
+							<li>-t,  --tries=NUMBER            set number of retries to NUMBER (5 recommended).</li>
+							<li>--auth-no-challenge     send Basic HTTP authentication information
+								 without first waiting for the server's challenge thus saving a roundtrip.</li>
+							<li>--waitretry=SECONDS       wait 1..SECONDS between retries of a retrieval. By default, Wget will assume a value of 10 seconds.</li>
+							<li>-N,  --timestamping  Turn on time-stamping and download only missing or updated files.</li>
+						</ul>
+		    		
+		    		<dl id="gcwu-date-mod" role="contentinfo">
+        			<dt>Date modified:</dt><dd><span><time>2013-08-01</time></span></dd>
+      			</dl>
+      			<!-- MainContentEnd -->
+          </div>
         </div>
-
-        <div width="66%">
-            <p>
-                <input type="checkbox" name="remember" value="true">Remember my choice of download method</input>
-                (cookies required) 
-            </p>
-            <p style="color: #800; padding-left: 6em; padding-right: 6em">
-	        Individual download pages have "Chose one of the other download methods" buttons which, if pressed, remove the remembered download choice and return to the multiple choice page.
-            </p>
-        </div>
-        
-    </form>
-    
-    
-    <h2>Help</h2>
-    
-    <h3>
-        I want to use the Java option but it didn't work. How can I fix it?
-    </h3>
-    <p>
-        For general help on getting applets or webstart working, we 
-        have a <a href="/JavaTest">Java Test Page</a> with instructions.
-    </p>
-    <h3>
-        <i>wget</i> is not working
-    </h3>
-        <p>
-            The recommended usage above includes the <code>--content-disposition</code> option,
-            which is available in <i>wget</i> version 1.12 or later. This option improves the
-            likelhood that saved files will have the correct filenames when retrieved from services.
-        </p>
-        <p>
-            Please note that there are many versions of <i>wget</i> with a variety of
-            options and syntax.  Please consult your local help pages before contacting
-            us.&nbsp;   <code>wget --help</code> should reveal the arguments supported by
-            your version of <i>wget</i>.
-	</p>
-				
-	<p> 
-	    The <i>wget</i> command should be available on most systems. If not, <i>wget</i>
-            can be downloaded from <a href="http://www.gnu.org/software/wget/">gnu.org</a>.
-	    Alternately, you can try one of the several other web download utilities
-	    such as: curl, HTTrack, leech (mozilla add-on), pavuk, lftp, etc.
-	</p>    
-    <h3>
-        common options used with <i>wget</i>
-    </h3>
-    <p>
-     For downloading large number of files with <i>wget</i>, the following options might come handy:
-	<ul>
-	   <li>-t,  --tries=NUMBER            set number of retries to NUMBER (5 recommended).</li>
-	   <li>--auth-no-challenge     send Basic HTTP authentication information
-                 without first waiting for the server's challenge thus saving a roundtrip.
-           <li>--waitretry=SECONDS       wait 1..SECONDS between retries of a retrieval. By default, Wget will assume a value of 10 seconds.</li>
-           <li>-N,  --timestamping  Turn on time-stamping and download only missing or updated files.</li>
-	</ul>
-
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
-</body>
-</html>
-
+        <!-- noindex -->
+      </div>
+    </div>
+	<c:catch><c:import url="<%= cadcFooter%>" /></c:catch>
