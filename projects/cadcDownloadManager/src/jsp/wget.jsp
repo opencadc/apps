@@ -110,15 +110,6 @@ String bodyFooter = skin + "bodyFooter";
 <c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
 
 <p>
-    You can download individual files by clicking on their filenames 
-    in the list below.
-</p>
-
-<br>
-
-  
-<p>
-    <ul>
 <%
     Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriList, paramMap, true);
     while ( iter.hasNext() )
@@ -127,36 +118,21 @@ String bodyFooter = skin + "bodyFooter";
         if (dd.url != null)
         {
 %>
-<li>
-    <a href="<%= dd.url %>"> <%= dd.url %></a>
-</li>
+    <a href="<%= dd.url %>"> <%= dd.url %></a><br/>
 <%
         }
         else
         {
 %>
-<li>
-    <%= dd.uri %>: <%= dd.error %>
-</li>
+    <%= dd.uri %>: <%= dd.error %><br/>
 <%
         }
         out.flush();
     }
     out.flush();
 %>
-</ul>
-
 </p>
 
-<div style="padding-left: 2em; padding-right: 2em">
-    <form action="/downloadManager/download" method="POST">
-        <input type="hidden" name="uris" value="<%= uris %>" />
-        <input type="hidden" name="params" value="<%= params %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
-        <input type="submit" name="clearCookie" value="Chose one of the other download methods" />
-        <input type="submit" OnClick="closemyself()" value="Close window" />
-    </form>
-</div>    
 <c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
 </body>
 </html>
