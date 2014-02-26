@@ -90,7 +90,7 @@
 
 <property name="project" value="cadcDownloadManager" />
 
-<property name="jars" value="${lib}/cadcUtil.jar:${lib}/cadcRegistryClient.jar:${ext.lib}/servlet-api.jar:${ext.lib}/log4j.jar" />
+<property name="jars" value="${lib}/cadcUtil.jar:${lib}/cadcLog.jar:${lib}/cadcRegistryClient.jar:${ext.lib}/servlet-api.jar:${ext.lib}/log4j.jar" />
 
 <target name="build" depends="client,servlet,sample,resources" />
 
