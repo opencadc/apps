@@ -101,7 +101,7 @@ public class Main
     {
         try
         {
-            ArgumentMap am = new ArgumentMap(args);
+            final ArgumentMap am = new ArgumentMap(args);
             if ( am.isSet("h") || am.isSet("help") )
             {
                 usage();
@@ -114,47 +114,11 @@ public class Main
                 level = Level.INFO;
             else if ( am.isSet("q") || am.isSet("quiet") )
                 level = Level.OFF;
-
-            String uriStr = fixNull(am.getValue("uris"));
-            String paramStr = fixNull(am.getValue("params"));
-
-            boolean headless = am.isSet("headless");
+            final Level logLevel = level;
             
-            
-            ConditionVar downloadCompleteCond = new ConditionVar();
-            
-            if (headless)
-            {
-                boolean decompress = am.isSet("decompress");
-                boolean overwrite = am.isSet("overwrite");
-                String dest = am.getValue("dest");
-                String thStr = am.getValue("threads");
-                boolean retry = am.isSet("retry");
-                Integer threads = null;
-                if (thStr != null)
-                    try
-                    {
-                        threads = new Integer(thStr);
-                    }
-                    catch(NumberFormatException ex)
-                    {
-                        throw new IllegalArgumentException("failed to parse '" + thStr + "' as an integer");
-                    }
-                downloadCompleteCond.set(false);
-                ui = new ConsoleUI(level, threads, retry, dest, decompress, overwrite, downloadCompleteCond);
-            }
-            else
-            {
-                ui = new GraphicUI(level);
-                ApplicationFrame frame  = new ApplicationFrame(Constants.name, (Application)ui);
-                frame.getContentPane().add((Component)ui);
-                frame.setVisible(true);
-            }
-            
-            
-
             Subject subject = new Subject();
-            // Cookie based authentication?
+            
+            // Cookie based authentication
             String ssoCookieStr = fixNull(am.getValue("ssocookie"));
             if (ssoCookieStr != null)
             {
@@ -184,13 +148,49 @@ public class Main
                   }
             }
 
-            final List<String> uris = DownloadUtil.decodeListURI(uriStr);
-            final Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+            
+
+            final boolean headless = am.isSet("headless");
+            
+            final ConditionVar downloadCompleteCond = new ConditionVar();
 
             boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>()
             {
                 public Boolean run()
                 {
+                    String uriStr = fixNull(am.getValue("uris"));
+                    String paramStr = fixNull(am.getValue("params"));
+                    List<String> uris = DownloadUtil.decodeListURI(uriStr);
+                    Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+                    
+                    if (headless)
+                    {
+                        boolean decompress = am.isSet("decompress");
+                        boolean overwrite = am.isSet("overwrite");
+                        String dest = am.getValue("dest");
+                        String thStr = am.getValue("threads");
+                        boolean retry = am.isSet("retry");
+                        Integer threads = null;
+                        if (thStr != null)
+                            try
+                            {
+                                threads = new Integer(thStr);
+                            }
+                            catch(NumberFormatException ex)
+                            {
+                                throw new IllegalArgumentException("failed to parse '" + thStr + "' as an integer");
+                            }
+                        downloadCompleteCond.set(false);
+                        ui = new ConsoleUI(logLevel, threads, retry, dest, decompress, overwrite, downloadCompleteCond);
+                    }
+                    else
+                    {
+                        ui = new GraphicUI(logLevel);
+                        ApplicationFrame frame  = new ApplicationFrame(Constants.name, (Application)ui);
+                        frame.getContentPane().add((Component)ui);
+                        frame.setVisible(true);
+                    }
+
                     ui.add(uris, params);
                     ui.start();
                     return true;

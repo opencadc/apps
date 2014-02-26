@@ -70,6 +70,9 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.auth.SSOCookieManager;
 import java.io.IOException;
 
 import javax.servlet.RequestDispatcher;
@@ -81,10 +84,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
+import ca.nrc.cadc.dlm.client.Main;
+import ca.nrc.cadc.log.ServletLogInfo;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.util.ArrayUtil;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import javax.management.RuntimeErrorException;
+import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
@@ -139,44 +150,153 @@ public class DispatcherServlet extends HttpServlet
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException
     {
-        // forward
-        String uris = (String) request.getAttribute("uris");
-        String params = (String) request.getAttribute("params");
-        
-        if (uris == null)
-        {
-             // external post
-            List<String> uriList = ServerUtil.getURIs(request);
-            if ( uriList == null || uriList.isEmpty() )
-            {
-                request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
-                return;
-            }
-            uris = DownloadUtil.encodeListURI(uriList);
-            request.setAttribute("uris", uris);
-        }
+        ServletLogInfo logInfo = new ServletLogInfo(request);
+        log.info(logInfo.start());
 
-        if (params == null)
+        long start = System.currentTimeMillis();
+        
+        try
         {
-            Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
-            if (paramMap != null && !paramMap.isEmpty() )
+            Subject subject = AuthenticationUtil.getSubject(request);
+            logInfo.setSubject(subject);
+
+            
+            // if the ssodomains attribute is sent, the sso cookie can be used 
+            // with multiple domains
+            log.debug("looking for ssodomains attribute...");
+            String ssodomains = (String) request.getAttribute("ssodomains");
+            final Cookie[] cookies = request.getCookies();
+            if (!ArrayUtil.isEmpty(cookies))
             {
-                params = DownloadUtil.encodeParamMap(paramMap);
-                request.setAttribute("params", params);
+                log.debug("looking for "+SSOCookieManager.DEFAULT_SSO_COOKIE_NAME+" Cookie");
+                for (final Cookie cookie : cookies)
+                {
+                    if (cookie.getName().equals(
+                            SSOCookieManager.DEFAULT_SSO_COOKIE_NAME))
+                    {
+                        request.setAttribute("ssocookie", cookie.getValue());
+                        log.debug("ssocookie attribute: " + cookie.getValue());
+                        String servername = NetUtil.getServerName(this.getClass());
+                        String domain = NetUtil.getDomainName(servername);
+                        if (ssodomains != null)
+                        {
+                            domain = ssodomains;
+                        }
+                        request.setAttribute("ssocookiedomain", domain);
+                        log.debug("ssocookie domain: " + domain);
+                        
+                        if (subject != null && ssodomains != null)
+                        {
+                            final String[] domains = ssodomains.split(",");
+                            for (String d : domains)
+                            {
+                                SSOCookieCredential cred = new SSOCookieCredential(
+                                    SSOCookieManager.DEFAULT_SSO_COOKIE_NAME + "=" 
+                                        + cookie.getValue(), d.trim());
+                                subject.getPublicCredentials().add(cred);
+                            }
+                        }
+                    }
+                }
+            }
+            DownloadAction action = new DownloadAction(request, response);
+        
+            if (subject == null)
+                action.run();
+            else
+            {
+                try
+                {
+                    Subject.doAs(subject, action);
+                }
+                catch(PrivilegedActionException pex)
+                {
+                    if (pex.getCause() instanceof ServletException)
+                        throw (ServletException) pex.getCause();
+                    else if (pex.getCause() instanceof IOException)
+                        throw (IOException) pex.getCause();
+                    else if (pex.getCause() instanceof RuntimeException)
+                        throw (RuntimeException) pex.getCause();
+                    else
+                        throw new RuntimeException(pex.getCause());
+                }
             }
         }
+        catch(IOException ex)
+        {
+            log.debug("caught: " + ex);
+            throw ex;
+        }
+        catch(Exception e)
+        {
+            if (e instanceof RuntimeException)
+            {
+                RuntimeException rex = (RuntimeErrorException) e;
+                throw rex;
+            }
+        }
+        finally
+        {
+            Long dt = new Long(System.currentTimeMillis() - start);
+            logInfo.setElapsedTime(dt);
+            log.info(logInfo.end());
+        }
+    }
+    
+    private class DownloadAction implements  PrivilegedExceptionAction<Object>
+    {
+        HttpServletRequest request;
+        HttpServletResponse response;
         
-        log.debug("uris: " + uris);
-        log.debug("params: " + params);
+        DownloadAction(HttpServletRequest request, HttpServletResponse response)
+        {
+            this.request = request;
+            this.response = response;
+        }
         
-        // check for preferred/selected download method
-        String target = getDownloadMethod(request, response);
-        log.debug("Target: " + target);
-        if (target == null)
-            target = "/chooser.jsp";
+        public Object run() 
+            throws Exception
+        {
+            // forward
+            String uris = (String) request.getAttribute("uris");
+            String params = (String) request.getAttribute("params");
 
-        RequestDispatcher disp = request.getRequestDispatcher(target);
-        disp.forward(request, response);
+            if (uris == null)
+            {
+                 // external post
+                List<String> uriList = ServerUtil.getURIs(request);
+                if ( uriList == null || uriList.isEmpty() )
+                {
+                    request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
+                    return null;
+                }
+                uris = DownloadUtil.encodeListURI(uriList);
+                request.setAttribute("uris", uris);
+            }
+
+            if (params == null)
+            {
+                Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
+                if (paramMap != null && !paramMap.isEmpty() )
+                {
+                    params = DownloadUtil.encodeParamMap(paramMap);
+                    request.setAttribute("params", params);
+                }
+            }
+
+            log.debug("uris: " + uris);
+            log.debug("params: " + params);
+
+            // check for preferred/selected download method
+            String target = getDownloadMethod(request, response);
+            log.debug("Target: " + target);
+            if (target == null)
+                target = "/chooser.jsp";
+
+            RequestDispatcher disp = request.getRequestDispatcher(target);
+            disp.forward(request, response);
+            return null;
+        }
     }
 
     /**
