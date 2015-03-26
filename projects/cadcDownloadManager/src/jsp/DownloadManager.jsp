@@ -111,6 +111,7 @@
         <jar href="cadcDALI.jar"/>
         <jar href="jdom2.jar"/>
         <jar href="xerces.jar"/>
+        <jar href="cadcVOSClient.jar" />
 <%
     if (rcHost != null)
     {

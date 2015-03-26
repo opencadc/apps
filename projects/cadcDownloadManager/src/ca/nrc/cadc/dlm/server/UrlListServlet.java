@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -82,6 +83,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadUtil;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -133,6 +135,11 @@ public class UrlListServlet extends HttpServlet
         response.setContentType("html/txt");
         response.setHeader("Content-Disposition",
                 "attachement;filename=\"cadcUrlList.txt\"");
+        
+        // force auth method
+        List<String> forceAuth = new ArrayList<String>(1);
+        forceAuth.add(AuthMethod.PASSWORD.getValue());
+        paramMap.put("auth", forceAuth);
         
         Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriList, paramMap, true);
         while (iter.hasNext())
