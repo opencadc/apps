@@ -70,6 +70,7 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.auth.SSOCookieManager;
@@ -84,24 +85,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
-import ca.nrc.cadc.dlm.client.Main;
 import ca.nrc.cadc.log.ServletLogInfo;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.ArrayUtil;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import javax.management.RuntimeErrorException;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
 
 /**
  * Download pre-processor. This servlet accepts either direct POSTs from clients or
- * requerst scope attributes and passes the request on to the approproate JSP page.
+ * request scope attributes and passes the request on to the appropriate JSP page.
  * </p><p>
  * For direct POST, the client must use the multi-valued <em>uri</em> parameter to pass 
  * in one or more URIs. These are flattened into a single comma-separated list and 
@@ -160,45 +157,49 @@ public class DispatcherServlet extends HttpServlet
             Subject subject = AuthenticationUtil.getSubject(request);
             logInfo.setSubject(subject);
 
-            
-            // if the ssodomains attribute is sent, the sso cookie can be used 
-            // with multiple domains
-            log.debug("looking for ssodomains attribute...");
-            String ssodomains = (String) request.getAttribute("ssodomains");
-            final Cookie[] cookies = request.getCookies();
-            if (!ArrayUtil.isEmpty(cookies))
+            AuthMethod am = AuthenticationUtil.getAuthMethod(subject);
+            if (am != null && !AuthMethod.ANON.equals(am))
             {
-                log.debug("looking for "+SSOCookieManager.DEFAULT_SSO_COOKIE_NAME+" Cookie");
-                for (final Cookie cookie : cookies)
+                // if the ssodomains attribute is sent, the sso cookie can be used 
+                // with multiple domains
+                log.debug("looking for ssodomains attribute...");
+                String ssodomains = (String) request.getAttribute("ssodomains");
+                final Cookie[] cookies = request.getCookies();
+                if (!ArrayUtil.isEmpty(cookies))
                 {
-                    if (cookie.getName().equals(
-                            SSOCookieManager.DEFAULT_SSO_COOKIE_NAME))
+                    log.debug("looking for "+SSOCookieManager.DEFAULT_SSO_COOKIE_NAME+" Cookie");
+                    for (final Cookie cookie : cookies)
                     {
-                        request.setAttribute("ssocookie", cookie.getValue());
-                        log.debug("ssocookie attribute: " + cookie.getValue());
-                        String servername = NetUtil.getServerName(this.getClass());
-                        String domain = NetUtil.getDomainName(servername);
-                        if (ssodomains != null)
+                        if (cookie.getName().equals(
+                                SSOCookieManager.DEFAULT_SSO_COOKIE_NAME))
                         {
-                            domain = ssodomains;
-                        }
-                        request.setAttribute("ssocookiedomain", domain);
-                        log.debug("ssocookie domain: " + domain);
-                        
-                        if (subject != null && ssodomains != null)
-                        {
-                            final String[] domains = ssodomains.split(",");
-                            for (String d : domains)
+                            request.setAttribute("ssocookie", cookie.getValue());
+                            log.debug("ssocookie attribute: " + cookie.getValue());
+                            String servername = NetUtil.getServerName(this.getClass());
+                            String domain = NetUtil.getDomainName(servername);
+                            if (ssodomains != null)
                             {
-                                SSOCookieCredential cred = new SSOCookieCredential(
-                                    SSOCookieManager.DEFAULT_SSO_COOKIE_NAME + "=" 
-                                        + cookie.getValue(), d.trim());
-                                subject.getPublicCredentials().add(cred);
+                                domain = ssodomains;
+                            }
+                            request.setAttribute("ssocookiedomain", domain);
+                            log.debug("ssocookie domain: " + domain);
+
+                            if (subject != null && ssodomains != null)
+                            {
+                                final String[] domains = ssodomains.split(",");
+                                for (String d : domains)
+                                {
+                                    SSOCookieCredential cred = new SSOCookieCredential(
+                                        SSOCookieManager.DEFAULT_SSO_COOKIE_NAME + "=" 
+                                            + cookie.getValue(), d.trim());
+                                    subject.getPublicCredentials().add(cred);
+                                }
                             }
                         }
                     }
                 }
             }
+            
             DownloadAction action = new DownloadAction(request, response);
         
             if (subject == null)
@@ -231,7 +232,7 @@ public class DispatcherServlet extends HttpServlet
         {
             if (e instanceof RuntimeException)
             {
-                RuntimeException rex = (RuntimeErrorException) e;
+                RuntimeException rex = (RuntimeException) e;
                 throw rex;
             }
         }
