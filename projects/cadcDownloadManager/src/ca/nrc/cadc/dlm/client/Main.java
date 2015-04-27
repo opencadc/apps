@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import java.awt.Component;
 import java.security.PrivilegedAction;
 
@@ -83,6 +84,7 @@ import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.onfire.ak.Application;
 import ca.onfire.ak.ApplicationFrame;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -119,6 +121,7 @@ public class Main
             Subject subject = new Subject();
             
             // Cookie based authentication
+            boolean cookieCreds = false;
             String ssoCookieStr = fixNull(am.getValue("ssocookie"));
             if (ssoCookieStr != null)
             {
@@ -145,15 +148,20 @@ public class Main
                           SSOCookieManager.DEFAULT_SSO_COOKIE_NAME + "=" + 
                                   ssoCookieStr, domain.trim());
                       subject.getPublicCredentials().add(cred);
+                      cookieCreds = true;
                   }
             }
 
-            
-
             final boolean headless = am.isSet("headless");
+
+            String str = null;
+            if (!headless && !cookieCreds)
+                str = AuthMethod.PASSWORD.getValue();
+            final String forceAuthMethod = str;
             
             final ConditionVar downloadCompleteCond = new ConditionVar();
 
+            
             boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>()
             {
                 public Boolean run()
@@ -162,7 +170,12 @@ public class Main
                     String paramStr = fixNull(am.getValue("params"));
                     List<String> uris = DownloadUtil.decodeListURI(uriStr);
                     Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
-                    
+                    if (forceAuthMethod != null)
+                    {
+                        List<String> am = new ArrayList<String>();
+                        am.add(forceAuthMethod);
+                        params.put("auth", am);
+                    }
                     if (headless)
                     {
                         boolean decompress = am.isSet("decompress");
