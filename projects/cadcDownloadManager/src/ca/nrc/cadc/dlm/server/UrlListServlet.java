@@ -83,6 +83,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadUtil;
+import ca.nrc.cadc.dlm.ManifestReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -132,7 +133,7 @@ public class UrlListServlet extends HttpServlet
         int countUrls = 0;
         int countErrors = 0;
 
-        response.setContentType("html/txt");
+        response.setContentType("text/plain");
         response.setHeader("Content-Disposition",
                 "attachement;filename=\"cadcUrlList.txt\"");
         
