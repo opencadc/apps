@@ -144,9 +144,7 @@ public class Main
                   }
                   for (String domain : domains)
                   {
-                      SSOCookieCredential cred = new SSOCookieCredential(
-                          SSOCookieManager.DEFAULT_SSO_COOKIE_NAME + "=" + 
-                                  ssoCookieStr, domain.trim());
+                      SSOCookieCredential cred = new SSOCookieCredential(ssoCookieStr, domain.trim());
                       subject.getPublicCredentials().add(cred);
                       cookieCreds = true;
                   }

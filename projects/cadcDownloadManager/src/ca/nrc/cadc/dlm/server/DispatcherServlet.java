@@ -73,7 +73,6 @@ package ca.nrc.cadc.dlm.server;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSOCookieCredential;
-import ca.nrc.cadc.auth.SSOCookieManager;
 import java.io.IOException;
 
 import javax.servlet.RequestDispatcher;
@@ -86,12 +85,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.util.ArrayUtil;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
@@ -160,40 +158,37 @@ public class DispatcherServlet extends HttpServlet
             AuthMethod am = AuthenticationUtil.getAuthMethod(subject);
             if (am != null && !AuthMethod.ANON.equals(am))
             {
-                // if the ssodomains attribute is sent, the sso cookie can be used 
-                // with multiple domains
+                // if the ssodomains attribute is set, the sso cookie can be used 
+                // with additional domains; not that the only way to do that is to
+                // intercept the post with a different servlet, set it, and forward
+                // or maybe to subclass this and override doPost -- intercept+forward
+                // is probably safer
                 log.debug("looking for ssodomains attribute...");
                 String ssodomains = (String) request.getAttribute("ssodomains");
-                final Cookie[] cookies = request.getCookies();
-                if (!ArrayUtil.isEmpty(cookies))
+                if (ssodomains != null)
                 {
-                    log.debug("looking for "+SSOCookieManager.DEFAULT_SSO_COOKIE_NAME+" Cookie");
-                    for (final Cookie cookie : cookies)
+                    final String[] domains = ssodomains.split(",");
+                                
+                    Set<SSOCookieCredential> creds = subject.getPublicCredentials(SSOCookieCredential.class);
+                    
+                    if (!creds.isEmpty())
                     {
-                        if (cookie.getName().equals(
-                                SSOCookieManager.DEFAULT_SSO_COOKIE_NAME))
+                        SSOCookieCredential cred = creds.iterator().next();
+                        // these are only really needed by the webstart servlet/jsp since server-side
+                        // will use the credential from the subject directly
+                        String ck = cred.getSsoCookieValue();
+                        ck = ck.replace("&", "&amp;");
+                        request.setAttribute("ssocookie", ck);
+                        log.debug("ssocookie attribute: " + ck);
+                        request.setAttribute("ssocookiedomain", ssodomains);
+                        log.debug("ssocookie domain: " + ssodomains);
+                        for (String d : domains)
                         {
-                            request.setAttribute("ssocookie", cookie.getValue());
-                            log.debug("ssocookie attribute: " + cookie.getValue());
-                            String servername = NetUtil.getServerName(this.getClass());
-                            String domain = NetUtil.getDomainName(servername);
-                            if (ssodomains != null)
+                            if (!cred.getDomain().equals(d))
                             {
-                                domain = ssodomains;
-                            }
-                            request.setAttribute("ssocookiedomain", domain);
-                            log.debug("ssocookie domain: " + domain);
-
-                            if (subject != null && ssodomains != null)
-                            {
-                                final String[] domains = ssodomains.split(",");
-                                for (String d : domains)
-                                {
-                                    SSOCookieCredential cred = new SSOCookieCredential(
-                                        SSOCookieManager.DEFAULT_SSO_COOKIE_NAME + "=" 
-                                            + cookie.getValue(), d.trim());
-                                    subject.getPublicCredentials().add(cred);
-                                }
+                                SSOCookieCredential alt = new SSOCookieCredential(cred.getSsoCookieValue(), d);
+                                log.debug("adding cookie for alternate domain: " + d);
+                                subject.getPublicCredentials().add(alt);
                             }
                         }
                     }

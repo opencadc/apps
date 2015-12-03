@@ -81,9 +81,18 @@
     String uris = (String) request.getAttribute("uris");
     String params = (String) request.getAttribute("params");
     String codebase = (String) request.getAttribute("codebase");
-    String ssocookie = (String) request.getAttribute("ssocookie");
-    String ssocookiedomain = (String) request.getAttribute("ssocookiedomain");
-
+    String ssocookieArg = "";
+    String ssocookiedomainArg = "";
+    String ck = (String) request.getAttribute("ssocookie");
+    String cd = (String) request.getAttribute("ssocookiedomain");
+    if (ck != null)
+    {
+        ssocookieArg = "--ssocookie=" + ck;
+    }
+    if (cd != null)
+    {
+        ssocookiedomainArg = "--ssocookiedomain=" + cd;
+    }
     String rcHostProp = RegistryClient.class.getName() + ".host";
     String rcHost = (String) request.getAttribute("targetHost");
 %>
@@ -126,8 +135,8 @@
         <argument>--verbose</argument>
         <argument>--uris=<%= uris %></argument>
         <argument>--params=<%= params %></argument>
-	<argument>--ssocookie=<%= ssocookie %></argument>
-	<argument>--ssocookiedomain=<%= ssocookiedomain %></argument>
+	<argument><%= ssocookieArg %></argument>
+	<argument><%= ssocookiedomainArg %></argument>
     </application-desc>
     
 </jnlp>
