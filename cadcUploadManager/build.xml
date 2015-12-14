@@ -86,7 +86,7 @@
     <import file="extras.xml" optional="true" />
 
 
-    <property name="project" value="cadcVOS" />
+    <property name="project" value="cadcUploadManager" />
 
     <property name="cadcUtil" value="${lib}/cadcUtil.jar" />
     <property name="cadcAccessControl" value="${lib}/cadcAccessControl.jar" />
