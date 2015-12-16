@@ -88,12 +88,13 @@
     <property name="project"    value="cadcUploadManager" />
 
     <property name="cadcUtil"   value="${lib}/cadcUtil.jar" />
+    <property name="cadcRegistryClient"   value="${lib}/cadcRegistryClient.jar" />
     <property name="cadcUWS"    value="${lib}/cadcUWS.jar" />
     <property name="cadcVOS"    value="${lib}/cadcVOS.jar" />
 
     <property name="log4j"      value="${ext.lib}/log4j.jar" />
 
-    <property name="cadcJars"   value="${cadcUtil}:${cadcUWS}:${cadcVOS}" />
+    <property name="cadcJars"   value="${cadcUtil}:${cadcRegistryClient}:${cadcUWS}:${cadcVOS}" />
     <property name="extJars"    value="${log4j}" />
     <property name="jars"       value="${cadcJars}:${extJars}" />
 
