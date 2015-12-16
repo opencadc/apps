@@ -69,14 +69,13 @@
 
 package ca.nrc.cadc.vos.client.ui;
 
+import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.easymock.EasyMock;
 import org.easymock.IArgumentMatcher;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import ca.nrc.cadc.util.Log4jInit;
 
 public class CommandExecutorTest
 {

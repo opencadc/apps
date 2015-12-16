@@ -33,6 +33,21 @@
  */
 package ca.nrc.cadc.vos.client.ui;
 
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
+import org.apache.log4j.Level;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import javax.swing.JFileChooser;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import java.awt.Component;
+import java.awt.Insets;
+import java.io.File;
+import java.net.URI;
+
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
@@ -40,24 +55,6 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import java.awt.Component;
-import java.awt.Insets;
-import java.io.File;
-import java.net.URI;
-
-import javax.swing.JFileChooser;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-
-import org.apache.log4j.Level;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import ca.nrc.cadc.vos.AbstractCADCVOSTest;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 
 public class GraphicUITest extends AbstractCADCVOSTest<GraphicUI>

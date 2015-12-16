@@ -1,9 +1,9 @@
-/*
+/**
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009.                            (c) 2009.
+ *  (c) 2010.                            (c) 2010.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,105 +62,45 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 4 $
- *
  ************************************************************************
  */
 
-package ca.nrc.cadc.vos;
+package ca.nrc.cadc.vos.client.ui;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.Before;
 
-import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 
-/**
- *
- * @author yeunga
- */
-public class LinkNodeTest 
+public abstract class AbstractCADCVOSTest<T>
 {
-    private static Logger log = Logger.getLogger(LinkNodeTest.class);
-    private static String ROOT_NODE;
-    private static String VOS_URI =  "vos://cadc.nrc.ca!vospace";
+    private T testSubject;
 
-    String endpoint;
-    VOSpaceClient client;
+
+    @Before
+    public void setUp() throws Exception
+    {
+        initializeTestSubject();
+
+        Assert.assertNotNull("Test subject should not be null.",
+                             getTestSubject());
+    }
+
 
     /**
-     * @throws java.lang.Exception
+     * Set and initialize the Test Subject.
+     *
+     * @throws Exception    If anything goes awry.
      */
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception
+    protected abstract void initializeTestSubject() throws Exception;
+
+
+    public T getTestSubject()
     {
-        Log4jInit.setLevel("ca.nrc.cadc.vos", Level.INFO);
-        ROOT_NODE = System.getProperty("user.name") + "/";
+        return testSubject;
     }
 
-    @Test
-    public void testInstantiationsWithoutProperties() throws Exception
+    public void setTestSubject(T testSubject)
     {
-        final String slashPath1 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        final String slashPath2 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        VOSURI uri = new VOSURI(VOS_URI + slashPath1);
-        URI target = new URI(VOS_URI + slashPath2);
-        LinkNode node = new LinkNode(uri, target);
-        Assert.assertEquals(uri, node.getUri());
-        Assert.assertEquals(target, node.getTarget());
+        this.testSubject = testSubject;
     }
-    
-    @Test
-    public void testInstantiationsWithProperties() throws Exception
-    {
-        final String slashPath1 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        final String slashPath2 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        VOSURI uri = new VOSURI(VOS_URI + slashPath1);
-        URI target = new URI(VOS_URI + slashPath2);
-
-        List<NodeProperty> properties = new ArrayList<NodeProperty>();
-        properties.add(new NodeProperty(VOS.PROPERTY_URI_TITLE, "sz_title")); 
-        properties.add(new NodeProperty(VOS.PROPERTY_URI_CREATOR, "sz_creator"));
-        
-        LinkNode node = new LinkNode(uri, properties, target);
-        Assert.assertEquals(uri, node.getUri());
-        Assert.assertEquals(target, node.getTarget());
-        List<NodeProperty> actualProperties = node.getProperties();
-        Assert.assertEquals(properties.size(), actualProperties.size());
-        for (NodeProperty property : properties)
-        {
-        	Assert.assertTrue(actualProperties.contains(property));
-        }
-    }
-    
-    @Test
-    public void testSetTarget() throws Exception
-    {
-        final String slashPath1 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        final String slashPath2 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        final String slashPath3 = "/" + ROOT_NODE
-                + TestUtil.uniqueStringOnTime();
-        VOSURI uri = new VOSURI(VOS_URI + slashPath1);
-        URI target = new URI(VOS_URI + slashPath2);
-        URI newTarget = new URI(VOS_URI + slashPath3);
-        LinkNode node = new LinkNode(uri, target);
-        Assert.assertEquals(target, node.getTarget());
-        
-        node.setTarget(newTarget);
-        Assert.assertEquals(newTarget, node.getTarget());
-    }
-        	
 }

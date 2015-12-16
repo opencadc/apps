@@ -33,25 +33,22 @@
  */
 package ca.nrc.cadc.vos.client.ui;
 
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
+import org.junit.Test;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JProgressBar;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JProgressBar;
-
-import org.junit.Test;
-
-import ca.nrc.cadc.vos.AbstractCADCVOSTest;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 
 public class JUploadManagerTest extends AbstractCADCVOSTest<JUploadManager>
