@@ -33,12 +33,13 @@
  */
 package ca.nrc.cadc.vos.client.ui;
 
-import ca.nrc.cadc.vos.AbstractCADCVOSTest;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+
 import static org.easymock.EasyMock.createMock;
 
 

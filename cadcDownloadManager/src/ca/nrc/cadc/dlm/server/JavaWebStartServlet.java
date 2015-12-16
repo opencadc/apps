@@ -70,26 +70,18 @@
 
 package ca.nrc.cadc.dlm.server;
 
-import java.io.IOException;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.reg.client.RegistryClient;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import ca.nrc.cadc.auth.SSOCookieManager;
-import ca.nrc.cadc.dlm.DownloadUtil;
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.ArrayUtil;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import java.io.IOException;
 
 /**
  * Download pre-processor for Java WebStart download method.
