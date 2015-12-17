@@ -114,13 +114,13 @@
         <j2se version="1.5+" initial-heap-size="64m" max-heap-size="256m" />
         <jar href="cadcDownloadManagerClient.jar"/>
         <jar href="cadcUtil.jar"/>
-        <jar href="cadcRegistryClient.jar"/>
+        <jar href="cadcRegistry.jar"/>
         <jar href="log4j.jar"/>
         <!-- these are needed for VOTable parsing in the cadcDALI library -->
         <jar href="cadcDALI.jar"/>
         <jar href="jdom2.jar"/>
         <jar href="xerces.jar"/>
-        <jar href="cadcVOSClient.jar" />
+        <jar href="cadcVOS.jar" />
 <%
     if (rcHost != null)
     {
