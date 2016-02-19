@@ -104,6 +104,7 @@
              update="no"
              manifest="${build}/tmp/${project}.mf">
             <include name="ca/nrc/cadc/**" />
+            <include name="ca/onfire/ak/**" />
             <exclude name="**Test**" />
         </jar>
     </target>
@@ -132,37 +133,5 @@
     <property name="objenesis"      value="${ext.dev}/objenesis.jar" />
     <property name="testingJars"
               value="${cadcUWS-Server}:${asm}:${cglib}:${easyMock}:${junit}:${objenesis}"/>
-
-    <!--&lt;!&ndash; Run the test suite &ndash;&gt;-->
-    <!--<target name="setup-test" depends="resources">-->
-        <!--<copy file="test/src/resources/Views.properties" todir="${build}/test/class"/>-->
-        <!--<copy  todir="${build}/test/class">-->
-            <!--<fileset dir="test/src/resources">-->
-                <!--<include name="**/*.xml" />-->
-            <!--</fileset>-->
-        <!--</copy>-->
-        <!---->
-    <!--</target>-->
-
-    <!--<target name="create-tables">-->
-        <!--<echo message="creating test tables..."/>-->
-        <!--<exec executable="test/scripts/createTestTables.sh"/>-->
-    <!--</target>-->
-    <!---->
-    <!--&lt;!&ndash; convenience test targets when developing &ndash;&gt;-->
-    <!--<target name="int-test" depends="compile-test">-->
-        <!--<junit printsummary="yes" haltonfailure="yes" fork="yes">-->
-          <!--<classpath>-->
-              <!--<pathelement path="."/>-->
-              <!--<pathelement path="src"/>-->
-              <!--<pathelement path="test/src"/>-->
-              <!--<pathelement path="${build}/class"/>-->
-              <!--<pathelement path="${build}/test/class"/>-->
-              <!--<pathelement path="${jars}:${testingJars}"/>-->
-          <!--</classpath>-->
-          <!--<formatter type="plain" usefile="false"/>-->
-          <!--<test name="ca.nrc.cadc.vos.client.ui.integration.UploadApplicationTest" />-->
-        <!--</junit>-->
-    <!--</target>-->
 
 </project>
