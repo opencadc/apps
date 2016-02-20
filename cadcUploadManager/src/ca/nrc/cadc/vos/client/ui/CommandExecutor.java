@@ -129,10 +129,16 @@ public class CommandExecutor implements Runnable
                 catch (Throwable t)
                 {
                     if (t instanceof PrivilegedActionException)
-                        t = ((PrivilegedActionException)t).getCause();
+                    {
+                        throwable = t.getCause();
+                    }
+                    else
+                    {
+                        throwable = t;
+                    }
+
                     log.info("Error executing command: " + nextCommand
-                             + ": " + t);
-                    throwable = t;
+                             + ": " + throwable);
                 }
                 finally
                 {
