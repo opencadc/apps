@@ -135,8 +135,20 @@
         <argument>--verbose</argument>
         <argument>--uris=<%= uris %></argument>
         <argument>--params=<%= params %></argument>
-	<argument><%= ssocookieArg %></argument>
-	<argument><%= ssocookiedomainArg %></argument>
+<%
+    if (!ssocookieArg.isEmpty())
+    {
+%>
+        <argument><%= ssocookieArg %></argument>
+<%
+    }
+    if (!ssocookiedomainArg.isEmpty())
+    {
+%>
+        <argument><%= ssocookiedomainArg %></argument>
+<%
+    }
+%>
     </application-desc>
     
 </jnlp>
