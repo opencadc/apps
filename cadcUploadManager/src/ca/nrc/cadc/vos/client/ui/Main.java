@@ -131,18 +131,10 @@ public class Main
             {
                 try
                 {
-                    final RegistryClient registryClient = new RegistryClient();
-                    final URL vospaceServiceURL =
-                            registryClient.getServiceURL(VOSPACE_SERVICE_URI,
-                                                         "http");
-
                     final GraphicUI graphicUploadUI =
                             new GraphicUI(logLevel,
                                           targetVOSpaceURI,
-                                          new VOSpaceClient(
-                                                  vospaceServiceURL.
-                                                          toString()),
-                                          subject);
+                                          new VOSpaceClient(VOSPACE_SERVICE_URI), subject);
                     final ApplicationFrame frame =
                             new ApplicationFrame(Constants.name,
                                                  graphicUploadUI);

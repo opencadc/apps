@@ -70,14 +70,13 @@
 package ca.nrc.cadc.vos.client.ui;
 
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
+import ca.nrc.cadc.thread.ConditionVar;
+import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
+import ca.onfire.ak.AbstractApplication;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
 import javax.swing.BorderFactory;
@@ -89,15 +88,14 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.thread.ConditionVar;
-import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
-import ca.onfire.ak.AbstractApplication;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 
 
 /**
@@ -165,8 +163,6 @@ public class GraphicUI extends AbstractApplication
 
         Log4jInit.setLevel("ca.nrc.cadc", LOGGER.getLevel(),
                            new BufferedWriter(getLogWriter()));
-        LOGGER.debug("Executing tasks against VOSpace found at "
-                + getVOSpaceClient().getBaseURL());
 
         addMainPane();
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
