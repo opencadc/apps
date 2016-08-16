@@ -115,6 +115,7 @@
         <jar href="cadcDownloadManagerClient.jar"/>
         <jar href="cadcUtil.jar"/>
         <jar href="cadcRegistry.jar"/>
+        <jar href="cadcLog.jar" />
         <jar href="log4j.jar"/>
         <!-- these are needed for VOTable parsing in the cadcDALI library -->
         <jar href="cadcDALI.jar"/>
