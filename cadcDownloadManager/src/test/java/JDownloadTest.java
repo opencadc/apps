@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2012.                            (c) 2012.
+*  (c) 2009.                            (c) 2009.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -58,7 +58,7 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, sesrc/jsp/index.jspe          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
@@ -67,133 +67,84 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.vos.client.ui;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import ca.nrc.cadc.dlm.client.event.ConsoleEventLogger;
+import ca.nrc.cadc.dlm.client.JDownload;
+import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.util.Log4jInit;
 
-import org.apache.log4j.Logger;
+import ca.onfire.ak.AbstractApplication;
+import ca.onfire.ak.ApplicationFrame;
+import java.awt.BorderLayout;
+
+import java.io.File;
+import java.net.URL;
+import javax.swing.JPanel;
+import org.apache.log4j.Level;
 
 /**
- * 
- * A non-threadsafe interface to a bounded fifo queue buffering vospace
- * commands to be executed.
- * 
- * The queue will not grow beyond maxCapcity.
- * 
- * Implementations of the CommandQueueListerer will receive queue processing
- * event notifications.
- * 
- * @author majorb
+ * TODO.
  *
+ * @author pdowler
  */
-public class CommandQueue
+public class JDownloadTest extends AbstractApplication
 {
-    
-    private static Logger log = Logger.getLogger(CommandQueue.class);
-    
-    private CommandQueueListener listener;
-    private boolean doneProduction = false;
-    private long commandsProcessed = 0;
-    private ArrayBlockingQueue<VOSpaceCommand> queue;
-    
-    
-    public CommandQueue(int maxCapacity, CommandQueueListener listener)
+    public static void main(String[] args)
     {
-        // Force FIFO behaviour by setting 2nd arg to true.
-        this.queue = new ArrayBlockingQueue<VOSpaceCommand>(maxCapacity, true);
-        this.listener = listener;
-    }
-    
-    /**
-     * Method to indicate that the producer is finished working.
-     */
-    public void doneProduction()
-    {
-        if (listener != null)
+        String baseURL = "http://cadcweb0/getData/anon/";
+        try
         {
-            listener.productionComplete();
-        }
+            Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
 
-        doneProduction = true;
+            HttpDownload dl = new HttpDownload(
+                new URL(baseURL + "HSTCA/J8FU02030_DRZ"),
+                new File("/tmp")
+            );
+            
+            dl.setDecompress(true);
+            dl.setOverwrite(true);
+            
+            dl.setTransferListener(new ConsoleEventLogger());
+            
+            JDownloadTest ui = new JDownloadTest(dl);
+            ApplicationFrame frame  = new ApplicationFrame("JDownloadTest", ui);
+            frame.getContentPane().add(ui);
+            frame.setVisible(true);
+                        
+            Thread.sleep(3000L);
+            long t1 = System.currentTimeMillis();
+            Thread t = new Thread(dl);
+            t.start();
+            t.join();
+            
+            long dt = System.currentTimeMillis() - t1;
+            dt /= 1000L;
+            
+            msg("duration: " + dt + " sec");
+            
+            msg("output: " + dl.getFile());
+            msg("failure: " + dl.getThrowable());
+        }
+        catch(Throwable t) { t.printStackTrace(); }
     }
 
-    public void startProduction()
+    HttpDownload download;
+    
+    public JDownloadTest(HttpDownload dl)
     {
-        if (listener != null)
-        {
-            listener.productionStarted();
-        }
-    }
-
-    public int size()
-    {
-        return queue.size();
+        super(new BorderLayout());
+        this.download = dl;
     }
     
-    /**
-     * Returns true if command production is complete.
-     * @return  True if done producing (Adding to the queue), False otherwise.
-     */
-    public boolean isDoneProduction()
+    protected void makeUI()
     {
-        return doneProduction;
-    }
-    
-    /**
-     * Removes the command at the top of the queue.
-     */
-    public void commandCompleted(VOSpaceCommand command, Throwable error)
-    {
-        log.debug("Command " + command + " completed.");
-        commandsProcessed++;
-
-        if (listener != null)
-        {
-            listener.commandConsumed(commandsProcessed, (long) queue.size(),
-                                     error);
-        }
-
-        log.debug("New queue size after remove: " + queue.size());
-    }
-    
-    /**
-     * Push the command on the queue, wait if full.
-     * @param command   The command to put.
-     */
-    public void put(VOSpaceCommand command) throws InterruptedException
-    {
-        queue.put(command);
-        log.debug("New queue size after put: " + queue.size());
-    }
-    
-    /**
-     * Removes and returns the command at the head of the queue.  Will block
-     * indefinitely if the queue is empty.
-     *  
-     * @return VOSpaceCommand.
-     */
-    public VOSpaceCommand take() throws InterruptedException
-    {
-        VOSpaceCommand command = queue.take();
-        log.debug("New queue size after take: " + queue.size());
-        return command;
+        JDownload jdl = new JDownload(download);
+        add(new JPanel(), BorderLayout.CENTER);
+        add(jdl, BorderLayout.NORTH);
     }
 
-    /**
-     * Abort this Command Queue kindly.  Any in-progress Threads will finish
-     * execution.
-     *
-     * @return  long    Count of items remaining in the queue.
-     */
-    public long clear()
+    private static void msg(String s)
     {
-        if (listener != null)
-        {
-            listener.onAbort();
-        }
-
-        int remaining = queue.size();
-        queue.clear();
-        return remaining;
+         System.out.println("[JDownloadTest] " + s);
     }
 }

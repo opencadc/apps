@@ -68,27 +68,51 @@
 */
 
 
-package ca.nrc.cadc.dlm.client.event;
+import ca.nrc.cadc.net.HttpDownload;
 
-import ca.nrc.cadc.net.event.TransferEvent;
-import ca.nrc.cadc.net.event.TransferListener;
 
 /**
- * Listens for events and logs to System.out.
+ * TODO.
  *
  * @author pdowler
  */
-public class ConsoleEventLogger implements TransferListener
+public class SanityTest
 {
-    public ConsoleEventLogger() { }
+    public SanityTest() { }
     
-    public void transferEvent(TransferEvent e)
+    public static void main(String[] args)
     {
-        System.out.println("[ConsoleEventLogger] event: " + e); 
-    }
+        String[] tests = new String[]
+        {
+            "attachment;filename=foo.txt",
+            "inline;filename=foo.txt",
+            "attachment;filename='foo.txt'",
+            "attachment;filename=\"foo.txt\"",
+            "attachment;filename=/etc/passwd",
+            "attachment;filename=c:\\windows\\system\\security.dll",
+            "attachment;filename=/kernel",
+            "attachment;filename=//kernel",
+            "attachment;filename='/kernel'",
+            "attachment;filename='//kernel'",
+        };
+        
+        try
+        {
+            String s, f;
+            for (int i=0; i<tests.length; i++)
+            {
+                s = tests[i];
+                f = HttpDownload.parseContentDisposition(s);
+                System.out.println(s + " -->> " + f);
 
-    public String getEventHeader()
-    {
-        return null;
+                s = s.toUpperCase();
+                f = HttpDownload.parseContentDisposition(s);
+                System.out.println(s + " -->> " + f);
+            }
+        }
+        catch(Throwable t)
+        {
+            t.printStackTrace();
+        }
     }
 }
