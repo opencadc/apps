@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.7.1'
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+version = '1.0'
+group = 'opencadc'
+sourceCompatibility = 1.7
+
+dependencies {
+    compile 'log4j:log4j:1.2.+'
+    compile 'javax.servlet:javax.servlet-api:3.1.+'
+
+    compile 'org.opencadc:cadcUtil:1.+'
+    compile 'org.opencadc:cadcLog:1.+'
+    compile 'org.opencadc:cadcUWS:1.+'
+    compile 'org.opencadc:cadcVOS:1.+'
+    compile 'org.opencadc:cadcRegistry:1.+'
+
+    testCompile 'org.opencadc:cadcUWS-Server:1.+'
+    testCompile 'junit:junit:4.+'
+    testCompile 'org.easymock:easymock:3.+'
+}
