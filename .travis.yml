@@ -1,0 +1,8 @@
+language: java 
+jdk:  
+  - openjdk7  
+  - oraclejdk8 
+env:
+  - MODULE_DIR=cadc-download-manager
+  - MODULE_DIR=cadc-upload-manager
+script: cd $MODULE_DIR && gradle assemble check install || break -1 
