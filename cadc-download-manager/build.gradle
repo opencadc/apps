@@ -8,6 +8,11 @@ plugins {
 repositories {
     jcenter()
     mavenLocal()
+
+    // Check the bintray repository last.
+    maven {
+        url  'http://dl.bintray.com/opencadc/software'
+    }
 }
 
 version = '1.0'
@@ -47,9 +52,9 @@ dependencies {
     compile 'log4j:log4j:1.2.+'
     compile 'javax.servlet:javax.servlet-api:3.1.+'
 
-    compile 'org.opencadc:cadcUtil:1.+'
-    compile 'org.opencadc:cadcLog:1.+'
-    compile 'org.opencadc:cadcRegistry:1.+'
+    compile 'org.opencadc:cadc-util:1.+'
+    compile 'org.opencadc:cadc-log:1.+'
+    compile 'org.opencadc:cadc-registry:1.+'
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'
