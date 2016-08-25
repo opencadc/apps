@@ -1,9 +1,9 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2012.                            (c) 2012.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -58,80 +58,64 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, sesrc/jsp/index.jspe          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
-	
-<project default="build" basedir=".">
-    <property environment="env"/>
-    <property file="local.build.properties" />
+package ca.nrc.cadc.ulm.client.ui;
 
-    <!-- site-specific build properties or overrides of values in opencadc.properties -->
-    <property file="${env.CADC_PREFIX}/etc/local.properties" />
+import org.apache.log4j.Logger;
 
-    <!-- site-specific targets, e.g. install, cannot duplicate those in opencadc.targets.xml -->
-    <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.NodeNotFoundException;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 
-    <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
+/**
+ * Class to create the vospace directory denoted by the supplied
+ * container node.
+ *  
+ * @author majorb
+ *
+ */
+public class CreateDirectory implements VOSpaceCommand
+{
+    protected static final Logger log = Logger.getLogger(CreateDirectory.class);
+    
+    private ContainerNode containerNode;
+    
+    public CreateDirectory(ContainerNode containerNode)
+    {
+        if (containerNode == null)
+            throw new IllegalArgumentException("containerNode cannot be null.");
+        this.containerNode = containerNode;
+    }
 
-    <!-- developer convenience: place for extra targets and properties -->
-    <import file="extras.xml" optional="true" />
+    @Override
+    public void execute(VOSpaceClient vospaceClient) throws Exception
+    {
+        try
+        {
+            // see if the node exists
+            log.debug("Creating node: " + containerNode.getUri());
+            vospaceClient.getNode(containerNode.getUri().getPath());
+            log.debug("Node already exists: " + containerNode.getUri());
+        }
+        catch (NodeNotFoundException e)
+        {
+            // create it if it doesn't
+            vospaceClient.createNode(containerNode);
+        }
+    }
+    
+    @Override
+    public String toString()
+    {
+        return "Create directory " + containerNode.getUri();
+    }
 
-    <property name="project"    value="cadcUploadManager" />
-
-    <property name="cadcUtil"   value="${lib}/cadcUtil.jar" />
-    <property name="cadcRegistry"   value="${lib}/cadcRegistry.jar" />
-    <property name="cadcUWS"    value="${lib}/cadcUWS.jar" />
-    <property name="cadcVOS"    value="${lib}/cadcVOS.jar" />
-
-    <property name="log4j"      value="${ext.lib}/log4j.jar" />
-
-    <property name="cadcJars"   value="${cadcUtil}:${cadcRegistry}:${cadcUWS}:${cadcVOS}" />
-    <property name="extJars"    value="${log4j}" />
-    <property name="jars"       value="${cadcJars}:${extJars}" />
-
-    <target name="build" depends="compile,manifest">
-        <jar jarfile="${build}/lib/${project}.jar"
-             basedir="${build}/class"
-             update="no"
-             manifest="${build}/tmp/${project}.mf">
-            <include name="ca/nrc/cadc/**" />
-            <include name="ca/onfire/ak/**" />
-            <exclude name="**Test**" />
-        </jar>
-    </target>
-
-    <target name="manifest">
-        <pathconvert property="flat.manifest" pathsep=" ">
-            <mapper type="flatten"/>
-            <path> <pathelement path="${cadcJars}"/> </path>
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <pathconvert property="non-flat.manifest" pathsep=" ">
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <manifest file="${build}/tmp/${project}.mf" mode="replace">
-            <attribute name="Main-Class" value="ca.nrc.cadc.ulm.client.ui.Main"/>
-            <attribute name="Class-Path" value="${flat.manifest} ${non-flat.manifest}"/>
-        </manifest>
-    </target>
-
-    <!-- JAR files needed to run the test suite -->
-    <property name="cadcUWS-Server" value="${lib}/cadcUWS-Server.jar" />
-    <property name="asm"            value="${ext.dev}/asm.jar" />
-    <property name="cglib"          value="${ext.dev}/cglib.jar" />
-    <property name="easyMock"       value="${ext.dev}/easymock.jar" />
-    <property name="junit"          value="${ext.lib}/junit.jar" />
-    <property name="objenesis"      value="${ext.dev}/objenesis.jar" />
-    <property name="testingJars"
-              value="${cadcUWS-Server}:${asm}:${cglib}:${easyMock}:${junit}:${objenesis}"/>
-
-</project>
+}

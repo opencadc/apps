@@ -1,4 +1,4 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -65,73 +65,117 @@
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
-	
-<project default="build" basedir=".">
-    <property environment="env"/>
-    <property file="local.build.properties" />
 
-    <!-- site-specific build properties or overrides of values in opencadc.properties -->
-    <property file="${env.CADC_PREFIX}/etc/local.properties" />
+package ca.nrc.cadc.ulm.client.ui;
 
-    <!-- site-specific targets, e.g. install, cannot duplicate those in opencadc.targets.xml -->
-    <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
+import ca.nrc.cadc.appkit.util.Util;
 
-    <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 
-    <!-- developer convenience: place for extra targets and properties -->
-    <import file="extras.xml" optional="true" />
 
-    <property name="project"    value="cadcUploadManager" />
+class SourceDirectoryChooser
+{
+    private File initialDir;
+    private File selectedFile;
+    private final String fileChooserName;
 
-    <property name="cadcUtil"   value="${lib}/cadcUtil.jar" />
-    <property name="cadcRegistry"   value="${lib}/cadcRegistry.jar" />
-    <property name="cadcUWS"    value="${lib}/cadcUWS.jar" />
-    <property name="cadcVOS"    value="${lib}/cadcVOS.jar" />
 
-    <property name="log4j"      value="${ext.lib}/log4j.jar" />
+    public SourceDirectoryChooser(final File initialDir,
+                                  final String fileChooserName)
+    {
+        this.initialDir = initialDir;
+        this.fileChooserName = fileChooserName;
+    }
 
-    <property name="cadcJars"   value="${cadcUtil}:${cadcRegistry}:${cadcUWS}:${cadcVOS}" />
-    <property name="extJars"    value="${log4j}" />
-    <property name="jars"       value="${cadcJars}:${extJars}" />
 
-    <target name="build" depends="compile,manifest">
-        <jar jarfile="${build}/lib/${project}.jar"
-             basedir="${build}/class"
-             update="no"
-             manifest="${build}/tmp/${project}.mf">
-            <include name="ca/nrc/cadc/**" />
-            <include name="ca/onfire/ak/**" />
-            <exclude name="**Test**" />
-        </jar>
-    </target>
+    /**
+     * Display the contained FileChooser.
+     *
+     * @param parent        The parent component (Container).
+     * @param acceptText    The accept text.
+     * @return              The return code.
+     */
+    public int showDialog(final Component parent, final String acceptText)
+    {
+        final FileChooser fileChooser = getFileChooser(parent, acceptText);
+        final int ret = showDialog(fileChooser, parent, acceptText);
 
-    <target name="manifest">
-        <pathconvert property="flat.manifest" pathsep=" ">
-            <mapper type="flatten"/>
-            <path> <pathelement path="${cadcJars}"/> </path>
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <pathconvert property="non-flat.manifest" pathsep=" ">
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <manifest file="${build}/tmp/${project}.mf" mode="replace">
-            <attribute name="Main-Class" value="ca.nrc.cadc.ulm.client.ui.Main"/>
-            <attribute name="Class-Path" value="${flat.manifest} ${non-flat.manifest}"/>
-        </manifest>
-    </target>
+        if (ret == JFileChooser.APPROVE_OPTION)
+        {
+            setSelectedFile(fileChooser.getSelectedFile());
+        }
 
-    <!-- JAR files needed to run the test suite -->
-    <property name="cadcUWS-Server" value="${lib}/cadcUWS-Server.jar" />
-    <property name="asm"            value="${ext.dev}/asm.jar" />
-    <property name="cglib"          value="${ext.dev}/cglib.jar" />
-    <property name="easyMock"       value="${ext.dev}/easymock.jar" />
-    <property name="junit"          value="${ext.lib}/junit.jar" />
-    <property name="objenesis"      value="${ext.dev}/objenesis.jar" />
-    <property name="testingJars"
-              value="${cadcUWS-Server}:${asm}:${cglib}:${easyMock}:${junit}:${objenesis}"/>
+        return ret;
+    }
 
-</project>
+    /**
+     * Obtain an appropriate instance of a FileChooser.
+     *
+     * @param parent        The Parent component (Container).
+     * @param acceptText    The accept text.
+     * @return              FileChooser instance.
+     */
+    protected FileChooser getFileChooser(final Component parent,
+                                         final String acceptText)
+    {
+        return new SwingImpl(getInitialDir());
+    }
+
+    /**
+     * Display the file chooser and return the code.
+     *
+     * @param fileChooser       The FileChooser to display.
+     * @param parent            The parent component.
+     * @param acceptText        The text for acceptance.
+     * @return                  int return code.
+     */
+    protected int showDialog(final FileChooser fileChooser,
+                             final Component parent, final String acceptText)
+    {
+        return fileChooser.showOpenDialog(parent);
+    }
+
+    private class SwingImpl extends JFileChooser implements FileChooser
+    {
+        SwingImpl(final File initialDir)
+        {
+            super(initialDir);
+
+            setName(getFileChooserName());
+            setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        }
+        
+        protected JDialog createDialog(Component parent)
+                throws HeadlessException
+        {
+            final JDialog dialog = super.createDialog(null);
+            Util.setPositionRelativeToParent(dialog, parent, 20, 20);
+
+            return dialog;
+        }
+    }
+
+    public String getFileChooserName()
+    {
+        return fileChooserName;
+    }
+
+    public File getInitialDir()
+    {
+        return initialDir;
+    }
+
+    public File getSelectedFile()
+    {
+        return selectedFile;
+    }
+
+    public void setSelectedFile(File selectedFile)
+    {
+        this.selectedFile = selectedFile;
+    }
+}

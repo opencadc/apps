@@ -76,7 +76,6 @@ import ca.nrc.cadc.auth.SSOCookieCredential;
 import java.io.IOException;
 
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -96,15 +95,17 @@ import org.apache.log4j.Logger;
 
 
 /**
- * Download pre-processor. This servlet accepts either direct POSTs from clients or
+ * <p>Download pre-processor. This servlet accepts either direct POSTs from clients or
  * request scope attributes and passes the request on to the appropriate JSP page.
- * </p><p>
+ * </p>
+ * <p>
  * For direct POST, the client must use the multi-valued <em>uri</em> parameter to pass 
  * in one or more URIs. These are flattened into a single comma-separated list and 
  * passed along as attributes. The client may also set the single-valued <em>fragment</em>
  * parameter; the fragment is appended to each URI before SchemeHandler(s) are used to
  * convert them to URLs.
- * </p><p>
+ * </p>
+ *
  * When forwarding from another servlet
  * @author pdowler
  */
@@ -120,26 +121,14 @@ public class DispatcherServlet extends HttpServlet
     
     private static int ONE_YEAR = 365*24*3600;
 
-    /**
-     * 
-     * @param config
-     * @throws javax.servlet.ServletException
-     */
-    @Override
-    public void init(ServletConfig config)
-        throws ServletException
-    {
-        super.init(config);
-        
-    }
     
     /**
      * Handle POSTed download request from an external page.
      * 
-     * @param request
-     * @param response
-     * @throws javax.servlet.ServletException
-     * @throws java.io.IOException
+     * @param request           The HTTP Request.
+     * @param response          The HTTP Response.
+     * @throws javax.servlet.ServletException   For general Servlet exceptions
+     * @throws java.io.IOException          For any I/O related errors.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

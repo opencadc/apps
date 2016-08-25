@@ -1,4 +1,4 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -65,73 +65,18 @@
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
-	
-<project default="build" basedir=".">
-    <property environment="env"/>
-    <property file="local.build.properties" />
+package ca.nrc.cadc.ulm.client.ui;
 
-    <!-- site-specific build properties or overrides of values in opencadc.properties -->
-    <property file="${env.CADC_PREFIX}/etc/local.properties" />
 
-    <!-- site-specific targets, e.g. install, cannot duplicate those in opencadc.targets.xml -->
-    <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
 
-    <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
-
-    <!-- developer convenience: place for extra targets and properties -->
-    <import file="extras.xml" optional="true" />
-
-    <property name="project"    value="cadcUploadManager" />
-
-    <property name="cadcUtil"   value="${lib}/cadcUtil.jar" />
-    <property name="cadcRegistry"   value="${lib}/cadcRegistry.jar" />
-    <property name="cadcUWS"    value="${lib}/cadcUWS.jar" />
-    <property name="cadcVOS"    value="${lib}/cadcVOS.jar" />
-
-    <property name="log4j"      value="${ext.lib}/log4j.jar" />
-
-    <property name="cadcJars"   value="${cadcUtil}:${cadcRegistry}:${cadcUWS}:${cadcVOS}" />
-    <property name="extJars"    value="${log4j}" />
-    <property name="jars"       value="${cadcJars}:${extJars}" />
-
-    <target name="build" depends="compile,manifest">
-        <jar jarfile="${build}/lib/${project}.jar"
-             basedir="${build}/class"
-             update="no"
-             manifest="${build}/tmp/${project}.mf">
-            <include name="ca/nrc/cadc/**" />
-            <include name="ca/onfire/ak/**" />
-            <exclude name="**Test**" />
-        </jar>
-    </target>
-
-    <target name="manifest">
-        <pathconvert property="flat.manifest" pathsep=" ">
-            <mapper type="flatten"/>
-            <path> <pathelement path="${cadcJars}"/> </path>
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <pathconvert property="non-flat.manifest" pathsep=" ">
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <manifest file="${build}/tmp/${project}.mf" mode="replace">
-            <attribute name="Main-Class" value="ca.nrc.cadc.ulm.client.ui.Main"/>
-            <attribute name="Class-Path" value="${flat.manifest} ${non-flat.manifest}"/>
-        </manifest>
-    </target>
-
-    <!-- JAR files needed to run the test suite -->
-    <property name="cadcUWS-Server" value="${lib}/cadcUWS-Server.jar" />
-    <property name="asm"            value="${ext.dev}/asm.jar" />
-    <property name="cglib"          value="${ext.dev}/cglib.jar" />
-    <property name="easyMock"       value="${ext.dev}/easymock.jar" />
-    <property name="junit"          value="${ext.lib}/junit.jar" />
-    <property name="objenesis"      value="${ext.dev}/objenesis.jar" />
-    <property name="testingJars"
-              value="${cadcUWS-Server}:${asm}:${cglib}:${easyMock}:${junit}:${objenesis}"/>
-
-</project>
+/**
+ * An interface for UI behaviour.
+ * 
+ * @author jenkinsd
+ *
+ */
+public interface UserInterface
+{
+}

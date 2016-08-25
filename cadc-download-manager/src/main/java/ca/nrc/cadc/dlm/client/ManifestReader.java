@@ -84,10 +84,9 @@ import ca.nrc.cadc.dlm.DownloadDescriptor;
 import org.apache.log4j.Logger;
 
 /**
- * Reads a download manifest. A download manifest is a tab-separated-value
+ * <p>Reads a download manifest. A download manifest is a tab-separated-value
  * ascii file (content-type: <code>application/x-download-manifest+txt</code>)
- * with 2 or 3 tokens per line:
- * </p>
+ * with 2 or 3 tokens per line:</p>
  * <pre>
  * OK    &lt;url&gt;     [&lt;destination&gt;]
  * ERROR &lt;message&gt; [&lt;destination&gt;]

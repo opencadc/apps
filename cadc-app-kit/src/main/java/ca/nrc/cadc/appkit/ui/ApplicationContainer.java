@@ -43,44 +43,58 @@ public interface ApplicationContainer
 	 * container will call Application.quit() to request permission to actually
 	 * terminate before doing so; termination proceeds if that call returns true.
 	 */
-	public void quit();
+	void quit();
 	
 	/**
 	 * The application accesses the configuration with this method.
+	 * @return 		ApplicationConfig instance
 	 */
-	public ApplicationConfig getConfig();
+	ApplicationConfig getConfig();
 	
 	/**
 	 * Access the applet's context. This returns null if this
 	 * is not running as an applet.
+	 *
+	 * @return 		ApplicationContext instance, or null if none exists.
 	 */
-	public AppletContext getAppletContext();
+	AppletContext getAppletContext();
 	
 	/**
 	 * Standard method common to the JApplet and JFrame classes.
+	 *
+	 * @return		The Container of this application applet.
 	 */
-	public Container getContentPane();
+	Container getContentPane();
 	
 	/**
 	 * Standard method common to the JApplet and JFrame classes.
+	 *
+	 * @return 		The Component pane of this application.
 	 */
-	public Component getGlassPane();
+	Component getGlassPane();
 	
 	/**
 	 * Standard method common to the JApplet and JFrame classes.
+	 *
+	 * @return 	The JMenuBar instance attached to this application.
 	 */
-	public JMenuBar getJMenuBar();
-	public void setJMenuBar(JMenuBar m);
+	JMenuBar getJMenuBar();
+
+	void setJMenuBar(JMenuBar m);
 	
 	/**
 	 * Standard method common to the JApplet and JFrame classes.
+	 *
+	 * @return 	The JLayeredPane holding this application.
 	 */
-	public JLayeredPane getLayeredPane();
+	JLayeredPane getLayeredPane();
 	
 	/**
 	 * Standard method common to the JApplet and JFrame classes.
+	 *
+	 * @return 	The JRootPane holding this application.
 	 */
-	public JRootPane getRootPane();
+	JRootPane getRootPane();
 }
 
 // end of ApplicationContainer.java

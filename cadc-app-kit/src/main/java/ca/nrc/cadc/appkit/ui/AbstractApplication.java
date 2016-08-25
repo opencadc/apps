@@ -82,6 +82,8 @@ public abstract class AbstractApplication extends JPanel implements Application
 
   	/**
   	 * Stores the container reference and then calls makeUI.
+	 *
+	 * @param ac			The ApplicationContainer instance.
   	 */
 	public void setApplicationContainer(ApplicationContainer ac) 
   	{
@@ -101,9 +103,11 @@ public abstract class AbstractApplication extends JPanel implements Application
 	 * components that are part of the class name. Typically, one might put something like
 	 * "images/MyIcon.png" in the same jar file as the application class(es); this could
 	 * be subsequently loaded via <code>getImageIcon("images/MyIcon.png")</code>.
-	 * 
+	 *
+	 * @param c				The Class to use to determine the URL.
+	 * @param name			The name of image file name.
 	 * @return an ImageIcon holding the specified image
-	 * @throws MalformedURLException
+	 * @throws MalformedURLException	For a bad image URL.
 	 */
 	public ImageIcon getImageIcon(Class c, String name)
 		throws MalformedURLException
@@ -121,11 +125,12 @@ public abstract class AbstractApplication extends JPanel implements Application
 		if (baseResourceURL == null)
 			baseResourceURL = Toolkit.getBaseResourceURL(c);
 		String url = baseResourceURL + name;
-		StringBuffer sb = new StringBuffer();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
+		StringBuilder sb = new StringBuilder();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				new URL(url).openStream()));
 		String s = reader.readLine();
 		while ( s != null )
-			sb.append(s + lineSep);
+			sb.append(s).append(lineSep);
 		reader.close();
 		return sb.toString();
 	}

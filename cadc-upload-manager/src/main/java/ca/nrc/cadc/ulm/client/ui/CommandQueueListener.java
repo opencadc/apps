@@ -1,9 +1,9 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2012.                            (c) 2012.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -58,80 +58,48 @@
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+*  with OpenCADC.  If not, sesrc/jsp/index.jspe          OpenCADC ; si ce n’est
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
-	
-<project default="build" basedir=".">
-    <property environment="env"/>
-    <property file="local.build.properties" />
+package ca.nrc.cadc.ulm.client.ui;
 
-    <!-- site-specific build properties or overrides of values in opencadc.properties -->
-    <property file="${env.CADC_PREFIX}/etc/local.properties" />
+/**
+ * Implementations of CommandQueueListener will receive notifications as described
+ * by the methods in this interface.
+ * 
+ * @author majorb
+ *
+ */
+public interface CommandQueueListener
+{
+    
+    /**
+     * Indicates that production has started.
+     */
+    void productionStarted();
+    
+    /**
+     * Indicates that command production is complete.
+     */
+    void productionComplete();
+    
+    /**
+     * Indicates that a command has been processed
+     * @param commandsProcessed Total number that have been processed.
+     * @param commandsRemaining Total known number remaining to be processed.
+     * @param error             Last command's error.  Null when no error.
+     */
+    void commandConsumed(final Long commandsProcessed,
+                         final Long commandsRemaining, final Throwable error);
 
-    <!-- site-specific targets, e.g. install, cannot duplicate those in opencadc.targets.xml -->
-    <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
-
-    <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
-
-    <!-- developer convenience: place for extra targets and properties -->
-    <import file="extras.xml" optional="true" />
-
-    <property name="project"    value="cadcUploadManager" />
-
-    <property name="cadcUtil"   value="${lib}/cadcUtil.jar" />
-    <property name="cadcRegistry"   value="${lib}/cadcRegistry.jar" />
-    <property name="cadcUWS"    value="${lib}/cadcUWS.jar" />
-    <property name="cadcVOS"    value="${lib}/cadcVOS.jar" />
-
-    <property name="log4j"      value="${ext.lib}/log4j.jar" />
-
-    <property name="cadcJars"   value="${cadcUtil}:${cadcRegistry}:${cadcUWS}:${cadcVOS}" />
-    <property name="extJars"    value="${log4j}" />
-    <property name="jars"       value="${cadcJars}:${extJars}" />
-
-    <target name="build" depends="compile,manifest">
-        <jar jarfile="${build}/lib/${project}.jar"
-             basedir="${build}/class"
-             update="no"
-             manifest="${build}/tmp/${project}.mf">
-            <include name="ca/nrc/cadc/**" />
-            <include name="ca/onfire/ak/**" />
-            <exclude name="**Test**" />
-        </jar>
-    </target>
-
-    <target name="manifest">
-        <pathconvert property="flat.manifest" pathsep=" ">
-            <mapper type="flatten"/>
-            <path> <pathelement path="${cadcJars}"/> </path>
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <pathconvert property="non-flat.manifest" pathsep=" ">
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <manifest file="${build}/tmp/${project}.mf" mode="replace">
-            <attribute name="Main-Class" value="ca.nrc.cadc.ulm.client.ui.Main"/>
-            <attribute name="Class-Path" value="${flat.manifest} ${non-flat.manifest}"/>
-        </manifest>
-    </target>
-
-    <!-- JAR files needed to run the test suite -->
-    <property name="cadcUWS-Server" value="${lib}/cadcUWS-Server.jar" />
-    <property name="asm"            value="${ext.dev}/asm.jar" />
-    <property name="cglib"          value="${ext.dev}/cglib.jar" />
-    <property name="easyMock"       value="${ext.dev}/easymock.jar" />
-    <property name="junit"          value="${ext.lib}/junit.jar" />
-    <property name="objenesis"      value="${ext.dev}/objenesis.jar" />
-    <property name="testingJars"
-              value="${cadcUWS-Server}:${asm}:${cglib}:${easyMock}:${junit}:${objenesis}"/>
-
-</project>
+    /**
+     * Indicates that an Abort was issued.
+     */
+    void onAbort();
+}

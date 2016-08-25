@@ -1,4 +1,4 @@
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -65,73 +65,123 @@
 *  $Revision: 4 $
 *
 ************************************************************************
--->
+*/
 
-	
-<project default="build" basedir=".">
-    <property environment="env"/>
-    <property file="local.build.properties" />
+package ca.nrc.cadc.ulm.client.ui;
 
-    <!-- site-specific build properties or overrides of values in opencadc.properties -->
-    <property file="${env.CADC_PREFIX}/etc/local.properties" />
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.easymock.EasyMock;
+import org.easymock.IArgumentMatcher;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-    <!-- site-specific targets, e.g. install, cannot duplicate those in opencadc.targets.xml -->
-    <import file="${env.CADC_PREFIX}/etc/local.targets.xml" optional="true" />
+public class CommandExecutorTest
+{
+    
+    private static Logger log = Logger.getLogger(CommandExecutorTest.class);
 
-    <!-- default properties and targets -->
-    <property file="${env.CADC_PREFIX}/etc/opencadc.properties" />
-    <import file="${env.CADC_PREFIX}/etc/opencadc.targets.xml"/>
+    /**
+     * @throws java.lang.Exception
+     */
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.vos", Level.INFO);
+    }
+    
+    @Test
+    public void testCommandExecutorWithinBuffer() throws Exception
+    {
+        this.testCommandExecutor(5, 100);
+    }
+    
+    @Test
+    public void testCommandExecutorExceedingBuffer() throws Exception
+    {
+        this.testCommandExecutor(100, 5);
+    }
+    
+    private void testCommandExecutor(int commands, int bufferSize) throws Exception
+    {
+        CommandQueueListener listener =
+                EasyMock.createMock(CommandQueueListener.class);
+        final Throwable error = null;
+        
+        for (long i=1; i<=commands; i++)
+        {
+            listener.commandConsumed(matchQueueCommandsProcessed(i),
+                                     matchQueueCommandsRemaining(bufferSize),
+                                     EasyMock.eq(error));
+            EasyMock.expectLastCall().once();
+        }
+        
+        CommandQueue queue = new CommandQueue(bufferSize, listener);
+        CommandExecutor commandExecutor = new CommandExecutor(null, queue, null);
+        
+        VOSpaceCommand command = EasyMock.createMock(VOSpaceCommand.class);
+        command.execute(null);
+        EasyMock.expectLastCall().times(commands);
+        
+        EasyMock.replay(listener, command);
+        
+        Thread t = new Thread(commandExecutor);
+        t.setDaemon(true);
+        t.start();
+        
+        for (int i=0; i<commands; i++)
+        {
+            queue.put(command);
+            log.debug("Added command " + (i + 1) + " to queue.");
+        }
+        
+        // wait for 5 seconds and ensure the we were notified on each command processed
+        Thread.sleep(5000);
+        
+        EasyMock.verify(listener);
+    }
+    
+    private Long matchQueueCommandsProcessed(final long commandNumber)
+    {
+        EasyMock.reportMatcher(
+            new IArgumentMatcher()
+                {
+                    @Override
+                    public void appendTo(StringBuffer sb)
+                    {
+                        sb.append("eqException(Expected \"CommandsProcessed = " + commandNumber + "\"");
+                    }
+        
+                    @Override
+                    public boolean matches(Object arg0)
+                    {
+                        long value = (Long) arg0;
+                        return value == commandNumber;
+                    }
+                });
+        return null;
+    }
+    
+    private Long matchQueueCommandsRemaining(final long bufferSize)
+    {
+        EasyMock.reportMatcher(
+            new IArgumentMatcher()
+                {
+                    @Override
+                    public void appendTo(StringBuffer sb)
+                    {
+                        sb.append("eqException(Expected \"CommandsRemaining <= " + bufferSize + "\"");
+                    }
+        
+                    @Override
+                    public boolean matches(Object arg0)
+                    {
+                        long commandsRemaining = (Long) arg0;
+                        return commandsRemaining <= bufferSize;
+                    }
+                });
+        return null;
+    }
 
-    <!-- developer convenience: place for extra targets and properties -->
-    <import file="extras.xml" optional="true" />
-
-    <property name="project"    value="cadcUploadManager" />
-
-    <property name="cadcUtil"   value="${lib}/cadcUtil.jar" />
-    <property name="cadcRegistry"   value="${lib}/cadcRegistry.jar" />
-    <property name="cadcUWS"    value="${lib}/cadcUWS.jar" />
-    <property name="cadcVOS"    value="${lib}/cadcVOS.jar" />
-
-    <property name="log4j"      value="${ext.lib}/log4j.jar" />
-
-    <property name="cadcJars"   value="${cadcUtil}:${cadcRegistry}:${cadcUWS}:${cadcVOS}" />
-    <property name="extJars"    value="${log4j}" />
-    <property name="jars"       value="${cadcJars}:${extJars}" />
-
-    <target name="build" depends="compile,manifest">
-        <jar jarfile="${build}/lib/${project}.jar"
-             basedir="${build}/class"
-             update="no"
-             manifest="${build}/tmp/${project}.mf">
-            <include name="ca/nrc/cadc/**" />
-            <include name="ca/onfire/ak/**" />
-            <exclude name="**Test**" />
-        </jar>
-    </target>
-
-    <target name="manifest">
-        <pathconvert property="flat.manifest" pathsep=" ">
-            <mapper type="flatten"/>
-            <path> <pathelement path="${cadcJars}"/> </path>
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <pathconvert property="non-flat.manifest" pathsep=" ">
-            <path> <pathelement path="${extJars}"/> </path>
-        </pathconvert>
-        <manifest file="${build}/tmp/${project}.mf" mode="replace">
-            <attribute name="Main-Class" value="ca.nrc.cadc.ulm.client.ui.Main"/>
-            <attribute name="Class-Path" value="${flat.manifest} ${non-flat.manifest}"/>
-        </manifest>
-    </target>
-
-    <!-- JAR files needed to run the test suite -->
-    <property name="cadcUWS-Server" value="${lib}/cadcUWS-Server.jar" />
-    <property name="asm"            value="${ext.dev}/asm.jar" />
-    <property name="cglib"          value="${ext.dev}/cglib.jar" />
-    <property name="easyMock"       value="${ext.dev}/easymock.jar" />
-    <property name="junit"          value="${ext.lib}/junit.jar" />
-    <property name="objenesis"      value="${ext.dev}/objenesis.jar" />
-    <property name="testingJars"
-              value="${cadcUWS-Server}:${asm}:${cglib}:${easyMock}:${junit}:${objenesis}"/>
-
-</project>
+}

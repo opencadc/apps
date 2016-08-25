@@ -89,7 +89,7 @@ public class BrowserApplet implements ApplicationContainer
 	private void readConfig() { }
 
 	/**
-	 * @see ca.onfire.ak.ApplicationContainer#getContentPane()
+	 * @see ApplicationContainer#getContentPane()
 	 */
 	public Container getContentPane()
 	{
@@ -97,7 +97,7 @@ public class BrowserApplet implements ApplicationContainer
 	}
 
 	/**
-	 * @see ca.onfire.ak.ApplicationContainer#getGlassPane()
+	 * @see ApplicationContainer#getGlassPane()
 	 */
 	public Component getGlassPane()
 	{
@@ -105,7 +105,7 @@ public class BrowserApplet implements ApplicationContainer
 	}
 
 	/**
-	 * @see ca.onfire.ak.ApplicationContainer#getJMenuBar()
+	 * @see ApplicationContainer#getJMenuBar()
 	 */
 	public JMenuBar getJMenuBar()
 	{
@@ -114,7 +114,7 @@ public class BrowserApplet implements ApplicationContainer
 	public void setJMenuBar(JMenuBar m) { applet.setJMenuBar(m); }
 	
 	/**
-	 * @see ca.onfire.ak.ApplicationContainer#getLayeredPane()
+	 * @see ApplicationContainer#getLayeredPane()
 	 */
 	public JLayeredPane getLayeredPane()
 	{
@@ -122,7 +122,7 @@ public class BrowserApplet implements ApplicationContainer
 	}
 
 	/**
-	 * @see ca.onfire.ak.ApplicationContainer#getRootPane()
+	 * @see ApplicationContainer#getRootPane()
 	 */
 	public JRootPane getRootPane()
 	{

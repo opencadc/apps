@@ -41,6 +41,7 @@ public class Toolkit
 	 * then the returned value can be used to construct URLs to 
 	 * other resources.
 	 *
+	 * @param c				The Class to use to create a URL for.
 	 * @return base URL string, not including the name of the arg class
 	 */
 	public static String getBaseResourceURL(Class c)

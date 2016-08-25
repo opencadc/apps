@@ -57,18 +57,18 @@ import java.util.Iterator;
  * </p>
  *
  * <p>
- * The file is located using the <user.home> system property,
+ * The file is located using the <em>user.home</em> system property,
  * a <em>base</em> config directory name (onfire by default),
  * and a config file <em>extension</em> (.conf by default).
  * In order of priority, the following locations are checked
  * to find the configuration directory:
  * </p>
  *
- * <p><ul>
- * <li> [user.home]/.[base]
- * <li> [user.home]/[base]
- * <li> [user.dir]
- * </ul></p>
+ * <ul>
+ *   <li> [user.home]/.[base] </li>
+ *   <li> [user.home]/[base] </li>
+ *   <li> [user.dir] </li>
+ * </ul>
  *
  * <p>
  * The above list is only searched for places that the config file could
