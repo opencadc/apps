@@ -80,6 +80,7 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
+import ca.nrc.cadc.appkit.util.Util;
 import org.apache.log4j.Logger;
 
 

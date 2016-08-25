@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -85,8 +86,8 @@ import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.thread.Queue;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.onfire.ak.AbstractApplication;
-import ca.onfire.ak.ApplicationConfig;
+import ca.nrc.cadc.appkit.ui.AbstractApplication;
+import ca.nrc.cadc.appkit.ui.ApplicationConfig;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;

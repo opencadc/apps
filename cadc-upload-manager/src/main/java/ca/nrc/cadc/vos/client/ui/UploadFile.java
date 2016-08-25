@@ -73,7 +73,6 @@ import java.io.File;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.Principal;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +81,6 @@ import javax.security.auth.x500.X500Principal;
 
 import org.apache.log4j.Logger;
 
-import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.DataNode;
@@ -95,6 +93,7 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import ca.nrc.cadc.vos.client.VOSpaceTransferListener;
 
+
 /**
  * Class to upload the supplied file to vospace as the DataNode.
  *
@@ -103,12 +102,11 @@ import ca.nrc.cadc.vos.client.VOSpaceTransferListener;
  */
 public class UploadFile implements VOSpaceCommand
 {
-
     protected static final Logger log = Logger.getLogger(UploadFile.class);
 
     private DataNode dataNode;
     private File file;
-    private DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+
 
     public UploadFile(DataNode dataNode, File file)
     {
@@ -123,6 +121,7 @@ public class UploadFile implements VOSpaceCommand
         this.dataNode = dataNode;
         this.file = file;
     }
+
 
     @Override
     public void execute(VOSpaceClient vospaceClient) throws Exception
@@ -145,7 +144,7 @@ public class UploadFile implements VOSpaceCommand
 
         // upload the file through a transfer
         log.debug("Uploading file: " + file.getName() + " to " + dataNode.getUri());
-        List<Protocol> protocols = new ArrayList<Protocol>();
+        List<Protocol> protocols = new ArrayList<>();
 
         boolean ssl = false;
         AccessControlContext acContext = AccessController.getContext();

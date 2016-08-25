@@ -34,21 +34,17 @@
 package ca.nrc.cadc.vos.client.ui;
 
 import java.net.URI;
-import java.net.URL;
 import java.security.PrivilegedAction;
-
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
 
 import ca.nrc.cadc.auth.SSOCookieCredential;
-import ca.nrc.cadc.auth.SSOCookieManager;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import ca.onfire.ak.ApplicationFrame;
+import ca.nrc.cadc.appkit.ApplicationFrame;
 
 
 public class Main
@@ -60,7 +56,6 @@ public class Main
     public static void main(final String[] args)
     {
         final ArgumentMap argumentMap = new ArgumentMap(args);
-
         final ArgumentMap am = new ArgumentMap(args);
 
         if (am.isSet("h") || am.isSet("help"))

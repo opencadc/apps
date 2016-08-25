@@ -93,7 +93,8 @@ public class CommandExecutor implements Runnable
     private CommandQueue queue;
     private Subject subject;
     
-    public CommandExecutor(VOSpaceClient vospaceClient, CommandQueue queue, Subject subject)
+    public CommandExecutor(VOSpaceClient vospaceClient, CommandQueue queue,
+                           Subject subject)
     {
         this.vospaceClient = vospaceClient;
         this.queue = queue;
@@ -116,7 +117,8 @@ public class CommandExecutor implements Runnable
                 log.info("Executing command: " + nextCommand);
                 try
                 {
-                    PrivilegedExceptionAction<Object> action = new PrivilegedExceptionAction<Object>()
+                    PrivilegedExceptionAction<Object> action =
+                            new PrivilegedExceptionAction<Object>()
                     {
                         public Object run() throws Exception
                         {

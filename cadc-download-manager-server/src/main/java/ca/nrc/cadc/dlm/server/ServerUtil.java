@@ -68,89 +68,134 @@
 */
 
 
-import ca.nrc.cadc.dlm.client.event.ConsoleEventLogger;
-import ca.nrc.cadc.dlm.client.JDownload;
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.util.Log4jInit;
+package ca.nrc.cadc.dlm.server;
 
-import ca.nrc.cadc.appkit.ui.AbstractApplication;
-import ca.nrc.cadc.appkit.ui.ApplicationFrame;
+import ca.nrc.cadc.dlm.DownloadUtil;
+import ca.nrc.cadc.util.StringUtil;
 
-import java.awt.BorderLayout;
-
-import java.io.File;
 import java.net.URL;
-import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Level;
-
+import org.apache.log4j.Logger;
 
 /**
  * TODO.
  *
  * @author pdowler
  */
-public class JDownloadTest extends AbstractApplication
+public class ServerUtil
 {
-    public static void main(String[] args)
+    private static final Logger log = Logger.getLogger(ServerUtil.class);
+
+    // public API for DownloadManager is to accept and interpret these two params
+    static final String PARAM_URI = "uri";
+    static final String PARAM_URILIST = "uris";
+    static final String PARAM_PARAMLIST = "params";
+    static final String PARAM_METHOD = "method";
+
+    static final List<String> INTERNAL_PARAMS = new ArrayList<String>();
+
+    static
     {
-        String baseURL = "http://cadcweb0/getData/anon/";
+        INTERNAL_PARAMS.add(PARAM_URI);
+        INTERNAL_PARAMS.add(PARAM_URILIST);
+        INTERNAL_PARAMS.add(PARAM_PARAMLIST);
+        INTERNAL_PARAMS.add(PARAM_METHOD);
+    }
+
+    private ServerUtil()
+    {
+    }
+
+    public static String getCodebase(HttpServletRequest request)
+    {
         try
         {
-            Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
-
-            HttpDownload dl = new HttpDownload(
-                    new URL(baseURL + "HSTCA/J8FU02030_DRZ"),
-                    new File("/tmp")
-            );
-
-            dl.setDecompress(true);
-            dl.setOverwrite(true);
-
-            dl.setTransferListener(new ConsoleEventLogger());
-
-            JDownloadTest ui = new JDownloadTest(dl);
-            ApplicationFrame frame = new ApplicationFrame("JDownloadTest", ui);
-            frame.getContentPane().add(ui);
-            frame.setVisible(true);
-
-            Thread.sleep(3000L);
-            long t1 = System.currentTimeMillis();
-            Thread t = new Thread(dl);
-            t.start();
-            t.join();
-
-            long dt = System.currentTimeMillis() - t1;
-            dt /= 1000L;
-
-            msg("duration: " + dt + " sec");
-
-            msg("output: " + dl.getFile());
-            msg("failure: " + dl.getThrowable());
+            URL req = new URL(request.getRequestURL().toString());
+            String ret = req.getProtocol() + "://" + req.getHost();
+            ret += request.getContextPath();
+            return ret;
         }
-        catch (Throwable t)
+        catch (Throwable oops)
         {
-            t.printStackTrace();
+            log.error("failed to generate codebase URL", oops);
         }
+        return null;
     }
 
-    HttpDownload download;
-
-    public JDownloadTest(HttpDownload dl)
+    /**
+     * Extract all download content related parameters from the request.
+     *
+     * @param request
+     * @return
+     */
+    public static Map<String, List<String>> getParameters(
+            HttpServletRequest request)
     {
-        super(new BorderLayout());
-        this.download = dl;
+        // internal repost
+        String params = request.getParameter("params");
+        if (params != null)
+        {
+            return DownloadUtil.decodeParamMap(params);
+        }
+
+        // original post
+        Map<String, List<String>> paramMap = new TreeMap<>();
+        Enumeration e = request.getParameterNames();
+        while (e.hasMoreElements())
+        {
+            String key = (String) e.nextElement();
+            if (!INTERNAL_PARAMS.contains(key))
+            {
+                String[] values = request.getParameterValues(key);
+                if (values != null && values.length > 0)
+                {
+                    paramMap.put(key, Arrays.asList(values));
+                }
+            }
+        }
+        return paramMap;
     }
 
-    protected void makeUI()
+    /**
+     * Extract all download content related parameters from the request.
+     *
+     * @param request
+     * @return
+     */
+    public static List<String> getURIs(HttpServletRequest request)
     {
-        JDownload jdl = new JDownload(download);
-        add(new JPanel(), BorderLayout.CENTER);
-        add(jdl, BorderLayout.NORTH);
+        // internal repost
+        String uris = request.getParameter("uris");
+
+        if (uris != null)
+        {
+            return DownloadUtil.decodeListURI(uris);
+        }
+
+        // original post
+        String[] uriParams = request.getParameterValues(PARAM_URI);
+
+        List<String> ret = new ArrayList<>();
+
+        if (uriParams != null)
+        {
+            for (String u : uriParams)
+            {
+                if (StringUtil.hasText(u))
+                {
+                    ret.add(u);
+                }
+            }
+        }
+
+        return ret;
     }
 
-    private static void msg(String s)
-    {
-        System.out.println("[JDownloadTest] " + s);
-    }
 }

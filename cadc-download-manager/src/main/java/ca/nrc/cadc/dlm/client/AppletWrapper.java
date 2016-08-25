@@ -72,7 +72,7 @@
 package ca.nrc.cadc.dlm.client;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
-import ca.onfire.ak.BrowserApplet;
+import ca.nrc.cadc.appkit.ui.BrowserApplet;
 
 import javax.swing.JApplet;
 import java.io.IOException;

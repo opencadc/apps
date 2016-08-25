@@ -78,12 +78,11 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 
 import ca.nrc.cadc.auth.SSOCookieCredential;
-import ca.nrc.cadc.auth.SSOCookieManager;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
-import ca.onfire.ak.Application;
-import ca.onfire.ak.ApplicationFrame;
+import ca.nrc.cadc.appkit.ui.Application;
+import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -170,7 +169,7 @@ public class Main
                     Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
                     if (forceAuthMethod != null)
                     {
-                        List<String> am = new ArrayList<String>();
+                        List<String> am = new ArrayList<>();
                         am.add(forceAuthMethod);
                         params.put("auth", am);
                     }

@@ -74,7 +74,7 @@ import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import ca.onfire.ak.AbstractApplication;
+import ca.nrc.cadc.appkit.AbstractApplication;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -101,11 +101,11 @@ import java.io.Writer;
 /**
  * The main class for graphical output display.  Care has been taken to adhere
  * to the rules of conduct in Swing:
- *
+ * <p/>
  * 1. Swing Components must be created in the EDT (Event Dispatch Thread)
  * 2. Swing Components must be accessed in the EDT, unless calling methods
- *    documented as "thread safe".
- *
+ * documented as "thread safe".
+ * <p/>
  * Even if a Component is documented as thread-safe, it is not necessarily to
  * be trusted as such.
  *
@@ -126,7 +126,7 @@ public class GraphicUI extends AbstractApplication
 
     private final VOSURI targetVOSpaceURI;
     private final VOSpaceClient voSpaceClient;
-    
+
     private Subject subject;
 
 
@@ -140,7 +140,7 @@ public class GraphicUI extends AbstractApplication
         this.targetVOSpaceURI = targetVOSpaceURI;
         this.voSpaceClient = voSpaceClient;
         this.subject = subject;
-        
+
         this.uiInitCond = new ConditionVar();
         uiInitCond.set(false);
     }
@@ -155,7 +155,7 @@ public class GraphicUI extends AbstractApplication
     @Override
     protected void makeUI()
     {
-        
+
         tabPane = new JTabbedPane();
         getTabPane().setName("tabPane");
 
@@ -166,28 +166,28 @@ public class GraphicUI extends AbstractApplication
 
         addMainPane();
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-        
+
         setUploadManager(
                 new JUploadManager(getTargetVOSpaceURI(),
-                        getVOSpaceClient(), subject));
+                                   getVOSpaceClient(), subject));
 
         getTabPane().addTab("Upload",
-                getUploadManager());
-        
+                            getUploadManager());
+
         final JScrollPane sp =
                 createLogScrollPane(
                         getLogWriter().getLogTextArea());
         getTabPane().addTab("Log Messages", sp);
 
         Util.recursiveSetBackground(GraphicUI.this,
-                Color.WHITE);
+                                    Color.WHITE);
         getTabPane().setVisible(true);
-        
+
         DirectoryChooser dirChooser = new DirectoryChooser();
         Thread dirChooserThread = new Thread(dirChooser);
         dirChooserThread.start();
     }
-    
+
     @Override
     public void paint(Graphics g)
     {
@@ -206,8 +206,8 @@ public class GraphicUI extends AbstractApplication
     /**
      * Create an instance of a JScrollPane to contain the log output.
      *
-     * @param logTextArea   The JTextArea to scroll.
-     * @return              The JScrollPane instance.
+     * @param logTextArea The JTextArea to scroll.
+     * @return The JScrollPane instance.
      */
     protected JScrollPane createLogScrollPane(final JTextArea logTextArea)
     {
@@ -380,67 +380,36 @@ public class GraphicUI extends AbstractApplication
             {
                 System.out.println(logMessage);
             }
-//            if (!SwingUtilities.isEventDispatchThread())
-//            {
-//                try
-//                {
-//                    SwingUtilities.invokeAndWait(new Runnable()
-//                    {
-//                        @Override
-//                        public void run()
-//                        {
-//                            doWrite(new String(cbuf, off, len));
-//                        }
-//                    });
-//                }
-//                catch (Throwable t)
-//                {
-//                    System.out.println("Error writing to log.  Possible abort "
-//                                       + "issued.");
-//                    t.printStackTrace();
-//                }
-//            }
-//            else
-//            {
-//                doWrite(new String(cbuf, off, len));
-//            }
-        }
-
-        protected void doWrite(final String s)
-        {
-            if (getLogTextArea() != null)
-            {
-                getLogTextArea().append(s);
-            }
         }
     }
-    
+
     protected class DirectoryChooser implements Runnable
     {
-    
+
         @Override
         public void run()
         {
             try
             {
                 uiInitCond.waitForTrue();
-                
+
                 SwingUtilities.invokeAndWait((new Runnable()
                 {
-                
                     public void run()
                     {
                         selectSourceDirectory(GraphicUI.this,
-                                new SourceDirectoryChooserCallback()
-                                {
-                                    @Override
-                                    public void onCallback(
-                                            final File chosenDirectory)
-                                    {
-                                        getUploadManager().start(chosenDirectory);
-                                    }
-                                });
-                    }}));
+                                              new SourceDirectoryChooserCallback()
+                                              {
+                                                  @Override
+                                                  public void onCallback(
+                                                          final File chosenDirectory)
+                                                  {
+                                                      getUploadManager()
+                                                              .start(chosenDirectory);
+                                                  }
+                                              });
+                    }
+                }));
             }
             catch (final Exception e)
             {

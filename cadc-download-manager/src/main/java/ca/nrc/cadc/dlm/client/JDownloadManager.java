@@ -70,8 +70,9 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.appkit.util.HttpAuthenticator;
+import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
-import ca.nrc.cadc.dlm.ManifestReader;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.event.TransferEvent;
@@ -81,7 +82,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileReader;

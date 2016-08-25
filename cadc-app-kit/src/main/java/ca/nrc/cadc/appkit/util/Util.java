@@ -68,21 +68,10 @@
 */
 
 
-import ca.nrc.cadc.dlm.client.event.ConsoleEventLogger;
-import ca.nrc.cadc.dlm.client.JDownload;
-import ca.nrc.cadc.net.HttpDownload;
-import ca.nrc.cadc.util.Log4jInit;
+package ca.nrc.cadc.appkit.util;
 
-import ca.nrc.cadc.appkit.ui.AbstractApplication;
-import ca.nrc.cadc.appkit.ui.ApplicationFrame;
-
-import java.awt.BorderLayout;
-
-import java.io.File;
-import java.net.URL;
-import javax.swing.JPanel;
-
-import org.apache.log4j.Level;
+import javax.swing.*;
+import java.awt.*;
 
 
 /**
@@ -90,67 +79,46 @@ import org.apache.log4j.Level;
  *
  * @author pdowler
  */
-public class JDownloadTest extends AbstractApplication
+public class Util
 {
-    public static void main(String[] args)
+    private Util() { }
+    
+    public static Frame findParentFrame(Component parent)
     {
-        String baseURL = "http://cadcweb0/getData/anon/";
+        while (true)
+        {
+            if (parent == null)
+                return null;
+            if (parent instanceof Frame)
+                return (Frame) parent;
+            parent = parent.getParent();
+        }
+    }
+    
+    public static void setPositionRelativeToParent(Window w, Component parent,
+                                                   int hOffset, int vOffset)
+    {
         try
         {
-            Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
-
-            HttpDownload dl = new HttpDownload(
-                    new URL(baseURL + "HSTCA/J8FU02030_DRZ"),
-                    new File("/tmp")
-            );
-
-            dl.setDecompress(true);
-            dl.setOverwrite(true);
-
-            dl.setTransferListener(new ConsoleEventLogger());
-
-            JDownloadTest ui = new JDownloadTest(dl);
-            ApplicationFrame frame = new ApplicationFrame("JDownloadTest", ui);
-            frame.getContentPane().add(ui);
-            frame.setVisible(true);
-
-            Thread.sleep(3000L);
-            long t1 = System.currentTimeMillis();
-            Thread t = new Thread(dl);
-            t.start();
-            t.join();
-
-            long dt = System.currentTimeMillis() - t1;
-            dt /= 1000L;
-
-            msg("duration: " + dt + " sec");
-
-            msg("output: " + dl.getFile());
-            msg("failure: " + dl.getThrowable());
-        }
-        catch (Throwable t)
+            Point p = parent.getLocationOnScreen();
+            int x = (int) p.getX() + hOffset;
+            int y = (int) p.getY() + vOffset;
+            w.setLocation(x, y);
+            w.pack();
+        } 
+        catch (Throwable t) { }
+    }
+    
+    public static void recursiveSetBackground(Component comp, Color color)
+    {
+        if (comp instanceof JToolBar || comp instanceof JButton)
+            return;
+        comp.setBackground(color);
+        if (comp instanceof Container)
         {
-            t.printStackTrace();
+            Container cc = (Container) comp;
+            for (int i = 0; i < cc.getComponentCount(); i++)
+                recursiveSetBackground(cc.getComponent(i), color);
         }
-    }
-
-    HttpDownload download;
-
-    public JDownloadTest(HttpDownload dl)
-    {
-        super(new BorderLayout());
-        this.download = dl;
-    }
-
-    protected void makeUI()
-    {
-        JDownload jdl = new JDownload(download);
-        add(new JPanel(), BorderLayout.CENTER);
-        add(jdl, BorderLayout.NORTH);
-    }
-
-    private static void msg(String s)
-    {
-        System.out.println("[JDownloadTest] " + s);
     }
 }

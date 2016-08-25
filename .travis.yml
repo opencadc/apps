@@ -1,8 +1,6 @@
-language: java 
-jdk:  
-  - openjdk7  
-  - oraclejdk8 
-env:
-  - MODULE_DIR=cadc-download-manager
-  - MODULE_DIR=cadc-upload-manager
-script: cd $MODULE_DIR && gradle assemble check install || break -1 
+language: java
+jdk:
+  - openjdk7
+  - oraclejdk8
+script: for mod in cadc-app-kit cadc-download-manager cadc-upload-manager cadc-download-manager-server ; do cd $mod; gradle --info javadoc build install || break -1; cd ..; done
+
