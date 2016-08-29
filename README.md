@@ -2,4 +2,4 @@
 client applications
 
 Build status:
-[![Build Status](https://travis-ci.org/at88mph/apps.svg?branch=master)](https://travis-ci.org/at88mph/apps)
+<a href="https://travis-ci.org/opencadc/apps"><img src="https://travis-ci.org/opencadc/apps.svg?branch=master" /></a>
