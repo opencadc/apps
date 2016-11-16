@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.dlm.client;
+package ca.nrc.cadc.dlm;
 
 import java.io.BufferedReader;
 import java.io.IOException;

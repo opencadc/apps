@@ -70,6 +70,7 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.dlm.ManifestReader;
 import ca.nrc.cadc.appkit.util.HttpAuthenticator;
 import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
