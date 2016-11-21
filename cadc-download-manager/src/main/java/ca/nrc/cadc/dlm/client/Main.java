@@ -172,7 +172,13 @@ public class Main
                     for (String arg : args)
                     {
                         if (! arg.startsWith("-"))
-                            uris.add(arg);
+                        {
+                            // take care in case environment keeps all space seperated args
+                            // as a single arg, eg single <argument> element in JNLP
+                            String[] sas = arg.split(" ");
+                            for (String a :sas)
+                                uris.add(a);
+                        }
                     }
                     if (forceAuthMethod != null)
                     {

@@ -30,6 +30,7 @@ dependencies {
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-app-kit:1.+'
     compile 'org.opencadc:cadc-vos:[1.0,)'
+    compile 'org.opencadc:cadc-dali:[1.0,)'
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'
