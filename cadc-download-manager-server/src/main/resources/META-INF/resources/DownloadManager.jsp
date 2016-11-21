@@ -112,16 +112,20 @@
 
     <resources> 
         <j2se version="1.5+" initial-heap-size="64m" max-heap-size="256m" />
-        <jar href="cadcDownloadManagerClient.jar"/>
-        <jar href="cadcUtil.jar"/>
-        <jar href="cadcRegistry.jar"/>
-        <jar href="cadcLog.jar" />
+        <jar href="cadc-util.jar"/>
+        <jar href="cadc-registry.jar"/>
+        <jar href="cadc-log.jar" />
+        <jar href="cadc-vos.jar" />
+        <jar href="cadc-app-kit.jar"/>
+        <jar href="cadc-download-manager.jar"/>
         <jar href="log4j.jar"/>
-        <!-- these are needed for VOTable parsing in the cadcDALI library -->
-        <jar href="cadcDALI.jar"/>
+
+        <!-- needed by prototype DataLink client -->
+        <jar href="cadc-dali.jar"/>
         <jar href="jdom2.jar"/>
-        <jar href="xerces.jar"/>
-        <jar href="cadcVOS.jar" />
+        <jar href="xml-apis.jar"/>
+        <jar href="xercesImpl.jar"/>
+        
 <%
     if (rcHost != null)
     {
@@ -134,7 +138,7 @@
 
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
-        <argument>--uris=<%= uris %></argument>
+        <argument><%= uris %></argument>
         <argument>--params=<%= params %></argument>
 <%
     if (!ssocookieArg.isEmpty())
