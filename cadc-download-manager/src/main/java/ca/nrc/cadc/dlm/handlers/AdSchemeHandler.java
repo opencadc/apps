@@ -102,9 +102,8 @@ public class AdSchemeHandler implements SchemeHandler
     /**
      * Convert a URI to a List of URL(s).
      *
-     * @param uri
+     * @param uri a CADC storage system URI (ad scheme)
      * @throws IllegalArgumentException if the URI scheme is invalid
-     * @see SchemeHandler#getURL(URI)
      * @return a list with a single URL to the identified resource
      */
     public List<URL> toURL(URI uri)

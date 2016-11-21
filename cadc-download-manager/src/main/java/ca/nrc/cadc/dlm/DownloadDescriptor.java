@@ -90,7 +90,7 @@ public class DownloadDescriptor
     /**
      * Constructor.
      *
-     * @param url
+     * @param url the URL to download the data from
      */
     public DownloadDescriptor(URL url)
     {

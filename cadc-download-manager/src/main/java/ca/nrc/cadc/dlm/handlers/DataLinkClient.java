@@ -70,6 +70,7 @@
 package ca.nrc.cadc.dlm.handlers;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableField;
 import ca.nrc.cadc.dali.tables.votable.VOTableGroup;
@@ -129,16 +130,25 @@ public class DataLinkClient implements DownloadGenerator
     private boolean downloadOnly = false;
     
     private final URI resourceID;
-    private final RegistryClient regClient;
+    private final String baseURL;
 
     public DataLinkClient()
     {
-        this.regClient = new RegistryClient();
         String rprop = System.getProperty(RESOURCE_ID_PROP);
         if (rprop != null)
             this.resourceID = URI.create(rprop);
         else
             this.resourceID = URI.create(DEFAULT_RESOURCE_ID);
+        
+        AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+        if (am == null)
+        {
+            am = AuthMethod.ANON;
+        }
+
+        RegistryClient rc = new RegistryClient();
+        URL serviceURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, am);
+        this.baseURL = serviceURL.toExternalForm();
     }
 
     @Override
@@ -172,11 +182,7 @@ public class DataLinkClient implements DownloadGenerator
     {
         try // query datalink with uri and (for now) filters
         {
-            // TODO: check subject for credentials and pick suitable AuthMethod
-            AuthMethod am = AuthMethod.COOKIE; // same url as anon right now so... lazy
-            
-            URL linksURL = regClient.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, am);
-            StringBuilder sb = new StringBuilder(linksURL.toExternalForm());
+            StringBuilder sb = new StringBuilder(baseURL);
             sb.append("?id=");
             sb.append(NetUtil.encode(uri.toASCIIString()));
             
