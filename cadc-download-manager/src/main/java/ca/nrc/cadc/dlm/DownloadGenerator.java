@@ -83,15 +83,15 @@ public interface DownloadGenerator
     /**
      * Set a list of optional parameters for the resolver.
      * 
-     * @param params
+     * @param params map containing optional parameters
      */
     public void setParameters(Map<String,List<String>> params);
 
     /**
      * Return a stream of download descriptors for the specified URI.
      * 
-     * @param uri
-     * @return
+     * @param uri the URi to resolve into one or more downloads
+     * @return iterator with one or more download descriptors
      */
     public Iterator<DownloadDescriptor> downloadIterator(URI uri);
 }

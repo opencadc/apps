@@ -1,6 +1,7 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.dlm.ManifestReader;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URL;

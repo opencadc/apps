@@ -96,7 +96,7 @@ public class DownloadUtil
 {
     private static Logger log = Logger.getLogger(DownloadUtil.class);
 
-    public static final String URI_SEPARATOR = ",";
+    public static final String URI_SEPARATOR = " ";
     public static final String PARAM_SEPARATOR = "&";
 
     private DownloadUtil()

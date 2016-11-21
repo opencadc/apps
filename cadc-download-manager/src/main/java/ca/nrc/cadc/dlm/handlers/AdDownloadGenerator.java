@@ -1,17 +1,9 @@
-<%@ page contentType="application/x-java-jnlp-file" %>
-<% response.setHeader("Content-Disposition", "attachment; filename=DownloadManager.jnlp"); %>
-<?xml version="1.0" encoding="utf-8"?>
-
-<%--
-    Simple JSP page to write out a JNLP file that launches the DownloadManager application.
---%>
-
-<!--
+/*
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,87 +62,95 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
--->
-<%@ page import="ca.nrc.cadc.reg.client.RegistryClient" %>
+*/
 
-<%
+package ca.nrc.cadc.dlm.handlers;
 
-    String uris = (String) request.getAttribute("uris");
-    String params = (String) request.getAttribute("params");
-    String codebase = (String) request.getAttribute("codebase");
-    String ssocookieArg = "";
-    String ssocookiedomainArg = "";
-    String ck = (String) request.getAttribute("ssocookie");
-    String cd = (String) request.getAttribute("ssocookiedomain");
-    if (ck != null)
+import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadGenerator;
+import ca.nrc.cadc.dlm.FailIterator;
+import ca.nrc.cadc.dlm.SingleDownloadIterator;
+import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import org.apache.log4j.Logger;
+
+/**
+ * Download generator for CADC archive identifiers.
+ * 
+ * @author pdowler
+ */
+public class AdDownloadGenerator implements DownloadGenerator
+{
+    private static final Logger log = Logger.getLogger(AdDownloadGenerator.class);
+
+    private AdSchemeHandler ad;
+    private Map<String,List<String>> params;
+
+    private static final Set<String> PARAMS;
+    static
     {
-        ssocookieArg = "--ssocookie=" + ck;
+        PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
+        PARAMS.add("logkey");
+        PARAMS.add("logvalue");
+        PARAMS.add("cutout");
+        PARAMS.add("runid");
     }
-    if (cd != null)
-    {
-        ssocookiedomainArg = "--ssocookiedomain=" + cd;
-    }
-    String rcHostProp = RegistryClient.class.getName() + ".host";
-    String rcHost = (String) request.getAttribute("targetHost");
-%>
 
-<jnlp spec="1.0+" codebase="<%= codebase %>"> 
-  
-  <information> 
-    <title>DownloadManager</title> 
-    <vendor>Canadian Astronomy Data Centre</vendor> 
-    <homepage href="/"/> 
-    <description>Simple multithreaded download of data from the CADC</description>
-    </information>
-
-    <security> 
-        <all-permissions/> 
-    </security> 
-
-    <resources> 
-        <j2se version="1.5+" initial-heap-size="64m" max-heap-size="256m" />
-        <jar href="cadcDownloadManagerClient.jar"/>
-        <jar href="cadcUtil.jar"/>
-        <jar href="cadcRegistry.jar"/>
-        <jar href="cadcLog.jar" />
-        <jar href="log4j.jar"/>
-        <!-- these are needed for VOTable parsing in the cadcDALI library -->
-        <jar href="cadcDALI.jar"/>
-        <jar href="jdom2.jar"/>
-        <jar href="xerces.jar"/>
-        <jar href="cadcVOS.jar" />
-<%
-    if (rcHost != null)
+    public AdDownloadGenerator() 
     {
-%>
-        <property name="<%= rcHostProp %>" value="<%= rcHost %>" />
-<%
+        this.ad = new AdSchemeHandler();
     }
-%>
-    </resources> 
-
-    <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
-        <argument>--verbose</argument>
-        <argument>--uris=<%= uris %></argument>
-        <argument>--params=<%= params %></argument>
-<%
-    if (!ssocookieArg.isEmpty())
-    {
-%>
-        <argument><%= ssocookieArg %></argument>
-<%
-    }
-    if (!ssocookiedomainArg.isEmpty())
-    {
-%>
-        <argument><%= ssocookiedomainArg %></argument>
-<%
-    }
-%>
-    </application-desc>
     
-</jnlp>
+    public Iterator<DownloadDescriptor> downloadIterator(URI uri)
+    {
+        try
+        {
+            URL url = ad.getURL(uri);
+            if (params != null)
+            {
+                StringBuilder sb = new StringBuilder(url.toExternalForm());
+                boolean first = true;
+                Iterator<Map.Entry<String,List<String>>> i = params.entrySet().iterator();
+                while ( i.hasNext() )
+                {
+                    Map.Entry<String,List<String>> me = i.next();
+                    if ( PARAMS.contains(me.getKey()) && me.getValue() != null )
+                    {
+                        for (String v : me.getValue())
+                        {
+                            if (first)
+                                sb.append("?");
+                            else
+                                sb.append("&");
+                            first = false;
+                            sb.append(me.getKey());
+                            sb.append("=");
+                            sb.append(URLEncoder.encode(v, "UTF-8"));
+                        }
+                    }
+                }
+                url = new URL(sb.toString());
+            }
+            return new SingleDownloadIterator(uri, url);
+        }
+        catch(Exception ex)
+        {
+            return new FailIterator(uri, "failed to resolve URI: " + ex.getMessage());
+        }
+    }
 
+    public void setParameters(Map<String, List<String>> params)
+    {
+        this.params = params;
+    }
+}

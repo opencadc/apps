@@ -118,7 +118,8 @@ public class GraphicUI extends AbstractApplication implements ChangeListener, Us
     public GraphicUI(Level logLevel)
     {
         super(new BorderLayout());
-        Log4jInit.setLevel("ca.nrc.cadc", logLevel, writer);
+        Log4jInit.setLevel("ca.nrc.cadc.dlm", logLevel, writer);
+        Log4jInit.setLevel("ca.nrc.cadc.net", logLevel, writer);
         
         this.uiInitCond = new ConditionVar();
         uiInitCond.set(false);

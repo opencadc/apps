@@ -1,4 +1,12 @@
-/*
+<%@ page contentType="application/x-java-jnlp-file" %>
+<% response.setHeader("Content-Disposition", "attachment; filename=DownloadManager.jnlp"); %>
+<?xml version="1.0" encoding="utf-8"?>
+
+<%--
+    Simple JSP page to write out a JNLP file that launches the DownloadManager application.
+--%>
+
+<!--
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
@@ -65,101 +73,88 @@
 *  $Revision: 4 $
 *
 ************************************************************************
-*/
+-->
+<%@ page import="ca.nrc.cadc.reg.client.RegistryClient" %>
 
-package ca.nrc.cadc.dlm;
+<%
 
-import java.net.URL;
+    String uris = (String) request.getAttribute("uris");
+    String params = (String) request.getAttribute("params");
+    String codebase = (String) request.getAttribute("codebase");
+    String ssocookieArg = "";
+    String ssocookiedomainArg = "";
+    String ck = (String) request.getAttribute("ssocookie");
+    String cd = (String) request.getAttribute("ssocookiedomain");
+    if (ck != null)
+    {
+        ssocookieArg = "--ssocookie=" + ck;
+    }
+    if (cd != null)
+    {
+        ssocookiedomainArg = "--ssocookiedomain=" + cd;
+    }
+    String rcHostProp = RegistryClient.class.getName() + ".host";
+    String rcHost = (String) request.getAttribute("targetHost");
+%>
 
-/**
- * Description of a download.
- * 
- * @author pdowler
- */
-public class DownloadDescriptor
-{
-    public static final String OK = "OK";
-    public static final String ERROR = "ERROR";
+<jnlp spec="1.0+" codebase="<%= codebase %>"> 
+  
+  <information> 
+    <title>DownloadManager</title> 
+    <vendor>Canadian Astronomy Data Centre</vendor> 
+    <homepage href="/"/> 
+    <description>Simple multithreaded download of data from the CADC</description>
+    </information>
+
+    <security> 
+        <all-permissions/> 
+    </security> 
+
+    <resources> 
+        <j2se version="1.5+" initial-heap-size="64m" max-heap-size="256m" />
+        <jar href="cadc-util.jar"/>
+        <jar href="cadc-registry.jar"/>
+        <jar href="cadc-log.jar" />
+        <jar href="cadc-vos.jar" />
+        <jar href="cadc-app-kit.jar"/>
+        <jar href="cadc-download-manager.jar"/>
+        <jar href="log4j.jar"/>
+
+        <!-- needed by prototype DataLink client -->
+        <jar href="cadc-dali.jar"/>
+        <jar href="jdom2.jar"/>
+        <jar href="xml-apis.jar"/>
+        <jar href="xercesImpl.jar"/>
+        
+<%
+    if (rcHost != null)
+    {
+%>
+        <property name="<%= rcHostProp %>" value="<%= rcHost %>" />
+<%
+    }
+%>
+    </resources> 
+
+    <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
+        <argument>--verbose</argument>
+        <argument><%= uris %></argument>
+        <argument>--params=<%= params %></argument>
+<%
+    if (!ssocookieArg.isEmpty())
+    {
+%>
+        <argument><%= ssocookieArg %></argument>
+<%
+    }
+    if (!ssocookiedomainArg.isEmpty())
+    {
+%>
+        <argument><%= ssocookiedomainArg %></argument>
+<%
+    }
+%>
+    </application-desc>
     
-    public String status;
-    public String uri;
-    public URL url;
-    public String destination;
-    public String error;
+</jnlp>
 
-    /**
-     * Constructor.
-     *
-     * @param url the URL to download the data from
-     */
-    public DownloadDescriptor(URL url)
-    {
-        this(null, url, null);
-    }
-
-    /**
-     * Constructor.
-     * 
-     * @param uri original URI (optional)
-     * @param url the URL to download the data from
-     */
-    public DownloadDescriptor(String uri, URL url)
-    {
-        this(uri, url, null);
-    }
-
-    /**
-     * Constructor. A download URL may be derived from a URI; the URI is
-     * not used but just attached to aid in error reporting.
-     * 
-     * @param uri original URI (optional)
-     * @param url the URL to download the data from
-     * @param destination the relative path where file should be stored (optional)
-     */
-    public DownloadDescriptor(String uri, URL url, String destination)
-    {
-        this.status = OK;
-        this.uri = uri;
-        this.url = url;
-        this.destination = destination;
-    }
-
-    /**
-     * Constructor for a download that could not be performed. The error message
-     * describes the reason for failure.
-     *
-     * @param uri original URI (optional)
-     * @param error message describing the failure
-     */
-    public DownloadDescriptor(String uri, String error)
-    {
-        this(uri, error, null);
-    }
-
-    /**
-     * Constructor for a download that could not be performed. The error message
-     * describes the reason for failure.
-     * 
-     * @param uri (optional)
-     * @param error message describing the failure
-     * @param destination the relative path where file would have been stored (optional)
-     */
-    public DownloadDescriptor(String uri, String error, String destination)
-    {
-        this.status = ERROR;
-        this.uri = uri;
-        this.error = error;
-        this.destination = destination;
-    }
-
-    @Override
-    public String toString()
-    {
-        if (url != null)
-            return this.getClass().getSimpleName() + "["
-                + status + "," + uri + "," + url + "," + destination + "]";
-        return this.getClass().getSimpleName() + "["
-                + status + "," + uri + "," + error + "," + destination + "]";
-    }
-
-}

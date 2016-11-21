@@ -98,7 +98,7 @@ public class Main
     //private static Logger log = Logger.getLogger(Main.class);
     private static UserInterface ui;
 
-    public static void main(String[] args)
+    public static void main(final String[] args)
     {
         try
         {
@@ -163,10 +163,23 @@ public class Main
             {
                 public Boolean run()
                 {
-                    String uriStr = fixNull(am.getValue("uris"));
+                    //String uriStr = fixNull(am.getValue("uris"));
                     String paramStr = fixNull(am.getValue("params"));
-                    List<String> uris = DownloadUtil.decodeListURI(uriStr);
+                    //List<String> uris = DownloadUtil.decodeListURI(uriStr);
                     Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+                    
+                    List<String> uris = new ArrayList<>();
+                    for (String arg : args)
+                    {
+                        if (! arg.startsWith("-"))
+                        {
+                            // take care in case environment keeps all space seperated args
+                            // as a single arg, eg single <argument> element in JNLP
+                            String[] sas = arg.split(" ");
+                            for (String a :sas)
+                                uris.add(a);
+                        }
+                    }
                     if (forceAuthMethod != null)
                     {
                         List<String> am = new ArrayList<>();
