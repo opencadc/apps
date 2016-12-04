@@ -112,7 +112,6 @@ public class DataLinkClient implements DownloadGenerator
     public static final String RESOURCE_ID_PROP = DataLinkClient.class.getName() + ".resourceID";
     
     public static final String CUTOUT = "#cutout";
-    public static final String DEFAULT_RESOURCE_ID = "ivo://cadc.nrc.ca/caom2ops";
 
     private static final String DOWNLOAD_REQUEST = "getDownloadLinks";
 
@@ -129,26 +128,13 @@ public class DataLinkClient implements DownloadGenerator
     private List<String> productTypes;
     private boolean downloadOnly = false;
     
-    private final URI resourceID;
-    private final String baseURL;
-
+    private final RegistryClient regClient;
+    private final DataLinkServiceResolver resolver;
+    
     public DataLinkClient()
     {
-        String rprop = System.getProperty(RESOURCE_ID_PROP);
-        if (rprop != null)
-            this.resourceID = URI.create(rprop);
-        else
-            this.resourceID = URI.create(DEFAULT_RESOURCE_ID);
-        
-        AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-        if (am == null)
-        {
-            am = AuthMethod.ANON;
-        }
-
-        RegistryClient rc = new RegistryClient();
-        URL serviceURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, am);
-        this.baseURL = serviceURL.toExternalForm();
+        this.regClient = new RegistryClient();
+        this.resolver = new DataLinkServiceResolver();
     }
 
     @Override
@@ -182,7 +168,17 @@ public class DataLinkClient implements DownloadGenerator
     {
         try // query datalink with uri and (for now) filters
         {
-            StringBuilder sb = new StringBuilder(baseURL);
+            URI resourceID = resolver.getResourceID(uri);
+            AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+            if (am == null)
+                am = AuthMethod.ANON;
+            URL serviceURL = regClient.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, am);
+            if (serviceURL == null)
+            {
+                return new FailIterator(uri, "failed to resolve URI: cannot find DataLink service " + resourceID);
+            }
+                
+            StringBuilder sb = new StringBuilder(serviceURL.toExternalForm());
             sb.append("?id=");
             sb.append(NetUtil.encode(uri.toASCIIString()));
             
@@ -198,7 +194,10 @@ public class DataLinkClient implements DownloadGenerator
             HttpDownload get = new HttpDownload(url, bos);
             get.run();
             if ( get.getThrowable() != null)
+            {
                 return new FailIterator(uri, "failed to resolve URI: " + get.getThrowable().getMessage());
+            }
+            
             try
             {
                 String responseContent = bos.toString("UTF-8");
@@ -371,7 +370,7 @@ public class DataLinkClient implements DownloadGenerator
                 
                 if (errMsg != null)
                 {
-                    return new DownloadDescriptor(uri, errMsg);
+                    return new DownloadDescriptor(uri, "datalink service response: " + errMsg);
                 }
                 else if (url == null)
                 {

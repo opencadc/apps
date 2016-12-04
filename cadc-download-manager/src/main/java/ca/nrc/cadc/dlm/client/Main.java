@@ -83,6 +83,8 @@ import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.appkit.ui.Application;
 import ca.nrc.cadc.appkit.ui.ApplicationFrame;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -260,9 +262,8 @@ public class Main
 
     private static void usage()
     {
-        System.out.println("java -jar cadcDownloadManagerClient.jar -h || --help");
-        System.out.println("java -jar cadcDownloadManagerClient.jar [-v|--verbose | -d|--debug | -q|--quiet ]");
-        System.out.println("          --uris=<comma-separated list of URIs>");
+        System.out.println("cadc-download-manager -h || --help");
+        System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of URIs>");
         System.out.println("         [ --fragment=<common fragment to append to all URIs> ]");
         System.out.println("         [ --ssocookie=<cookie value to use in sso authentication> ]");
         System.out.println("         [ --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)> ]");
