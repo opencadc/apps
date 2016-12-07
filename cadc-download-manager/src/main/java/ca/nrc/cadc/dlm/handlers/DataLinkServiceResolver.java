@@ -129,6 +129,8 @@ public class DataLinkServiceResolver
         }
         
         String val = props.getProperty(key);
+        if (val == null) // unknown collection -> default
+            val = props.getProperty(DEFAULT_KEY);
         log.debug("getResourceID: " + publisherID + " -> " + key + " -> " + val);
         
         if (val != null)
