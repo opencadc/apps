@@ -78,6 +78,7 @@ import ca.nrc.cadc.dali.tables.votable.VOTableParam;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
+import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
 import ca.nrc.cadc.dlm.FailIterator;
@@ -85,12 +86,14 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.StringUtil;
 import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -125,8 +128,8 @@ public class DataLinkClient implements DownloadGenerator
     private Map<String,List<String>> params;
     private String runID;
     private String cutout;
-    private List<String> productTypes;
     private boolean downloadOnly = false;
+    private String requestFail;
     
     private final RegistryClient regClient;
     private final DataLinkServiceResolver resolver;
@@ -150,16 +153,42 @@ public class DataLinkClient implements DownloadGenerator
         val = params.get("cutout");
         if (val != null && !val.isEmpty())
         {
+            // transform to SODA CIRCLE or POLYGON param
             StringBuilder sb = new StringBuilder();
-            for (String c : val)
+            String str = val.get(0); // first only
+            
+            // strip off old STC-S pre amble and just get the numeric values
+            String[] tokens = str.split(" ");
+            List<Double> dvals = new ArrayList<>();
+            for (String t : tokens)
             {
-                sb.append("cutout=").append(NetUtil.encode(c));
+                try
+                {
+                    Double d = new Double(t);
+                    dvals.add(d);
+                }
+                catch(NumberFormatException ex)
+                {
+                    log.debug("ignoring token in cutout: " + t);
+                }
             }
-            this.cutout = sb.toString();
+            DoubleArrayFormat daf = new DoubleArrayFormat();
+            if (dvals.size() == 3)
+            {
+                // TODO: update param name to SODA-1.0 spec
+                this.cutout = "CIRC=" + NetUtil.encode(daf.format(dvals.iterator()));
+            }
+            else if (dvals.size() >= 6)
+            {
+                // TODO: update param name to SODA-1.0 spec
+                this.cutout = "POLY=" +  NetUtil.encode(daf.format(dvals.iterator()));
+            }
+            else
+                this.requestFail = "invalid parameter: cutout=" + str;
         }
-        this.productTypes = params.get("productType");
         
-        if (cutout == null && (productTypes == null || productTypes.isEmpty()))
+        
+        if (cutout == null)
             this.downloadOnly = true;
     }
 
@@ -326,6 +355,7 @@ public class DataLinkClient implements DownloadGenerator
                     url = getServiceProperty(serviceDef, "accessURL");
                     if (url == null)
                         return new DownloadDescriptor(uri, "invalid link: service " + serviceDef + " has no accessURL parameter");
+                    log.debug("accessURL: " + url);
                     
                     // find any additional service input parameters
                     List<VOTableGroup> groups = metaResource.getGroups();
@@ -355,6 +385,10 @@ public class DataLinkClient implements DownloadGenerator
                                     Object paramValue = curRow.get(paramColumn.intValue());
                                     url = appendParam(url, nextParam.getName(), paramValue);
                                 }
+                            }
+                            else if (StringUtil.hasText(nextParam.getValue())) // value supplied
+                            {
+                                url = appendParam(url, nextParam.getName(), nextParam.getValue());
                             }
                             //else
                             //{
@@ -425,6 +459,7 @@ public class DataLinkClient implements DownloadGenerator
                 String url = (String) curRow.get(urlIndex);
                 
                 // productType filtering
+                /*
                 if (curRow != null && productTypes != null && ptIndex >= 0)
                 {
                     String pt = (String) curRow.get(ptIndex);
@@ -439,7 +474,8 @@ public class DataLinkClient implements DownloadGenerator
                     else
                         log.debug("pass: " + url + " productType: " + pt);
                 }
-
+                */
+                
                 // semantics filtering
                 if (curRow != null && semIndex >= 0)
                 {
@@ -454,7 +490,7 @@ public class DataLinkClient implements DownloadGenerator
                     else if (CUTOUT.equals(sem))
                     {
                         String standardID = getServiceProperty(sdef, "standardID");
-                        if (Standards.CUTOUT_20.toString().equals(standardID))
+                        if (Standards.SODA_SYNC_10.toString().equals(standardID))
                         {
                             curParams = cutout;
                             log.debug("pass: " + url + " semantics: " + sem + " cutout: " + cutout);
