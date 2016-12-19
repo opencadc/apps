@@ -404,7 +404,7 @@ public class DataLinkClient implements DownloadGenerator
                 
                 if (errMsg != null)
                 {
-                    return new DownloadDescriptor(uri, "datalink service response: " + errMsg);
+                    return new DownloadDescriptor(uri, errMsg);
                 }
                 else if (url == null)
                 {
