@@ -16,7 +16,7 @@ repositories {
     }
 }
 
-version = '1.2.4'
+version = '1.2.5'
 group = 'org.opencadc'
 sourceCompatibility = 1.7
 
