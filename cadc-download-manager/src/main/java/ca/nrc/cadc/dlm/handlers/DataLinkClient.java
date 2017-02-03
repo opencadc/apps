@@ -116,7 +116,7 @@ public class DataLinkClient implements DownloadGenerator
     
     public static final String CUTOUT = "#cutout";
 
-    private static final String DOWNLOAD_REQUEST = "getDownloadLinks";
+    private static final String DOWNLOAD_REQUEST = "downloads-only";
 
     private static final String COL_NAME_URI = "ID";
     private static final String COL_NAME_URL = "access_url";
