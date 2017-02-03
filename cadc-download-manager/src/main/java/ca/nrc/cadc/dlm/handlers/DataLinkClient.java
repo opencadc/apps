@@ -122,10 +122,8 @@ public class DataLinkClient implements DownloadGenerator
     private static final String COL_NAME_URL = "access_url";
     private static final String COL_NAME_SERVICE_DEF = "service_def";
     private static final String COL_NAME_ERR_MSG = "error_message";
-    private static final String COL_NAME_PRODUCT_TYPE = "product_type";
     private static final String COL_NAME_SEMANTICS = "semantics";
 
-    private Map<String,List<String>> params;
     private String runID;
     private String cutout;
     private boolean downloadOnly = false;
@@ -143,7 +141,6 @@ public class DataLinkClient implements DownloadGenerator
     @Override
     public void setParameters(Map<String,List<String>> params)
     {
-        this.params = params;
         List<String> val;
 
         val = params.get("runid");
@@ -175,13 +172,11 @@ public class DataLinkClient implements DownloadGenerator
             DoubleArrayFormat daf = new DoubleArrayFormat();
             if (dvals.size() == 3)
             {
-                // TODO: update param name to SODA-1.0 spec
-                this.cutout = "CIRC=" + NetUtil.encode(daf.format(dvals.iterator()));
+                this.cutout = "CIRCLE=" + NetUtil.encode(daf.format(dvals.iterator()));
             }
             else if (dvals.size() >= 6)
             {
-                // TODO: update param name to SODA-1.0 spec
-                this.cutout = "POLY=" +  NetUtil.encode(daf.format(dvals.iterator()));
+                this.cutout = "POLYGON=" +  NetUtil.encode(daf.format(dvals.iterator()));
             }
             else
                 this.requestFail = "invalid parameter: cutout=" + str;
@@ -195,6 +190,11 @@ public class DataLinkClient implements DownloadGenerator
     @Override
     public Iterator<DownloadDescriptor> downloadIterator(URI uri)
     {
+        if (requestFail != null)
+        {
+            return new FailIterator(uri, requestFail);
+        }
+        
         try // query datalink with uri and (for now) filters
         {
             URI resourceID = resolver.getResourceID(uri);
@@ -319,8 +319,6 @@ public class DataLinkClient implements DownloadGenerator
                 }
             }
 
-            // cadc-specific optional filtering column
-            this.ptIndex = getColumnByName(COL_NAME_PRODUCT_TYPE, links);
             this.rowIter = links.getTableData().iterator();
 
             advance();
@@ -457,24 +455,12 @@ public class DataLinkClient implements DownloadGenerator
             {
                 curRow = rowIter.next();
                 String url = (String) curRow.get(urlIndex);
-                
-                // productType filtering
-                /*
-                if (curRow != null && productTypes != null && ptIndex >= 0)
+                String serviceDef = (String) curRow.get(sdIndex);
+                if (downloadOnly && serviceDef != null)
                 {
-                    String pt = (String) curRow.get(ptIndex);
-                    String[] pts = null;
-                    if (pt != null)
-                        pts = pt.split(",");
-                    if (pts == null || !containsAny(productTypes, pts))
-                    {
-                        curRow = null;
-                        log.debug("skip: " + url + " productType: " + pt);
-                    }
-                    else
-                        log.debug("pass: " + url + " productType: " + pt);
+                    curRow = null;
+                    log.debug("skip: downloadOnly"); 
                 }
-                */
                 
                 // semantics filtering
                 if (curRow != null && semIndex >= 0)
