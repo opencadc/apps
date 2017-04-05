@@ -2,20 +2,15 @@ plugins {
     id 'java'
     id 'maven'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.7.1'
+    id 'com.jfrog.bintray' version '1.7.3'
 }
 
 repositories {
     jcenter()
     mavenLocal()
-
-    // Check the bintray repository last.
-    maven {
-        url  'http://dl.bintray.com/opencadc/software'
-    }
 }
 
-version = '1.0'
+version = '1.0.1'
 group = 'org.opencadc'
 sourceCompatibility = 1.7
 
@@ -34,3 +29,55 @@ dependencies {
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'
 }
+
+def jnlpJars = file('build/tmp/jnlpJars/')
+
+test.enabled = false
+
+task extractJARs(type: Copy) {
+    from configurations.compile.files; // flatten
+    into jnlpJars
+    include '**/*.jar'
+    rename '(.+)-[^-]+', '$1.jar' // rename to remove version number
+}
+
+String codeSignKeystore = System.getenv('RPS') + '/etc/cadcKeystore'
+jar {
+    doFirst {
+        def jars = files(jnlpJars.listFiles().findAll {it.name.endsWith('.jar')})
+        jars.each { File file ->
+            println 'File: ' + file
+            ant.jar(destfile: file, update: true) {
+                delegate.manifest {
+                    attribute(name: 'Application-Name', value: 'UploadManager')
+                    attribute(name: 'Entry-Point', value: 'ca.nrc.cadc.ulm.client.ui.Main')
+                    attribute(name: 'permissions', value: 'all-permissions')
+                    attribute(name: 'codebase',
+                            value: '*.cadc-ccda.hia-iha.nrc-cnrc.gc.ca *.canfar.net *.canfar.phys.uvic.ca *.cadc.dao.nrc.ca')
+                    // TODO: figure out how to use this correctly
+                    //attribute(name: 'Application-Library-Allowable-Codebase',
+                    //    value: '*.cadc.dao.nrc.ca *.cadc-ccda.hia-iha.nrc-cnrc.gc.ca')
+                }
+            }
+            println 'signing ULM jar: ' + file.name
+
+            ant.signjar(jar: file, signedjar: 'build/resources/main/' + file.name,
+                    alias: 'cadc',
+                    keystore: codeSignKeystore,
+                    storepass: 'omenseen1')
+        }
+    }
+}.dependsOn extractJARs
+
+task signSelf {
+    doLast {
+        println 'Signing self: ' + 'build/libs/' + project.name + '-' + project.version + '.jar'
+
+        ant.signjar(jar: 'build/libs/' + project.name + '-' + project.version + '.jar',
+                alias: 'cadc',
+                keystore: codeSignKeystore,
+                storepass: 'omenseen1')
+    }
+}
+
+jar.finalizedBy signSelf
