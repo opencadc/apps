@@ -78,6 +78,7 @@ import ca.nrc.cadc.dali.tables.votable.VOTableParam;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
+import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
 import ca.nrc.cadc.dlm.FailIterator;
@@ -85,12 +86,14 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.StringUtil;
 import org.apache.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -113,20 +116,18 @@ public class DataLinkClient implements DownloadGenerator
     
     public static final String CUTOUT = "#cutout";
 
-    private static final String DOWNLOAD_REQUEST = "getDownloadLinks";
+    private static final String DOWNLOAD_REQUEST = "downloads-only";
 
     private static final String COL_NAME_URI = "ID";
     private static final String COL_NAME_URL = "access_url";
     private static final String COL_NAME_SERVICE_DEF = "service_def";
     private static final String COL_NAME_ERR_MSG = "error_message";
-    private static final String COL_NAME_PRODUCT_TYPE = "product_type";
     private static final String COL_NAME_SEMANTICS = "semantics";
 
-    private Map<String,List<String>> params;
     private String runID;
     private String cutout;
-    private List<String> productTypes;
     private boolean downloadOnly = false;
+    private String requestFail;
     
     private final RegistryClient regClient;
     private final DataLinkServiceResolver resolver;
@@ -140,7 +141,6 @@ public class DataLinkClient implements DownloadGenerator
     @Override
     public void setParameters(Map<String,List<String>> params)
     {
-        this.params = params;
         List<String> val;
 
         val = params.get("runid");
@@ -150,22 +150,51 @@ public class DataLinkClient implements DownloadGenerator
         val = params.get("cutout");
         if (val != null && !val.isEmpty())
         {
+            // transform to SODA CIRCLE or POLYGON param
             StringBuilder sb = new StringBuilder();
-            for (String c : val)
+            String str = val.get(0); // first only
+            
+            // strip off old STC-S pre amble and just get the numeric values
+            String[] tokens = str.split(" ");
+            List<Double> dvals = new ArrayList<>();
+            for (String t : tokens)
             {
-                sb.append("cutout=").append(NetUtil.encode(c));
+                try
+                {
+                    Double d = new Double(t);
+                    dvals.add(d);
+                }
+                catch(NumberFormatException ex)
+                {
+                    log.debug("ignoring token in cutout: " + t);
+                }
             }
-            this.cutout = sb.toString();
+            DoubleArrayFormat daf = new DoubleArrayFormat();
+            if (dvals.size() == 3)
+            {
+                this.cutout = "CIRCLE=" + NetUtil.encode(daf.format(dvals.iterator()));
+            }
+            else if (dvals.size() >= 6)
+            {
+                this.cutout = "POLYGON=" +  NetUtil.encode(daf.format(dvals.iterator()));
+            }
+            else
+                this.requestFail = "invalid parameter: cutout=" + str;
         }
-        this.productTypes = params.get("productType");
         
-        if (cutout == null && (productTypes == null || productTypes.isEmpty()))
+        
+        if (cutout == null)
             this.downloadOnly = true;
     }
 
     @Override
     public Iterator<DownloadDescriptor> downloadIterator(URI uri)
     {
+        if (requestFail != null)
+        {
+            return new FailIterator(uri, requestFail);
+        }
+        
         try // query datalink with uri and (for now) filters
         {
             URI resourceID = resolver.getResourceID(uri);
@@ -290,8 +319,6 @@ public class DataLinkClient implements DownloadGenerator
                 }
             }
 
-            // cadc-specific optional filtering column
-            this.ptIndex = getColumnByName(COL_NAME_PRODUCT_TYPE, links);
             this.rowIter = links.getTableData().iterator();
 
             advance();
@@ -326,6 +353,7 @@ public class DataLinkClient implements DownloadGenerator
                     url = getServiceProperty(serviceDef, "accessURL");
                     if (url == null)
                         return new DownloadDescriptor(uri, "invalid link: service " + serviceDef + " has no accessURL parameter");
+                    log.debug("accessURL: " + url);
                     
                     // find any additional service input parameters
                     List<VOTableGroup> groups = metaResource.getGroups();
@@ -356,6 +384,10 @@ public class DataLinkClient implements DownloadGenerator
                                     url = appendParam(url, nextParam.getName(), paramValue);
                                 }
                             }
+                            else if (StringUtil.hasText(nextParam.getValue())) // value supplied
+                            {
+                                url = appendParam(url, nextParam.getName(), nextParam.getValue());
+                            }
                             //else
                             //{
                                 // otherwise ensure we have provided the parameter
@@ -370,7 +402,7 @@ public class DataLinkClient implements DownloadGenerator
                 
                 if (errMsg != null)
                 {
-                    return new DownloadDescriptor(uri, "datalink service response: " + errMsg);
+                    return new DownloadDescriptor(uri, errMsg);
                 }
                 else if (url == null)
                 {
@@ -423,23 +455,13 @@ public class DataLinkClient implements DownloadGenerator
             {
                 curRow = rowIter.next();
                 String url = (String) curRow.get(urlIndex);
-                
-                // productType filtering
-                if (curRow != null && productTypes != null && ptIndex >= 0)
+                String serviceDef = (String) curRow.get(sdIndex);
+                if (downloadOnly && serviceDef != null)
                 {
-                    String pt = (String) curRow.get(ptIndex);
-                    String[] pts = null;
-                    if (pt != null)
-                        pts = pt.split(",");
-                    if (pts == null || !containsAny(productTypes, pts))
-                    {
-                        curRow = null;
-                        log.debug("skip: " + url + " productType: " + pt);
-                    }
-                    else
-                        log.debug("pass: " + url + " productType: " + pt);
+                    curRow = null;
+                    log.debug("skip: downloadOnly"); 
                 }
-
+                
                 // semantics filtering
                 if (curRow != null && semIndex >= 0)
                 {
@@ -454,7 +476,7 @@ public class DataLinkClient implements DownloadGenerator
                     else if (CUTOUT.equals(sem))
                     {
                         String standardID = getServiceProperty(sdef, "standardID");
-                        if (Standards.CUTOUT_20.toString().equals(standardID))
+                        if (Standards.SODA_SYNC_10.toString().equals(standardID))
                         {
                             curParams = cutout;
                             log.debug("pass: " + url + " semantics: " + sem + " cutout: " + cutout);
