@@ -49,7 +49,7 @@ import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 
 public class Main
 {
-    protected static final URI VOSPACE_SERVICE_URI =
+    private static final URI VOSPACE_SERVICE_URI =
             URI.create("ivo://cadc.nrc.ca/vospace");
 
 
@@ -92,60 +92,60 @@ public class Main
         if (ssoCookieStr != null)
         {
 
-              String ssoCookieDomain =
-                  fixNull(am.getValue("ssocookiedomain"));
-              if (ssoCookieDomain == null)
-              {   
-                  System.out.
-                  println("Missing ssocookiedomain argument...");
-                  Main.usage();
-                  System.exit(-1);
-              }
-              final String[] domains = ssoCookieDomain.split(",");
-              if (domains.length < 1)
-              {   
-                  System.out.
-                  println("Invalid ssocookiedomain argument: " + ssoCookieDomain);
-                  Main.usage();
-                  System.exit(-1);
-              }
-              for (String domain : domains)
-              {   
-                  SSOCookieCredential cred = new SSOCookieCredential(
-                      ssoCookieStr, domain.trim());
-                  subject.getPublicCredentials().add(cred);
-              }
+            String ssoCookieDomain =
+                    fixNull(am.getValue("ssocookiedomain"));
+            if (ssoCookieDomain == null)
+            {
+                System.out.
+                        println("Missing ssocookiedomain argument...");
+                Main.usage();
+                System.exit(-1);
+            }
+            final String[] domains = ssoCookieDomain.split(",");
+            if (domains.length < 1)
+            {
+                System.out.
+                        println("Invalid ssocookiedomain argument: " + ssoCookieDomain);
+                Main.usage();
+                System.exit(-1);
+            }
+            for (String domain : domains)
+            {
+                SSOCookieCredential cred = new SSOCookieCredential(
+                        ssoCookieStr, domain.trim());
+                subject.getPublicCredentials().add(cred);
+            }
 
         }
 
         final Boolean successfulStart =
                 Subject.doAs(subject, new PrivilegedAction<Boolean>()
-        {
-            @Override
-            public Boolean run()
-            {
-                try
                 {
-                    final GraphicUI graphicUploadUI =
-                            new GraphicUI(logLevel,
-                                          targetVOSpaceURI,
-                                          new VOSpaceClient(VOSPACE_SERVICE_URI),
-                                          subject);
-                    final ApplicationFrame frame =
-                            new ApplicationFrame(Constants.name,
-                                                 graphicUploadUI);
-                    frame.getContentPane().add(graphicUploadUI);
-                    frame.setVisible(true);
+                    @Override
+                    public Boolean run()
+                    {
+                        try
+                        {
+                            final GraphicUI graphicUploadUI =
+                                    new GraphicUI(logLevel,
+                                                  targetVOSpaceURI,
+                                                  new VOSpaceClient(VOSPACE_SERVICE_URI),
+                                                  subject);
+                            final ApplicationFrame frame =
+                                    new ApplicationFrame(Constants.name,
+                                                         graphicUploadUI);
+                            frame.getContentPane().add(graphicUploadUI);
+                            frame.setVisible(true);
 
-                    return Boolean.TRUE;
-                }
-                catch (Throwable t)
-                {
-                    t.printStackTrace();
-                    return Boolean.FALSE;
-                }
-            }
-        });
+                            return Boolean.TRUE;
+                        }
+                        catch (Throwable t)
+                        {
+                            t.printStackTrace();
+                            return Boolean.FALSE;
+                        }
+                    }
+                });
 
         if (!successfulStart)
         {
@@ -163,10 +163,14 @@ public class Main
     private static void usage()
     {
         System.out.println("java -jar cadcVOSClient.jar -h || --help");
-        System.out.println("java -jar cadcVOSClient.jar [-v|--verbose | -d|--debug | -q|--quiet ]");
-        System.out.println("          --dest=<VOSpace URI to upload the directory to>");
-        System.out.println("          --ssocookie=<cookie value to use in sso authentication>");
-        System.out.println("          --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)>");
+        System.out
+                .println("java -jar cadcVOSClient.jar [-v|--verbose | -d|--debug | -q|--quiet ]");
+        System.out
+                .println("          --dest=<VOSpace URI to upload the directory to>");
+        System.out
+                .println("          --ssocookie=<cookie value to use in sso authentication>");
+        System.out
+                .println("          --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)>");
         System.out.println();
     }
 }

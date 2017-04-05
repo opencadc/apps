@@ -85,29 +85,29 @@
 
   <resources>
     <j2se version="1.7+" initial-heap-size="64m" max-heap-size="256m"/>
-    <jar href="https://jcenter.bintray.com/org/opencadc/cadc-upload-manager/1.0.3/:cadc-upload-manager-1.0.3.jar"/>
-    <jar href="aopalliance.jar"/>
-    <jar href="cadc-app-kit.jar"/>
-    <jar href="cadc-log.jar"/>
-    <jar href="cadc-registry.jar"/>
-    <jar href="cadc-util.jar"/>
-    <jar href="cadc-uws.jar"/>
-    <jar href="cadc-vos.jar"/>
-    <jar href="commons-logging.jar"/>
-    <jar href="javax.servlet-api.jar"/>
-    <jar href="jdom2.jar"/>
-    <jar href="json.jar"/>
-    <jar href="log4j.jar"/>
-    <jar href="spring-beans.jar"/>
-    <jar href="spring-context.jar"/>
-    <jar href="spring-core.jar"/>
-    <jar href="spring-jdbc.jar"/>
-    <jar href="spring-tx.jar"/>
-    <jar href="xercesImpl.jar"/>
-    <jar href="xml-apis.jar"/>
+    <jar href="https://bintray.com/opencadc/software/download_file?file_path=org%2Fopencadc%2Fcadc-upload-manager%2F1.0.3%2Fcadc-upload-manager-1.0.3.jar"/>
+    <!--<jar href="aopalliance.jar"/>-->
+    <!--<jar href="cadc-app-kit.jar"/>-->
+    <!--<jar href="cadc-log.jar"/>-->
+    <!--<jar href="cadc-registry.jar"/>-->
+    <!--<jar href="cadc-util.jar"/>-->
+    <!--<jar href="cadc-uws.jar"/>-->
+    <!--<jar href="cadc-vos.jar"/>-->
+    <!--<jar href="commons-logging.jar"/>-->
+    <!--<jar href="javax.servlet-api.jar"/>-->
+    <!--<jar href="jdom2.jar"/>-->
+    <!--<jar href="json.jar"/>-->
+    <!--<jar href="log4j.jar"/>-->
+    <!--<jar href="spring-beans.jar"/>-->
+    <!--<jar href="spring-context.jar"/>-->
+    <!--<jar href="spring-core.jar"/>-->
+    <!--<jar href="spring-jdbc.jar"/>-->
+    <!--<jar href="spring-tx.jar"/>-->
+    <!--<jar href="xercesImpl.jar"/>-->
+    <!--<jar href="xml-apis.jar"/>-->
   </resources>
 
-  <application-desc main-class="ca.nrc.cadc.vos.client.ui.Main">
+  <application-desc main-class="ca.nrc.cadc.ulm.client.ui.Main">
     <argument>--verbose</argument>
     <argument>--dest=$$destination$$</argument>
     
