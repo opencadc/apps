@@ -32,8 +32,6 @@ dependencies {
 
 def jnlpJars = file('build/tmp/jnlpJars/')
 
-test.enabled = false
-
 task extractJARs(type: Copy) {
     from configurations.compile.files; // flatten
     into jnlpJars
