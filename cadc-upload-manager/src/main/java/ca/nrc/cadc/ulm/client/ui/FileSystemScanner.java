@@ -75,6 +75,7 @@ import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import ca.nrc.cadc.net.NetUtil;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.vos.ContainerNode;
@@ -259,8 +260,8 @@ public class FileSystemScanner implements Runnable
         // HACK: replace windows backslashes with forward slashes
         // (rt ticket 62652)
         uriString = uriString.replace("\\", "/");
-        URI uri = new URI(uriString);
-        DataNode node = new DataNode(new VOSURI(uri));
+        final URI uri = URI.create(NetUtil.encode(uriString));
+        final DataNode node = new DataNode(new VOSURI(uri));
 
         // Add node and InputStream from file.
         VOSpaceCommand command = new UploadFile(node, file);

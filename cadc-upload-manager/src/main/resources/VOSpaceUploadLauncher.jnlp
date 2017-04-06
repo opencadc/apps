@@ -85,7 +85,7 @@
 
   <resources>
     <j2se version="1.6+" initial-heap-size="64m" max-heap-size="256m"/>
-    <jar href="https://bintray.com/opencadc/software/download_file?file_path=org%2Fopencadc%2Fcadc-upload-manager%2F1.0.6%2Fcadc-upload-manager-1.0.6.jar"/>
+    <jar href="$$upload-jar$$"/>
     <!--<jar href="aopalliance.jar"/>-->
     <!--<jar href="cadc-app-kit.jar"/>-->
     <!--<jar href="cadc-log.jar"/>-->

@@ -10,7 +10,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.0.7'
+version = '1.0.8'
 group = 'org.opencadc'
 sourceCompatibility = 1.7
 
@@ -29,44 +29,3 @@ dependencies {
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'
 }
-
-def jnlpJars = file('build/tmp/jnlpJars/')
-
-task extractJARs(type: Copy) {
-    from configurations.compile.files; // flatten
-    into jnlpJars
-    include '**/*.jar'
-    rename '(.+)-[^-]+', '$1.jar' // rename to remove version number
-}
-
-jar {
-    doFirst {
-        def jars = files(jnlpJars.listFiles().findAll {it.name.endsWith('.jar')})
-        jars.each { File file ->
-            println 'File: ' + file
-            ant.jar(destfile: 'build/resources/main/' + file.name, update: true) {
-                delegate.manifest {
-                    attribute(name: 'Application-Name', value: 'UploadManager')
-                    attribute(name: 'Entry-Point', value: 'ca.nrc.cadc.ulm.client.ui.Main')
-                    attribute(name: 'Permissions', value: 'all-permissions')
-                    attribute(name: 'codebase',
-                            value: '*.cadc-ccda.hia-iha.nrc-cnrc.gc.ca *.canfar.net *.canfar.phys.uvic.ca *.cadc.dao.nrc.ca')
-                    // TODO: figure out how to use this correctly
-                    //attribute(name: 'Application-Library-Allowable-Codebase',
-                    //    value: '*.cadc.dao.nrc.ca *.cadc-ccda.hia-iha.nrc-cnrc.gc.ca')
-                }
-            }
-        }
-    }
-
-    manifest {
-        attributes('Application-Name': 'UploadManager',
-                'Entry-Point': 'ca.nrc.cadc.ulm.client.ui.Main',
-                'Permissions': 'all-permissions',
-                'codebase': '*.cadc-ccda.hia-iha.nrc-cnrc.gc.ca *.canfar.net *.canfar.phys.uvic.ca *.cadc.dao.nrc.ca')
-        // TODO: figure out how to use this correctly
-        //attribute(name: 'Application-Library-Allowable-Codebase',
-        //    value: '*.cadc.dao.nrc.ca *.cadc-ccda.hia-iha.nrc-cnrc.gc.ca')
-    }
-
-}.dependsOn extractJARs
