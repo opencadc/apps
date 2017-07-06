@@ -70,14 +70,11 @@
 package ca.nrc.cadc.ulm.client.ui;
 
 import java.io.File;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
-
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.uws.ErrorSummary;
@@ -150,15 +147,15 @@ public class UploadFile implements VOSpaceCommand
         }
 
         // upload the file through a transfer
-        log.debug("Uploading file: " + file.getName() + " to "
-                  + dataNode.getUri());
-        List<Protocol> protocols = new ArrayList<>();
+        log.debug("Uploading file: " + file.getName() + " to " + dataNode.getUri());
 
-        final AccessControlContext acContext = AccessController.getContext();
-        final Subject subject = Subject.getSubject(acContext);
-        final boolean ssl = (subject != null) && !subject.getPrincipals(X500Principal.class).isEmpty();
+        final List<Protocol> protocols = new ArrayList<>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
 
-        protocols.add(ssl ? (new Protocol(VOS.PROTOCOL_HTTPS_PUT)) : (new Protocol(VOS.PROTOCOL_HTTP_PUT)));
+        if (AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject()) == AuthMethod.CERT)
+        {
+            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        }
 
         Transfer transfer = new Transfer(dataNode.getUri().getURI(),
                                          Direction.pushToVoSpace, null,
