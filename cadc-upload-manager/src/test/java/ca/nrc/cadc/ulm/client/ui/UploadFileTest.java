@@ -168,8 +168,10 @@ public class UploadFileTest
             VOSURI uri = new VOSURI(ROOT_URI + "/dataNode");
             DataNode dataNode = new DataNode(uri);
             testFile = FileLoader.fromClasspath("testFile");
-            testFile.setReadable(false);
-            new UploadFile(dataNode, testFile);
+            if (testFile.setReadable(false))
+            {
+                new UploadFile(dataNode, testFile);
+            }
             fail("expected an illegal argument exception");
         }
         catch (IllegalArgumentException e)
@@ -241,13 +243,9 @@ public class UploadFileTest
 
         EasyMock.expect(mockClient.createTransfer(transfer))
                 .andReturn(mockClientTransfer).once();
-        EasyMock.expect(mockClient.getSslSocketFactory()).andReturn(null)
-                .once();
         mockClientTransfer.setMaxRetries(Integer.MAX_VALUE);
         EasyMock.expectLastCall().once();
         mockClientTransfer.setTransferListener(transListener);
-        EasyMock.expectLastCall().once();
-        mockClientTransfer.setSSLSocketFactory(null);
         EasyMock.expectLastCall().once();
         mockClientTransfer.setFile(testFile);
         EasyMock.expectLastCall().once();

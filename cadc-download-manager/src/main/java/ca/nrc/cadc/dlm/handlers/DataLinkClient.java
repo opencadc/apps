@@ -124,10 +124,11 @@ public class DataLinkClient implements DownloadGenerator
     private static final String COL_NAME_ERR_MSG = "error_message";
     private static final String COL_NAME_SEMANTICS = "semantics";
 
-    private String runID;
-    private String cutout;
-    private boolean downloadOnly = false;
-    private String requestFail;
+    // Package private for tests.
+    String runID;
+    String cutout;
+    boolean downloadOnly = false;
+    String requestFail;
     
     private final RegistryClient regClient;
     private final DataLinkServiceResolver resolver;
@@ -151,7 +152,6 @@ public class DataLinkClient implements DownloadGenerator
         if (val != null && !val.isEmpty())
         {
             // transform to SODA CIRCLE or POLYGON param
-            StringBuilder sb = new StringBuilder();
             String str = val.get(0); // first only
             
             // strip off old STC-S pre amble and just get the numeric values
@@ -176,7 +176,11 @@ public class DataLinkClient implements DownloadGenerator
             }
             else if (dvals.size() >= 6)
             {
-                this.cutout = "POLYGON=" +  NetUtil.encode(daf.format(dvals.iterator()));
+                this.cutout = "POLYGON=" + NetUtil.encode(daf.format(dvals.iterator()));
+            }
+            else if ("spectralinterval".equalsIgnoreCase(tokens[0]))
+            {
+                this.cutout = "BAND=" + NetUtil.encode(daf.format(dvals.iterator()));
             }
             else
                 this.requestFail = "invalid parameter: cutout=" + str;

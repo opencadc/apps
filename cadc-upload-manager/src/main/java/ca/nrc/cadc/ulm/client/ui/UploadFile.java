@@ -70,15 +70,11 @@
 package ca.nrc.cadc.ulm.client.ui;
 
 import java.io.File;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
-
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.uws.ErrorSummary;
@@ -113,18 +109,19 @@ public class UploadFile implements VOSpaceCommand
         {
             throw new IllegalArgumentException("dataNode cannot be null.");
         }
-        if (file == null)
+        else if (file == null)
         {
             throw new IllegalArgumentException("file cannot be null.");
         }
-        if (file.isDirectory())
+        else if (file.isDirectory())
         {
             throw new IllegalArgumentException("not a file.");
         }
-        if (!file.canRead())
+        else if (!file.canRead())
         {
             throw new IllegalArgumentException("cannot read file.");
         }
+
         this.dataNode = dataNode;
         this.file = file;
     }
@@ -137,8 +134,7 @@ public class UploadFile implements VOSpaceCommand
         log.debug("Checking node: " + dataNode);
         try
         {
-            vospaceClient.getNode(dataNode.getUri().getPath(),
-                                  "limit=0&detail=min");
+            vospaceClient.getNode(dataNode.getUri().getPath(), "limit=0&detail=min");
         }
         catch (NodeNotFoundException e)
         {
@@ -151,31 +147,14 @@ public class UploadFile implements VOSpaceCommand
         }
 
         // upload the file through a transfer
-        log.debug("Uploading file: " + file.getName() + " to "
-                  + dataNode.getUri());
-        List<Protocol> protocols = new ArrayList<>();
+        log.debug("Uploading file: " + file.getName() + " to " + dataNode.getUri());
 
-        boolean ssl = false;
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
-        if (subject != null)
-        {
-            for (Principal p : subject.getPrincipals())
-            {
-                if (p instanceof X500Principal)
-                {
-                    ssl = true;
-                }
-            }
-        }
+        final List<Protocol> protocols = new ArrayList<>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
 
-        if (ssl)
+        if (AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject()) == AuthMethod.CERT)
         {
             protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        }
-        else
-        {
-            protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
         }
 
         Transfer transfer = new Transfer(dataNode.getUri().getURI(),
@@ -185,7 +164,6 @@ public class UploadFile implements VOSpaceCommand
 
         clientTransfer.setMaxRetries(Integer.MAX_VALUE);
         clientTransfer.setTransferListener(new VOSpaceTransferListener(false));
-        clientTransfer.setSSLSocketFactory(vospaceClient.getSslSocketFactory());
         clientTransfer.setFile(file);
 
         clientTransfer.runTransfer();
