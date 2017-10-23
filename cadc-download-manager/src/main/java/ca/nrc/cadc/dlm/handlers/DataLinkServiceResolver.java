@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,75 +67,70 @@
 
 package ca.nrc.cadc.dlm.handlers;
 
-
+import java.io.FileReader;
 import java.net.URI;
-import java.net.URL;
 import java.util.Properties;
 import org.apache.log4j.Logger;
 
 /**
  * Class to find the right DataLink service resourceIdentifier to use.
- * 
+ *
  * @author pdowler
  */
-public class DataLinkServiceResolver 
-{
-    private static final Logger log = Logger.getLogger(DataLinkServiceResolver.class);
-
+public class DataLinkServiceResolver {
     public static final String DEFAULT_KEY = DataLinkServiceResolver.class.getName() + ".resourceID";
-    
+    private static final Logger log = Logger.getLogger(DataLinkServiceResolver.class);
     private Properties props;
-    
-    public DataLinkServiceResolver()
-    {
-        String fname = DataLinkServiceResolver.class.getSimpleName() + ".properties";
-        try
-        {
-            
-            URL url = DataLinkServiceResolver.class.getClassLoader().getResource(fname);
+
+    public DataLinkServiceResolver() {
+        long start = System.currentTimeMillis();
+        String fname = System.getProperty("user.home") + "/config/" + DataLinkServiceResolver.class.getSimpleName() + ".properties";
+
+        try {
             this.props = new Properties();
-            props.load(url.openStream());
+            props.load(new FileReader(fname));
+        } catch (Exception ex) {
+            throw new RuntimeException("CONFIG: failed to read " + fname + " from config directory.");
+        } finally {
         }
-        catch (Exception ex)
-        {
-            throw new RuntimeException("CONFIG: failed to read " + fname + " from classpath");
-        }
-        finally { }
+
+        long dur = System.currentTimeMillis() - start;
+        log.debug("load time: " + dur + "ms");
     }
-    
+
     /**
      * Find the DataLink service resourceIdentifier for the specified publisherID.
      * The current implementation ignores the publisherID and simply looks up a
      * configured the service in a configuration file.
-     * 
+     *
      * @param publisherID
-     * @return 
+     * @return
      */
-    public URI getResourceID(URI publisherID)
-    {
+    public URI getResourceID(URI publisherID) {
         String key = DEFAULT_KEY;
-        
-        if ("ivo".equals(publisherID.getScheme()))
-        {
+
+        if ("ivo".equals(publisherID.getScheme())) {
             key = publisherID.getPath();
-            if (key.startsWith(("/")))
+            if (key.startsWith(("/"))) {
                 key = key.substring(1);
-        }
-        else if ("caom".equals(publisherID.getScheme()))
-        {
+            }
+        } else if ("caom".equals(publisherID.getScheme())) {
             String ssp = publisherID.getSchemeSpecificPart();
             String[] ss = ssp.split("/");
             key = ss[0];
         }
-        
+
         String val = props.getProperty(key);
         if (val == null) // unknown collection -> default
+        {
             val = props.getProperty(DEFAULT_KEY);
+        }
         log.debug("getResourceID: " + publisherID + " -> " + key + " -> " + val);
-        
-        if (val != null)
+
+        if (val != null) {
             return URI.create(val);
-        
+        }
+
         log.debug("not found: " + key);
         return null;
     }
