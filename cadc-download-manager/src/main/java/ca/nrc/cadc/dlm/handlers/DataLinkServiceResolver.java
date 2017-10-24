@@ -71,6 +71,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URI;
 import java.util.Properties;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -79,24 +80,27 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DataLinkServiceResolver {
-    public static final String DEFAULT_KEY = DataLinkServiceResolver.class.getName() + ".resourceID";
+    static final String DEFAULT_KEY = DataLinkServiceResolver.class.getName() + ".resourceID";
     private static final Logger log = Logger.getLogger(DataLinkServiceResolver.class);
-    private static final String RESOURCEID_DEFAULT = "ivo://cadc.nrc.ca/caom2ops";
+    private static final String RESOURCE_ID_DEFAULT = "ivo://cadc.nrc.ca/caom2ops";
 
-    private Properties props;
+    private final Properties props = new Properties();
 
     public DataLinkServiceResolver() {
+        this(System.getProperty("user.home") + "/config/" + DataLinkServiceResolver.class.getSimpleName() +
+            ".properties");
+    }
+
+    DataLinkServiceResolver(final String configFileName) {
         long start = System.currentTimeMillis();
-        String fname = System.getProperty("user.home") + "/config/" + DataLinkServiceResolver.class.getSimpleName() + ".properties";
 
         try {
-            this.props = new Properties();
-            props.load(new FileReader(fname));
+            props.load(new FileReader(configFileName));
         } catch (FileNotFoundException ffe) {
-            props.setProperty(DEFAULT_KEY, RESOURCEID_DEFAULT);
+            props.setProperty(DEFAULT_KEY, RESOURCE_ID_DEFAULT);
         } catch (Exception ex) {
-            throw new RuntimeException("CONFIG: failed to read " + fname + " from config directory.");
-        } finally {
+            throw new RuntimeException(String.format("CONFIG: failed to read %s from config directory.",
+                configFileName));
         }
 
         long dur = System.currentTimeMillis() - start;
@@ -108,32 +112,29 @@ public class DataLinkServiceResolver {
      * The current implementation ignores the publisherID and simply looks up a
      * configured the service in a configuration file.
      *
-     * @param publisherID
-     * @return
+     * @param publisherID The URI to resolve a link for.
+     * @return URI instance, or null if no value found.
      */
     public URI getResourceID(URI publisherID) {
-        String key = DEFAULT_KEY;
+        final String key;
 
         if ("ivo".equals(publisherID.getScheme())) {
-            key = publisherID.getPath();
-            if (key.startsWith(("/"))) {
-                key = key.substring(1);
-            }
+            final String publisherIDPath = publisherID.getPath();
+            key = publisherIDPath.startsWith("/") ? publisherIDPath.substring(1) : publisherIDPath;
         } else if ("caom".equals(publisherID.getScheme())) {
             String ssp = publisherID.getSchemeSpecificPart();
             String[] ss = ssp.split("/");
             key = ss[0];
+        } else {
+            key = DEFAULT_KEY;
         }
 
-        String val = props.getProperty(key);
-        if (val == null) // unknown collection -> default
-        {
-            val = props.getProperty(DEFAULT_KEY);
-        }
+        final String val = props.containsKey(key) ? props.getProperty(key) : props.getProperty(DEFAULT_KEY);
+
         log.debug("getResourceID: " + publisherID + " -> " + key + " -> " + val);
 
         if (val != null) {
-            return URI.create(val);
+            return URI.create(val.trim());
         }
 
         log.debug("not found: " + key);
