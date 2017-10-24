@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.dlm.handlers;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URI;
 import java.util.Properties;
@@ -80,6 +81,8 @@ import org.apache.log4j.Logger;
 public class DataLinkServiceResolver {
     public static final String DEFAULT_KEY = DataLinkServiceResolver.class.getName() + ".resourceID";
     private static final Logger log = Logger.getLogger(DataLinkServiceResolver.class);
+    private static final String RESOURCEID_DEFAULT =  "ivo://cadc.nrc.ca/caom2ops";
+    private static final String RESOURCEID_KEY = "ca.nrc.cadc.dlm.handlers.DataLinkServiceResolver.resourceID";
     private Properties props;
 
     public DataLinkServiceResolver() {
@@ -89,6 +92,8 @@ public class DataLinkServiceResolver {
         try {
             this.props = new Properties();
             props.load(new FileReader(fname));
+        } catch (FileNotFoundException ffe) {
+            props.setProperty(RESOURCEID_KEY,RESOURCEID_DEFAULT);
         } catch (Exception ex) {
             throw new RuntimeException("CONFIG: failed to read " + fname + " from config directory.");
         } finally {
