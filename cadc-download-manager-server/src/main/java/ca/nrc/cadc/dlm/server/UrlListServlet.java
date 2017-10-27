@@ -70,21 +70,17 @@
 package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthMethod;
-
+import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
-
+import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import ca.nrc.cadc.dlm.DownloadDescriptor;
-import ca.nrc.cadc.dlm.DownloadUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -92,8 +88,7 @@ import java.util.Map;
  *
  * @author adriand
  */
-public class UrlListServlet extends HttpServlet
-{
+public class UrlListServlet extends HttpServlet {
     public static final String FILE_LIST_TARGET = "/urlList";
     private static final long serialVersionUID = 201208221730L;
 
@@ -109,38 +104,33 @@ public class UrlListServlet extends HttpServlet
     @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response) throws ServletException,
-                                                               IOException
-    {
-        String uris = (String) request.getAttribute("uris");
-        String params = (String) request.getAttribute("params");
-
-        List<String> uriList = DownloadUtil.decodeListURI(uris);
-        Map<String, List<String>> paramMap = DownloadUtil
-                .decodeParamMap(params);
+        IOException {
 
         response.setContentType("text/plain");
         response.setHeader("Content-Disposition",
-                           "attachement;filename=\"cadcUrlList.txt\"");
+            "attachement;filename=\"cadcUrlList.txt\"");
 
         // force auth method
         List<String> forceAuth = new ArrayList<>(1);
         forceAuth.add(AuthMethod.PASSWORD.getValue());
+
+        String params = (String) request.getAttribute("params");
+        Map<String, List<String>> paramMap = DownloadUtil
+            .decodeParamMap(params);
         paramMap.put("auth", forceAuth);
 
+        String uris = (String) request.getAttribute("uris");
+        List<String> uriList = DownloadUtil.decodeListURI(uris);
         for (Iterator<DownloadDescriptor> iter =
              DownloadUtil.iterateURLs(uriList, paramMap, true); iter
-                     .hasNext(); )
-        {
+                 .hasNext(); ) {
             final DownloadDescriptor dd = iter.next();
 
-            if (dd.url != null)
-            {
+            if (dd.url != null) {
                 response.getOutputStream().println(dd.url.toString());
-            }
-            else
-            {
+            } else {
                 response.getOutputStream().println("ERROR\t" + dd.uri + "\t"
-                                                   + dd.error);
+                    + dd.error);
             }
         }
 

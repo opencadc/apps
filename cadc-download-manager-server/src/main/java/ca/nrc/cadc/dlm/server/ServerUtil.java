@@ -72,7 +72,6 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.util.StringUtil;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -89,41 +87,32 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class ServerUtil
-{
-    private static final Logger log = Logger.getLogger(ServerUtil.class);
-
+public class ServerUtil {
     // public API for DownloadManager is to accept and interpret these two params
     static final String PARAM_URI = "uri";
     static final String PARAM_URILIST = "uris";
     static final String PARAM_PARAMLIST = "params";
     static final String PARAM_METHOD = "method";
-
     static final List<String> INTERNAL_PARAMS = new ArrayList<String>();
+    private static final Logger log = Logger.getLogger(ServerUtil.class);
 
-    static
-    {
+    static {
         INTERNAL_PARAMS.add(PARAM_URI);
         INTERNAL_PARAMS.add(PARAM_URILIST);
         INTERNAL_PARAMS.add(PARAM_PARAMLIST);
         INTERNAL_PARAMS.add(PARAM_METHOD);
     }
 
-    private ServerUtil()
-    {
+    private ServerUtil() {
     }
 
-    public static String getCodebase(HttpServletRequest request)
-    {
-        try
-        {
+    public static String getCodebase(HttpServletRequest request) {
+        try {
             URL req = new URL(request.getRequestURL().toString());
             String ret = req.getProtocol() + "://" + req.getHost();
             ret += request.getContextPath();
             return ret;
-        }
-        catch (Throwable oops)
-        {
+        } catch (Throwable oops) {
             log.error("failed to generate codebase URL", oops);
         }
         return null;
@@ -136,26 +125,21 @@ public class ServerUtil
      * @return
      */
     public static Map<String, List<String>> getParameters(
-            HttpServletRequest request)
-    {
+        HttpServletRequest request) {
         // internal repost
         String params = request.getParameter("params");
-        if (params != null)
-        {
+        if (params != null) {
             return DownloadUtil.decodeParamMap(params);
         }
 
         // original post
         Map<String, List<String>> paramMap = new TreeMap<>();
         Enumeration e = request.getParameterNames();
-        while (e.hasMoreElements())
-        {
+        while (e.hasMoreElements()) {
             String key = (String) e.nextElement();
-            if (!INTERNAL_PARAMS.contains(key))
-            {
+            if (!INTERNAL_PARAMS.contains(key)) {
                 String[] values = request.getParameterValues(key);
-                if (values != null && values.length > 0)
-                {
+                if (values != null && values.length > 0) {
                     paramMap.put(key, Arrays.asList(values));
                 }
             }
@@ -169,13 +153,11 @@ public class ServerUtil
      * @param request
      * @return
      */
-    public static List<String> getURIs(HttpServletRequest request)
-    {
+    public static List<String> getURIs(HttpServletRequest request) {
         // internal repost
         String uris = request.getParameter("uris");
 
-        if (uris != null)
-        {
+        if (uris != null) {
             return DownloadUtil.decodeListURI(uris);
         }
 
@@ -184,12 +166,9 @@ public class ServerUtil
 
         List<String> ret = new ArrayList<>();
 
-        if (uriParams != null)
-        {
-            for (String u : uriParams)
-            {
-                if (StringUtil.hasText(u))
-                {
+        if (uriParams != null) {
+            for (String u : uriParams) {
+                if (StringUtil.hasText(u)) {
                     ret.add(u);
                 }
             }

@@ -72,55 +72,50 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
+import java.io.IOException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Download pre-processor for Java WebStart download method.
+ *
  * @author adriand
  */
-public class JavaWebStartServlet extends HttpServlet
-{
+public class JavaWebStartServlet extends HttpServlet {
     private static final long serialVersionUID = 201208071730L;
-    
+
     private static final Logger log = Logger.getLogger(JavaWebStartServlet.class);
-    
+
 
     /**
-     * 
      * @param config
      * @throws javax.servlet.ServletException
      */
     public void init(ServletConfig config)
-        throws ServletException
-    {
+        throws ServletException {
         super.init(config);
         log.setLevel(Level.DEBUG);
     }
-    
+
     /**
      * Handle POSTed download request directed to the Java WebStart download method.
-     * 
+     *
      * @param request
      * @param response
      * @throws javax.servlet.ServletException
      * @throws java.io.IOException
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException
-    {
+        throws ServletException, IOException {
         // encode & in the param list for safe use in XML
         String params = (String) request.getAttribute("params");
-        if (params != null)
-        {
+        if (params != null) {
             params = params.replaceAll("&", "&amp;");
             request.setAttribute("params", params);
         }
@@ -129,7 +124,7 @@ public class JavaWebStartServlet extends HttpServlet
         String codebase = ServerUtil.getCodebase(request);
         request.setAttribute("codebase", codebase);
         log.debug("codebase attribute: " + codebase);
-        
+
         // origin serverName for applet and jnlp deployment
         //String  serverName = NetUtil.getServerName(JavaWebStartServlet.class);
         //request.setAttribute("serverName", serverName);
@@ -141,15 +136,16 @@ public class JavaWebStartServlet extends HttpServlet
         disp.forward(request, response);
     }
 
-    private void setRegistryClientProps(HttpServletRequest request)
-    {
+    private void setRegistryClientProps(HttpServletRequest request) {
         String local = System.getProperty(RegistryClient.class.getName() + ".local");
         String host = System.getProperty(RegistryClient.class.getName() + ".host");
-        if (local != null && "true".equals(local))
+        if (local != null && "true".equals(local)) {
             host = NetUtil.getServerName(JavaWebStartServlet.class);
-        if (host != null)
+        }
+        if (host != null) {
             request.setAttribute("targetHost", host);
+        }
     }
 
-    
+
 }
