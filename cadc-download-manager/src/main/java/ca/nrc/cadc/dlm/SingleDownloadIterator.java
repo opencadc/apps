@@ -74,35 +74,29 @@ import java.net.URL;
 import java.util.Iterator;
 
 /**
- *
  * @author pdowler
  */
-public class SingleDownloadIterator implements Iterator<DownloadDescriptor>
-{
+public class SingleDownloadIterator implements Iterator<DownloadDescriptor> {
     URI uri;
     URL url;
 
-    public SingleDownloadIterator(URI uri, URL url)
-    {
+    public SingleDownloadIterator(URI uri, URL url) {
         this.uri = uri;
         this.url = url;
     }
 
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         return (uri != null);
     }
 
-    public DownloadDescriptor next()
-    {
+    public DownloadDescriptor next() {
         DownloadDescriptor ret = new DownloadDescriptor(uri.toASCIIString(), url);
         uri = null;
         url = null;
         return ret;
     }
 
-    public void remove()
-    {
+    public void remove() {
         throw new UnsupportedOperationException();
     }
 }

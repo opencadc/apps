@@ -74,21 +74,19 @@ import java.util.Map;
 
 /**
  * An interface for UI behaviour.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public interface UserInterface
-{
-    
+public interface UserInterface {
+
     String configSection = "downloads";
     String threadCountConfigKey = "downloadManager.threadCount";
     String retryConfigKey = "downloadManager.retryWhenServerBusy";
     String downloadDirConfigKey = "downloadManager.downloadDir";
     String debugKey = "downloadManager.debug";
-    
-    public void add(List<String> uris, Map<String,List<String>> params);
-    
+
+    public void add(List<String> uris, Map<String, List<String>> params);
+
     void start();
 
 }

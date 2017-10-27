@@ -71,22 +71,21 @@ package ca.nrc.cadc.dlm.client;
 
 /**
  * The interface defining the behaviour required as a Thread controller.
- * @author majorb
  *
+ * @author majorb
  */
-public interface ThreadControl
-{
-    
-    void setValue(Integer value);
-    
+public interface ThreadControl {
+
     Integer getValue();
-    
+
+    void setValue(Integer value);
+
     void addListener(ThreadControlListener listener);
-    
+
     void removeListener(ThreadControlListener listener);
-    
+
     void start();
-    
+
     void stop();
-    
+
 }

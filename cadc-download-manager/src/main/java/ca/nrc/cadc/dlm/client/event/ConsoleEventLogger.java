@@ -78,17 +78,14 @@ import ca.nrc.cadc.net.event.TransferListener;
  *
  * @author pdowler
  */
-public class ConsoleEventLogger implements TransferListener
-{
+public class ConsoleEventLogger implements TransferListener {
     public ConsoleEventLogger() { }
     
-    public void transferEvent(TransferEvent e)
-    {
+    public void transferEvent(TransferEvent e) {
         System.out.println("[ConsoleEventLogger] event: " + e); 
     }
 
-    public String getEventHeader()
-    {
+    public String getEventHeader() {
         return null;
     }
 }

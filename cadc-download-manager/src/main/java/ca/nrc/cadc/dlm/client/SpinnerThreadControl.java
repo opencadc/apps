@@ -94,7 +94,6 @@ package ca.nrc.cadc.dlm.client;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -103,69 +102,54 @@ import javax.swing.event.ChangeListener;
 
 /**
  * Defines the behaviour of the thread control from a JSpinner widget.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public class SpinnerThreadControl extends JSpinner implements ThreadControl, ChangeListener
-{
-    
+public class SpinnerThreadControl extends JSpinner implements ThreadControl, ChangeListener {
+
     private static final long serialVersionUID = 7257282177640803129L;
-    
+
     List<ThreadControlListener> listeners = new ArrayList<ThreadControlListener>();
-    
-    SpinnerThreadControl(int initialThreadCount, int maxThreadCount)
-    {
+
+    SpinnerThreadControl(int initialThreadCount, int maxThreadCount) {
         super();
         SpinnerModel sm = new SpinnerNumberModel(new Integer(initialThreadCount), new Integer(1), new Integer(maxThreadCount), new Integer(1));
         this.setModel(sm);
         sm.addChangeListener(this);
         listeners = new ArrayList<ThreadControlListener>();
-        
+
     }
-    
-    
-    public void setValue(Integer value)
-    {
+
+    public Integer getValue() {
+        return (Integer) super.getValue();
+    }
+
+    public void setValue(Integer value) {
         super.setValue(value);
     }
-    
-    public Integer getValue()
-    {
-        return (Integer)super.getValue();
-    }
-    
-    
-    public void addListener(ThreadControlListener listener)
-    {
-        if (!listeners.contains(listener))
-        {
+
+    public void addListener(ThreadControlListener listener) {
+        if (!listeners.contains(listener)) {
             listeners.add(listener);
         }
     }
-    
-    public void removeListener(ThreadControlListener listener)
-    {
-        if (listeners.contains(listener))
-        {
+
+    public void removeListener(ThreadControlListener listener) {
+        if (listeners.contains(listener)) {
             listeners.remove(listener);
         }
     }
-    
-    public void start()
-    {
+
+    public void start() {
         this.setEnabled(true);
     }
-    
-    public void stop()
-    {
+
+    public void stop() {
         this.setEnabled(false);
     }
-    
-    public void stateChanged(ChangeEvent e)
-    {
-        for (int i=0; i<listeners.size(); i++)
-        {
+
+    public void stateChanged(ChangeEvent e) {
+        for (int i = 0; i < listeners.size(); i++) {
             listeners.get(i).threadValueChanged(getValue());
         }
     }

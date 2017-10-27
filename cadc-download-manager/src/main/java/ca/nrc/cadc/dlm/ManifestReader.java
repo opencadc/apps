@@ -79,8 +79,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-
-import ca.nrc.cadc.dlm.DownloadDescriptor;
 import org.apache.log4j.Logger;
 
 /**
@@ -95,116 +93,102 @@ import org.apache.log4j.Logger;
  * https). If the first token is ERROR, the second token is an error message. The
  * third (optional) token is a relative path to store the downloaded file in; the
  * last path element is the filename and all preceeding elements are assumed to be
- * directory names. 
+ * directory names.
  *
  * @author pdowler
  */
-public class ManifestReader
-{
+public class ManifestReader {
+    public static final String CONTENT_TYPE = "application/x-download-manifest+txt";
     private static Logger log = Logger.getLogger(ManifestReader.class);
 
-    public static final String CONTENT_TYPE = "application/x-download-manifest+txt";
+    public ManifestReader() {
+    }
 
-    public ManifestReader() { }
-
-    public Iterator<DownloadDescriptor> read(String content)
-    {
+    public Iterator<DownloadDescriptor> read(String content) {
         return read(new StringReader(content));
     }
-    
-    public Iterator<DownloadDescriptor> read(InputStream istream)
-    {
+
+    public Iterator<DownloadDescriptor> read(InputStream istream) {
         return read(new InputStreamReader(istream));
     }
 
-    public Iterator<DownloadDescriptor> read(Reader r)
-    {
+    public Iterator<DownloadDescriptor> read(Reader r) {
         return new ManifestIterator(r);
     }
 
-    private class ManifestIterator implements Iterator<DownloadDescriptor>
-    {
+    private class ManifestIterator implements Iterator<DownloadDescriptor> {
         private BufferedReader in;
         private DownloadDescriptor cur;
 
-        private ManifestIterator(Reader r)
-        {
+        private ManifestIterator(Reader r) {
             this.in = new BufferedReader(r);
             step(true);
         }
 
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             return (cur != null);
         }
 
-        public DownloadDescriptor next()
-        {
-            if (cur == null)
+        public DownloadDescriptor next() {
+            if (cur == null) {
                 throw new NoSuchElementException();
+            }
             DownloadDescriptor ret = cur;
             step(false);
             return ret;
         }
 
-        public void remove()
-        {
+        public void remove() {
             throw new UnsupportedOperationException();
         }
 
         // assign the next descriptor to cur
-        private void step(boolean init)
-        {
-            if (!init && cur == null)
+        private void step(boolean init) {
+            if (!init && cur == null) {
                 return;
+            }
 
             String arg = null;
             String dest = null;
-            try
-            {
+            try {
                 String line = in.readLine();
-                while (line != null) // skip blank lines
-                {
+                while (line != null) { // skip blank lines
                     line = line.trim();
-                    if (line.length() > 0)
+                    if (line.length() > 0) {
                         break; // found non-blank line
-                    else
+                    } else {
                         line = in.readLine();
+                    }
                 }
-                if (line == null)
-                {
+                if (line == null) {
                     cur = null;
-                    try { in.close(); }
-                    catch(IOException ignore) { }
+                    try {
+                        in.close();
+                    } catch (IOException ignore) {
+                        log.debug("Ignoring IOException: " + ignore);
+                    }
                     return;
                 }
                 log.debug("line: " + line);
                 String[] tokens = line.split("[\t]"); // tab-separated-value
                 String status = tokens[0];
-                if (tokens.length > 1)
+                if (tokens.length > 1) {
                     arg = tokens[1];
-                if (tokens.length > 2)
+                }
+                if (tokens.length > 2) {
                     dest = tokens[2];
-                if (DownloadDescriptor.OK.equals(status))
-                {
+                }
+                if (DownloadDescriptor.OK.equals(status)) {
                     URL url = new URL(arg);
                     cur = new DownloadDescriptor(null, url, dest);
-                }
-                else if (DownloadDescriptor.ERROR.equals(status))
-                {
+                } else if (DownloadDescriptor.ERROR.equals(status)) {
                     cur = new DownloadDescriptor(null, arg, dest);
-                }
-                else
-                {
+                } else {
                     cur = new DownloadDescriptor(null, "illegal start of line: " + status);
                 }
-            }
-            catch(MalformedURLException ex)
-            {
-                cur = new DownloadDescriptor(null, "illegal URL: "+ arg, dest);
-            }
-            catch(IOException ex)
-            {
+            } catch (MalformedURLException ex) {
+                cur = new DownloadDescriptor(null, "illegal URL: " + arg, dest);
+            } catch (IOException ex) {
                 throw new NoSuchElementException("failed to read a DownloadDescriptor: " + ex);
             }
             log.debug("step: " + cur);

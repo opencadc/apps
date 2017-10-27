@@ -69,22 +69,19 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
+import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
-import ca.nrc.cadc.util.StringUtil;
-
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -92,34 +89,21 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class DownloadUtil
-{
-    private static Logger log = Logger.getLogger(DownloadUtil.class);
-
+public class DownloadUtil {
     public static final String URI_SEPARATOR = " ";
     public static final String PARAM_SEPARATOR = "&";
+    private static Logger log = Logger.getLogger(DownloadUtil.class);
 
-    private DownloadUtil()
-    {
+    private DownloadUtil() {
     }
 
     // static classes for return values so we can put list operations in here 
     // and keep fine-grained error handling in app
 
-    public static class ParsedURI
-    {
-        public String str;
-        public URI uri;
-        public Throwable error;
-    }
-
-    public static String encodeListURI(List<String> uriList)
-    {
+    public static String encodeListURI(List<String> uriList) {
         StringBuilder uris = new StringBuilder();
-        for (String u : uriList)
-        {
-            if (uris.length() > 0)
-            {
+        for (String u : uriList) {
+            if (uris.length() > 0) {
                 uris.append(URI_SEPARATOR);
             }
             uris.append(u);
@@ -127,26 +111,20 @@ public class DownloadUtil
         return uris.toString();
     }
 
-    public static List<String> decodeListURI(String s)
-    {
-        if (!StringUtil.hasText(s))
-        {
+    public static List<String> decodeListURI(String s) {
+        if (!StringUtil.hasText(s)) {
             return new ArrayList<>();
         }
         String[] uris = s.split(URI_SEPARATOR);
         return Arrays.asList(uris);
     }
 
-    public static String encodeParamMap(Map<String, List<String>> paramMap)
-    {
+    public static String encodeParamMap(Map<String, List<String>> paramMap) {
         // separated list if key=value pairs
         StringBuilder params = new StringBuilder();
-        for (Map.Entry<String, List<String>> me : paramMap.entrySet())
-        {
-            for (String value : me.getValue())
-            {
-                if (params.length() > 0)
-                {
+        for (Map.Entry<String, List<String>> me : paramMap.entrySet()) {
+            for (String value : me.getValue()) {
+                if (params.length() > 0) {
                     params.append(PARAM_SEPARATOR);
                 }
                 params.append(me.getKey());
@@ -157,33 +135,26 @@ public class DownloadUtil
         return params.toString();
     }
 
-    public static Map<String, List<String>> decodeParamMap(String s)
-    {
+    public static Map<String, List<String>> decodeParamMap(String s) {
         String[] parts = null;
-        if (s != null)
-        {
+        if (s != null) {
             parts = s.split(PARAM_SEPARATOR);
         }
         return toParamMap(parts);
     }
 
-    private static Map<String, List<String>> toParamMap(String[] params)
-    {
+    private static Map<String, List<String>> toParamMap(String[] params) {
         Map<String, List<String>> paramSet =
-                new TreeMap<>(new CaseInsensitiveStringComparator());
-        if (params != null)
-        {
-            for (String p : params)
-            {
+            new TreeMap<>(new CaseInsensitiveStringComparator());
+        if (params != null) {
+            for (String p : params) {
                 log.debug("toParamMap: " + p);
                 String[] par = p.split("=");
-                if (par.length == 2)
-                {
+                if (par.length == 2) {
                     String key = par[0];
                     String val = par[1];
                     List<String> cur = paramSet.get(key);
-                    if (cur == null)
-                    {
+                    if (cur == null) {
                         cur = new ArrayList<>();
                         paramSet.put(key, cur);
                     }
@@ -195,53 +166,43 @@ public class DownloadUtil
     }
 
     public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris,
-                                                           Map<String, List<String>> params)
-    {
+                                                           Map<String, List<String>> params) {
         return iterateURLs(uris, params, false);
     }
 
     public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris,
                                                            Map<String, List<String>> params,
-                                                           final boolean removeDuplicates)
-    {
+                                                           final boolean removeDuplicates) {
         final List<ParsedURI> parsed = parseURIs(uris);
         final Set<URL> urls = new HashSet<>();
         final MultiDownloadGenerator gen = new MultiDownloadGenerator();
         gen.setParameters(params);
 
-        return new Iterator<DownloadDescriptor>()
-        {
+        return new Iterator<DownloadDescriptor>() {
             Iterator<ParsedURI> outer = parsed.iterator();
             Iterator<DownloadDescriptor> inner = null;
 
-            public boolean hasNext()
-            {
+            public boolean hasNext() {
                 return (inner != null || outer.hasNext());
             }
 
-            public DownloadDescriptor next()
-            {
-                if (!hasNext())
-                {
+            public DownloadDescriptor next() {
+                if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
 
-                if (inner != null)
-                {
+                if (inner != null) {
                     DownloadDescriptor dd = inner.next();
-                    if (!inner.hasNext())
-                    {
+                    if (!inner.hasNext()) {
                         inner = null;
                     }
                     if (removeDuplicates && dd.url != null && urls
-                            .contains(dd.url))
-                    {
+                        .contains(dd.url)) {
                         dd.status = DownloadDescriptor.ERROR;
                         dd.url = null;
                         dd.error = "duplicate URL";
                     }
-                    if (dd.url != null)
-                    {
+                    if (dd.url != null) {
                         urls.add(dd.url);
                     }
                     return dd;
@@ -249,55 +210,50 @@ public class DownloadUtil
 
                 ParsedURI cur = outer.next();
 
-                if (cur.error != null) // string -> URI fail
-                {
+                if (cur.error != null) { // string -> URI fail
                     return new DownloadDescriptor(cur.str,
-                                                  cur.error.toString());
+                        cur.error.toString());
                 }
-                try
-                {
+                try {
                     inner = gen.downloadIterator(cur.uri);
-                    if (inner.hasNext())
-                    {
+                    if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
                     // inner was empty
                     inner = null;
                     return new DownloadDescriptor(cur.uri.toString(),
-                                                  "no matching files");
-                }
-                catch (Throwable t)
-                {
+                        "no matching files");
+                } catch (Throwable t) {
                     return new DownloadDescriptor(cur.uri.toString(),
-                                                  t.toString());
+                        t.toString());
                 }
             }
 
-            public void remove()
-            {
+            public void remove() {
                 throw new UnsupportedOperationException();
             }
         };
 
     }
 
-    private static List<ParsedURI> parseURIs(List<String> uris)
-    {
+    private static List<ParsedURI> parseURIs(List<String> uris) {
         ArrayList ret = new ArrayList<>();
-        for (String s : uris)
-        {
+        for (String s : uris) {
             ParsedURI pu = new ParsedURI();
             pu.str = s;
-            try
-            {
+            try {
                 pu.uri = new URI(s);
-            }
-            catch (Throwable t)
-            {
+            } catch (Throwable t) {
                 pu.error = t;
             }
             ret.add(pu);
         }
         return ret;
+    }
+
+    public static class ParsedURI {
+        public String str;
+        public URI uri;
+        public Throwable error;
     }
 }

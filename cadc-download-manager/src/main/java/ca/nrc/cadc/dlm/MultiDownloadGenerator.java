@@ -81,91 +81,70 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 
 /**
- *
  * @author pdowler
  */
-public class MultiDownloadGenerator implements DownloadGenerator
-{
+public class MultiDownloadGenerator implements DownloadGenerator {
     private static final Logger log = Logger.getLogger(MultiDownloadGenerator.class);
 
     private static final String CACHE_FILENAME = MultiDownloadGenerator.class.getSimpleName() + ".properties";
 
-    private final Map<String,DownloadGenerator> generators = new HashMap<String,DownloadGenerator>();
+    private final Map<String, DownloadGenerator> generators = new HashMap<String, DownloadGenerator>();
     private Map<String, List<String>> params;
-    
-    public MultiDownloadGenerator()
-    {
+
+    public MultiDownloadGenerator() {
         this(MultiSchemeHandler.class.getClassLoader().getResource(CACHE_FILENAME));
     }
 
-    public MultiDownloadGenerator(URL url)
-    {
-        if (url == null)
-        {
+    public MultiDownloadGenerator(URL url) {
+        if (url == null) {
             log.debug("config URL is null: no custom scheme support");
             return;
         }
 
-        try
-        {
+        try {
             Properties props = new Properties();
             props.load(url.openStream());
             Iterator<String> i = props.stringPropertyNames().iterator();
-            while ( i.hasNext() )
-            {
+            while (i.hasNext()) {
                 String scheme = i.next();
                 String cname = props.getProperty(scheme);
-                try
-                {
+                try {
                     log.debug("loading: " + cname);
                     Class c = Class.forName(cname);
                     log.debug("instantiating: " + c);
                     DownloadGenerator gen = (DownloadGenerator) c.newInstance();
                     generators.put(scheme, gen);
                     log.debug("success: " + scheme + " is supported");
-                }
-                catch(Exception fail)
-                {
+                } catch (Exception fail) {
                     log.warn("failed to load " + cname + ", reason: " + fail);
                 }
             }
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             log.error("failed to read config from " + url, ex);
-        }
-        finally
-        {
-
         }
     }
 
-    public void setParameters(Map<String, List<String>> params)
-    {
+    public void setParameters(Map<String, List<String>> params) {
         this.params = params;
     }
 
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri)
-    {
-        if (uri == null)
+    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+        if (uri == null) {
             return null;
+        }
 
         DownloadGenerator gen = generators.get(uri.getScheme());
-        if (gen != null)
-        {
+        if (gen != null) {
             gen.setParameters(params); // NOT THREAD SAFE use of the DownloadGenerator
             return gen.downloadIterator(uri);
         }
 
         // fallback: hope for the best
-        try
-        {
+        try {
             log.debug("fallback: " + uri);
             URL url = uri.toURL();
             return new SingleDownloadIterator(uri, url);
-        }
-        catch(MalformedURLException mex)
-        {
+        } catch (MalformedURLException mex) {
             return new FailIterator(uri, "unknown URI scheme: " + uri.getScheme());
         }
     }

@@ -73,14 +73,13 @@ import java.net.URL;
 
 /**
  * Description of a download.
- * 
+ *
  * @author pdowler
  */
-public class DownloadDescriptor
-{
+public class DownloadDescriptor {
     public static final String OK = "OK";
     public static final String ERROR = "ERROR";
-    
+
     public String status;
     public String uri;
     public URL url;
@@ -92,32 +91,29 @@ public class DownloadDescriptor
      *
      * @param url the URL to download the data from
      */
-    public DownloadDescriptor(URL url)
-    {
+    public DownloadDescriptor(URL url) {
         this(null, url, null);
     }
 
     /**
      * Constructor.
-     * 
+     *
      * @param uri original URI (optional)
      * @param url the URL to download the data from
      */
-    public DownloadDescriptor(String uri, URL url)
-    {
+    public DownloadDescriptor(String uri, URL url) {
         this(uri, url, null);
     }
 
     /**
      * Constructor. A download URL may be derived from a URI; the URI is
      * not used but just attached to aid in error reporting.
-     * 
-     * @param uri original URI (optional)
-     * @param url the URL to download the data from
+     *
+     * @param uri         original URI (optional)
+     * @param url         the URL to download the data from
      * @param destination the relative path where file should be stored (optional)
      */
-    public DownloadDescriptor(String uri, URL url, String destination)
-    {
+    public DownloadDescriptor(String uri, URL url, String destination) {
         this.status = OK;
         this.uri = uri;
         this.url = url;
@@ -128,24 +124,22 @@ public class DownloadDescriptor
      * Constructor for a download that could not be performed. The error message
      * describes the reason for failure.
      *
-     * @param uri original URI (optional)
+     * @param uri   original URI (optional)
      * @param error message describing the failure
      */
-    public DownloadDescriptor(String uri, String error)
-    {
+    public DownloadDescriptor(String uri, String error) {
         this(uri, error, null);
     }
 
     /**
      * Constructor for a download that could not be performed. The error message
      * describes the reason for failure.
-     * 
-     * @param uri (optional)
-     * @param error message describing the failure
+     *
+     * @param uri         (optional)
+     * @param error       message describing the failure
      * @param destination the relative path where file would have been stored (optional)
      */
-    public DownloadDescriptor(String uri, String error, String destination)
-    {
+    public DownloadDescriptor(String uri, String error, String destination) {
         this.status = ERROR;
         this.uri = uri;
         this.error = error;
@@ -153,13 +147,13 @@ public class DownloadDescriptor
     }
 
     @Override
-    public String toString()
-    {
-        if (url != null)
+    public String toString() {
+        if (url != null) {
             return this.getClass().getSimpleName() + "["
                 + status + "," + uri + "," + url + "," + destination + "]";
+        }
         return this.getClass().getSimpleName() + "["
-                + status + "," + uri + "," + error + "," + destination + "]";
+            + status + "," + uri + "," + error + "," + destination + "]";
     }
 
 }

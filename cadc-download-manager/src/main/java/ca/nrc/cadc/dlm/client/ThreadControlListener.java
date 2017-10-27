@@ -71,13 +71,11 @@ package ca.nrc.cadc.dlm.client;
 
 /**
  * Implementing classes can receive thread value changed events.
- *  
- * @author majorb
  *
+ * @author majorb
  */
-public interface ThreadControlListener
-{
-    
+public interface ThreadControlListener {
+
     void threadValueChanged(Integer newValue);
 
 }

@@ -74,33 +74,30 @@ import java.util.Iterator;
 
 /**
  * Convenience class to return an error state download descritpor.
+ *
  * @author pdowler
  */
-public class FailIterator implements Iterator<DownloadDescriptor>
-{
+public class FailIterator implements Iterator<DownloadDescriptor> {
     URI uri;
     String msg;
 
-    public FailIterator(URI uri, String msg)
-    {
+    public FailIterator(URI uri, String msg) {
         this.uri = uri;
         this.msg = msg;
     }
 
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
         return (uri != null);
     }
 
-    public DownloadDescriptor next()
-    {
+    public DownloadDescriptor next() {
         DownloadDescriptor ret = new DownloadDescriptor(uri.toASCIIString(), msg);
-        uri = null;msg = null;
+        uri = null;
+        msg = null;
         return ret;
     }
 
-    public void remove()
-    {
+    public void remove() {
         throw new UnsupportedOperationException();
     }
 }
