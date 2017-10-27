@@ -72,7 +72,6 @@ package ca.nrc.cadc.ulm.client.ui;
 /**
  * @author jenkinsd
  */
-public class Constants
-{
-    public static String name ="UploadManager";
+public class Constants {
+    public static String name = "UploadManager";
 }

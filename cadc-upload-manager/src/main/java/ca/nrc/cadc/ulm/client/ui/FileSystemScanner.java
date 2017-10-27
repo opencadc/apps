@@ -66,30 +66,28 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.ulm.client.ui;
 
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.vos.ContainerNode;
+import ca.nrc.cadc.vos.DataNode;
+import ca.nrc.cadc.vos.VOSURI;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.Queue;
-
-import ca.nrc.cadc.net.NetUtil;
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.vos.ContainerNode;
-import ca.nrc.cadc.vos.DataNode;
-import ca.nrc.cadc.vos.VOSURI;
 
 /**
  * Starting from the specified source directory or file, creates Node commands
  * to replicate the file structure in VOSpace.
- * 
+ *
  * @author jburke
  */
-public class FileSystemScanner implements Runnable
-{
+public class FileSystemScanner implements Runnable {
     private static Logger log = Logger.getLogger(FileSystemScanner.class);
 
     // Queue to hold the Node commands
@@ -104,14 +102,13 @@ public class FileSystemScanner implements Runnable
 
     /**
      * Constructor.
-     * 
-     * @param sourceFile    root of the file structure to be uploaded.
-     * @param targetURI     target node URI.
-     * @param commandQueue  CommandQueue containing VOSpaceCommands.
+     *
+     * @param sourceFile   root of the file structure to be uploaded.
+     * @param targetURI    target node URI.
+     * @param commandQueue CommandQueue containing VOSpaceCommands.
      */
     public FileSystemScanner(File sourceFile, VOSURI targetURI,
-                             CommandQueue commandQueue)
-    {
+                             CommandQueue commandQueue) {
         this.sourceFile = sourceFile;
         this.targetURI = targetURI;
         this.commandQueue = commandQueue;
@@ -121,76 +118,52 @@ public class FileSystemScanner implements Runnable
     /**
      * Runs the scanner.
      */
-    public void run()
-    {
-        try
-        {
+    public void run() {
+        try {
             commandQueue.startProduction();
 
             // Queue to hold file paths.
             final Queue<String> filePathQueue = new LinkedList<>();
             filePathQueue.add(sourceFile.getPath());
 
-            while (!filePathQueue.isEmpty())
-            {
+            while (!filePathQueue.isEmpty()) {
                 // Next file in the queue.
                 final File file = new File(filePathQueue.remove());
 
-                try
-                {
+                try {
                     // Check if file is a symlink.
-                    if (isSymLink(file))
-                    {
+                    if (isSymLink(file)) {
                         log.warn("Symbolic link found: "
-                                 + file.getAbsolutePath());
-                    }
-
-                    // Create a DataNode command and add it to the CommandQueue.
-                    else if (file.isFile())
-                    {
+                            + file.getAbsolutePath());
+                    } else if (file.isFile()) {
+                        // Create a DataNode command and add it to the CommandQueue.
                         queueDataNode(file);
-                    }
-                    
-                    // Create a ContainerNode command and add it to the CommandQueue
-                    // and add directory listing to the queue.
-                    else
-                    {
+                    } else {
+                        // Create a ContainerNode command and add it to the CommandQueue
+                        // and add directory listing to the queue.
                         queueContainerNode(file);
-                        for (final String filename : file.list())
-                        {
+                        for (final String filename : file.list()) {
                             filePathQueue.add(file.getPath() + File.separator
-                                              + filename);
+                                + filename);
                         }
                     }
-                    
-                }
-                catch (IOException ioe)
-                {
-                    log.error("Unable to read " + file.getPath() +
-                              " because " + ioe.getMessage());
-                }
-                catch (URISyntaxException use)
-                {
-                    log.error("Invalid VOSpace URI for " + file.getPath() +
-                              " because " + use.getMessage());
-                }
-                catch (RuntimeException rte)
-                {
-                    log.error("Unable to process " + file.getPath() +
-                              " because " + rte.getMessage());
+
+                } catch (IOException ioe) {
+                    log.error("Unable to read " + file.getPath()
+                        + " because " + ioe.getMessage());
+                } catch (URISyntaxException use) {
+                    log.error("Invalid VOSpace URI for " + file.getPath()
+                        + " because " + use.getMessage());
+                } catch (RuntimeException rte) {
+                    log.error("Unable to process " + file.getPath()
+                        + " because " + rte.getMessage());
                 }
             }
-        }
-        catch (InterruptedException ie)
-        {
+        } catch (InterruptedException ie) {
             log.debug("Processing stopped");
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("Bug found!", e);
-        }
-        finally
-        {
+        } finally {
             commandQueue.doneProduction();
         }
     }
@@ -204,16 +177,14 @@ public class FileSystemScanner implements Runnable
      * @return true if the file path contains a symlink, false otherwise.
      * @throws IOException
      */
-    protected boolean isSymLink(File file) throws IOException
-    {
-        if (file == null)
-        {
+    protected boolean isSymLink(File file) throws IOException {
+        if (file == null) {
             throw new RuntimeException("null file");
         }
 
         return !file.getAbsolutePath().equals(file.getCanonicalPath());
     }
-    
+
     /**
      * Create a ContainerNode from the given file and
      * add it to the CommandQueue.
@@ -223,8 +194,7 @@ public class FileSystemScanner implements Runnable
      * @throws InterruptedException
      */
     protected void queueContainerNode(File file)
-        throws URISyntaxException, InterruptedException
-    {
+        throws URISyntaxException, InterruptedException {
         // Get the path starting from the root file.
         String path = getRelativePath(file);
 
@@ -250,8 +220,7 @@ public class FileSystemScanner implements Runnable
      * @throws InterruptedException
      */
     protected void queueDataNode(File file)
-        throws URISyntaxException, InterruptedException
-    {
+        throws URISyntaxException, InterruptedException {
         // Get the path starting from the root file.
         String path = getRelativePath(file);
 
@@ -271,17 +240,15 @@ public class FileSystemScanner implements Runnable
     /**
      * Get the relative path from the root file to the given file.
      *
-     * @param file      The file to get the path for.
+     * @param file The file to get the path for.
      * @return String of relative path to the given file.
      */
-    protected String getRelativePath(File file)
-    {
+    protected String getRelativePath(File file) {
         int index = sourceFile.getAbsolutePath().lastIndexOf(File.separator);
-        if (index == -1)
-        {
-            throw new RuntimeException("file " + file.getAbsolutePath() + 
-                                       " not in source directory " +
-                                       sourceFile.getAbsolutePath());
+        if (index == -1) {
+            throw new RuntimeException("file " + file.getAbsolutePath()
+                + " not in source directory "
+                + sourceFile.getAbsolutePath());
         }
         return file.getAbsolutePath().substring(index);
     }

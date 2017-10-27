@@ -31,16 +31,16 @@
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
+
 package ca.nrc.cadc.ulm.client.ui;
 
 import java.io.File;
 
-public interface UploadManager
-{
+public interface UploadManager {
     /**
      * Begin the UploadManager's Producer and Consumer threads.
      *
-     * @param sourceDirectory       The beginning directory on open.
+     * @param sourceDirectory The beginning directory on open.
      */
     void start(final File sourceDirectory);
 
@@ -52,15 +52,15 @@ public interface UploadManager
     /**
      * Obtain whether a stop command was issued.
      *
-     * @return      True if stopped, False otherwise.
+     * @return True if stopped, False otherwise.
      */
     boolean isStopIssued();
 
     /**
      * Register a new listener to this UploadManager.
      *
-     * @param commandQueueListener  The listener to register.
+     * @param commandQueueListener The listener to register.
      */
     void registerCommandQueueListener(
-            final CommandQueueListener commandQueueListener);
+        final CommandQueueListener commandQueueListener);
 }

@@ -31,146 +31,121 @@
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
+
 package ca.nrc.cadc.ulm.client.ui;
 
-import java.net.URI;
-import java.security.PrivilegedAction;
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-
+import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import ca.nrc.cadc.appkit.ui.ApplicationFrame;
+import java.net.URI;
+import java.security.PrivilegedAction;
+import javax.security.auth.Subject;
+import org.apache.log4j.Level;
 
 
-public class Main
-{
+public class Main {
     private static final URI VOSPACE_SERVICE_URI =
-            URI.create("ivo://cadc.nrc.ca/vospace");
+        URI.create("ivo://cadc.nrc.ca/vospace");
 
 
-    public static void main(final String[] args)
-    {
+    public static void main(final String[] args) {
         final ArgumentMap argumentMap = new ArgumentMap(args);
         final ArgumentMap am = new ArgumentMap(args);
 
-        if (am.isSet("h") || am.isSet("help"))
-        {
+        if (am.isSet("h") || am.isSet("help")) {
             usage();
             System.exit(0);
         }
 
         final Level logLevel;
-        if (am.isSet("d") || am.isSet("debug"))
-        {
+        if (am.isSet("d") || am.isSet("debug")) {
             logLevel = Level.DEBUG;
-        }
-        else if (am.isSet("v") || am.isSet("verbose"))
-        {
+        } else if (am.isSet("v") || am.isSet("verbose")) {
             logLevel = Level.INFO;
-        }
-        else if (am.isSet("q") || am.isSet("quiet"))
-        {
+        } else if (am.isSet("q") || am.isSet("quiet")) {
             logLevel = Level.OFF;
-        }
-        else
-        {
+        } else {
             logLevel = Level.WARN;
         }
 
         final VOSURI targetVOSpaceURI =
-                new VOSURI(URI.create(argumentMap.getValue("dest")));
+            new VOSURI(URI.create(argumentMap.getValue("dest")));
         final Subject subject = new Subject();
 
         // Cookie based authentication?
         final String ssoCookieStr = fixNull(argumentMap.getValue("ssocookie"));
 
-        if (ssoCookieStr != null)
-        {
+        if (ssoCookieStr != null) {
 
             String ssoCookieDomain =
-                    fixNull(am.getValue("ssocookiedomain"));
-            if (ssoCookieDomain == null)
-            {
-                System.out.
-                        println("Missing ssocookiedomain argument...");
+                fixNull(am.getValue("ssocookiedomain"));
+            if (ssoCookieDomain == null) {
+                System.out.println("Missing ssocookiedomain argument...");
                 Main.usage();
                 System.exit(-1);
             }
             final String[] domains = ssoCookieDomain.split(",");
-            if (domains.length < 1)
-            {
-                System.out.
-                        println("Invalid ssocookiedomain argument: " + ssoCookieDomain);
+            if (domains.length < 1) {
+                System.out.println("Invalid ssocookiedomain argument: " + ssoCookieDomain);
                 Main.usage();
                 System.exit(-1);
             }
-            for (String domain : domains)
-            {
+            for (String domain : domains) {
                 SSOCookieCredential cred = new SSOCookieCredential(
-                        ssoCookieStr, domain.trim());
+                    ssoCookieStr, domain.trim());
                 subject.getPublicCredentials().add(cred);
             }
 
         }
 
         final Boolean successfulStart =
-                Subject.doAs(subject, new PrivilegedAction<Boolean>()
-                {
-                    @Override
-                    public Boolean run()
-                    {
-                        try
-                        {
-                            final GraphicUI graphicUploadUI =
-                                    new GraphicUI(logLevel,
-                                                  targetVOSpaceURI,
-                                                  new VOSpaceClient(VOSPACE_SERVICE_URI),
-                                                  subject);
-                            final ApplicationFrame frame =
-                                    new ApplicationFrame(Constants.name,
-                                                         graphicUploadUI);
-                            frame.getContentPane().add(graphicUploadUI);
-                            frame.setVisible(true);
+            Subject.doAs(subject, new PrivilegedAction<Boolean>() {
+                @Override
+                public Boolean run() {
+                    try {
+                        final GraphicUI graphicUploadUI =
+                            new GraphicUI(logLevel,
+                                targetVOSpaceURI,
+                                new VOSpaceClient(VOSPACE_SERVICE_URI),
+                                subject);
+                        final ApplicationFrame frame =
+                            new ApplicationFrame(Constants.name,
+                                graphicUploadUI);
+                        frame.getContentPane().add(graphicUploadUI);
+                        frame.setVisible(true);
 
-                            return Boolean.TRUE;
-                        }
-                        catch (Throwable t)
-                        {
-                            t.printStackTrace();
-                            return Boolean.FALSE;
-                        }
+                        return Boolean.TRUE;
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                        return Boolean.FALSE;
                     }
-                });
+                }
+            });
 
-        if (!successfulStart)
-        {
+        if (!successfulStart) {
             System.out.println("Unable to start application.");
             System.exit(-1);
         }
     }
 
     // convert string 'null' and empty string to a null, trim() and return
-    private static String fixNull(final String s)
-    {
+    private static String fixNull(final String s) {
         return (!StringUtil.hasLength(s) || "null".equals(s)) ? null : s;
     }
 
-    private static void usage()
-    {
+    private static void usage() {
         System.out.println("java -jar cadcVOSClient.jar -h || --help");
         System.out
-                .println("java -jar cadcVOSClient.jar [-v|--verbose | -d|--debug | -q|--quiet ]");
+            .println("java -jar cadcVOSClient.jar [-v|--verbose | -d|--debug | -q|--quiet ]");
         System.out
-                .println("          --dest=<VOSpace URI to upload the directory to>");
+            .println("          --dest=<VOSpace URI to upload the directory to>");
         System.out
-                .println("          --ssocookie=<cookie value to use in sso authentication>");
+            .println("          --ssocookie=<cookie value to use in sso authentication>");
         System.out
-                .println("          --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)>");
+            .println("          --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)>");
         System.out.println();
     }
 }

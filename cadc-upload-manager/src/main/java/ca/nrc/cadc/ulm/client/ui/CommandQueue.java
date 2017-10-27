@@ -70,110 +70,97 @@
 package ca.nrc.cadc.ulm.client.ui;
 
 import java.util.concurrent.ArrayBlockingQueue;
-
 import org.apache.log4j.Logger;
 
 /**
- * 
- * A non-threadsafe interface to a bounded fifo queue buffering vospace
- * commands to be executed.
- * 
- * The queue will not grow beyond maxCapcity.
- * 
- * Implementations of the CommandQueueListerer will receive queue processing
- * event notifications.
- * 
- * @author majorb
+ * <p>A non-threadsafe interface to a bounded fifo queue buffering vospace
+ * commands to be executed.</p>
  *
+ * <p>The queue will not grow beyond maxCapcity.</p>
+ *
+ * <p>Implementations of the CommandQueueListerer will receive queue processing
+ * event notifications.</p>
+ *
+ * @author majorb
  */
-public class CommandQueue
-{
-    
+public class CommandQueue {
+
     private static Logger log = Logger.getLogger(CommandQueue.class);
-    
+
     private CommandQueueListener listener;
     private boolean doneProduction = false;
     private long commandsProcessed = 0;
     private ArrayBlockingQueue<VOSpaceCommand> queue;
-    
-    
-    public CommandQueue(int maxCapacity, CommandQueueListener listener)
-    {
+
+
+    public CommandQueue(int maxCapacity, CommandQueueListener listener) {
         // Force FIFO behaviour by setting 2nd arg to true.
         this.queue = new ArrayBlockingQueue<VOSpaceCommand>(maxCapacity, true);
         this.listener = listener;
     }
-    
+
     /**
      * Method to indicate that the producer is finished working.
      */
-    public void doneProduction()
-    {
-        if (listener != null)
-        {
+    public void doneProduction() {
+        if (listener != null) {
             listener.productionComplete();
         }
 
         doneProduction = true;
     }
 
-    public void startProduction()
-    {
-        if (listener != null)
-        {
+    public void startProduction() {
+        if (listener != null) {
             listener.productionStarted();
         }
     }
 
-    public int size()
-    {
+    public int size() {
         return queue.size();
     }
-    
+
     /**
      * Returns true if command production is complete.
-     * @return  True if done producing (Adding to the queue), False otherwise.
+     *
+     * @return True if done producing (Adding to the queue), False otherwise.
      */
-    public boolean isDoneProduction()
-    {
+    public boolean isDoneProduction() {
         return doneProduction;
     }
-    
+
     /**
      * Removes the command at the top of the queue.
      */
-    public void commandCompleted(VOSpaceCommand command, Throwable error)
-    {
+    public void commandCompleted(VOSpaceCommand command, Throwable error) {
         log.debug("Command " + command + " completed.");
         commandsProcessed++;
 
-        if (listener != null)
-        {
+        if (listener != null) {
             listener.commandConsumed(commandsProcessed, (long) queue.size(),
-                                     error);
+                error);
         }
 
         log.debug("New queue size after remove: " + queue.size());
     }
-    
+
     /**
      * Push the command on the queue, wait if full.
-     * @param command   The command to put.
+     *
+     * @param command The command to put.
      */
-    public void put(VOSpaceCommand command) throws InterruptedException
-    {
+    public void put(VOSpaceCommand command) throws InterruptedException {
         queue.put(command);
         log.debug("New queue size after put: " + queue.size());
     }
-    
+
     /**
      * Removes and returns the command at the head of the queue.  Will block
      * indefinitely if the queue is empty.
-     *  
+     *
      * @return VOSpaceCommand.
      */
-    public VOSpaceCommand take() throws InterruptedException
-    {
+    public VOSpaceCommand take() throws InterruptedException {
         VOSpaceCommand command = queue.take();
         log.debug("New queue size after take: " + queue.size());
         return command;
@@ -183,12 +170,10 @@ public class CommandQueue
      * Abort this Command Queue kindly.  Any in-progress Threads will finish
      * execution.
      *
-     * @return  long    Count of items remaining in the queue.
+     * @return long    Count of items remaining in the queue.
      */
-    public long clear()
-    {
-        if (listener != null)
-        {
+    public long clear() {
+        if (listener != null) {
             listener.onAbort();
         }
 
