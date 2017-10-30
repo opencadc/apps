@@ -71,17 +71,33 @@
 package ca.nrc.cadc.appkit.util;
 
 import ca.nrc.cadc.net.NetrcFile;
-import org.apache.log4j.Logger;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.WeakHashMap;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -93,10 +109,15 @@ import java.util.*;
  *
  * @author pdowler
  */
-public class HttpAuthenticator extends Authenticator implements Runnable
-{
-    private static final Logger LOGGER =
-            Logger.getLogger(HttpAuthenticator.class);
+public class HttpAuthenticator extends Authenticator implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(HttpAuthenticator.class);
+
+    private static final int CANCEL = 1;
+    private static final int OK = 2;
+    private static final String RETRY_TEXT = "Credentials rejected by server, please try again";
+    private static final String OK_TEXT = "OK";
+    private static final String CANCEL_TEXT = "Cancel";
+    private static final String NETRC_TEXT = "Read credentials from .netrc file";
 
     private Component parent;
     private MyAuthDialog mad;
@@ -107,26 +128,24 @@ public class HttpAuthenticator extends Authenticator implements Runnable
     // inside a synchronized block as multiple threads doing http could be blocked
     // inside the getPasswordAuthentication method
     private Map<RequestingApp, PasswordAuthentication> authMap =
-            new HashMap<>();
+        new HashMap<>();
 
     // cache previous url -> credential look ups to detect when the creds were bad
     // weak: entries can be removed by the GC when the app is done with the URL
     private Map<URL, RequestingApp> prevAttempts = new WeakHashMap<>();
+    private PasswordAuthentication lastResponse;
+    private boolean doRetry;
 
-    public HttpAuthenticator(final Component parent)
-    {
+    public HttpAuthenticator(final Component parent) {
         super();
         this.parent = parent;
 
         LOGGER.debug("constructor");
     }
 
-
     @Override
-    protected PasswordAuthentication getPasswordAuthentication()
-    {
-        synchronized (this) // http library does not have to synchronize usage
-        {
+    protected PasswordAuthentication getPasswordAuthentication() {
+        synchronized (this) { // http library does not have to synchronize usage
             final RequestingApp ra = new RequestingApp();
             ra.host = getRequestingHost();
             ra.port = getRequestingPort();
@@ -139,36 +158,30 @@ public class HttpAuthenticator extends Authenticator implements Runnable
 
             boolean retry = false;
             RequestingApp prev = prevAttempts.get(ra.url);
-            if (prev != null) // already tried: assume creds were bad and clear cache
-            {
+            if (prev != null) { // already tried: assume creds were bad and clear cache
                 authMap.remove(prev);
                 retry = true;
             }
 
             PasswordAuthentication pa = authMap.get(ra);
-            if (pa == null)
-            {
+            if (pa == null) {
                 pa = getCredentials(retry);
-                if (pa != null)
-                {
+                if (pa != null) {
                     authMap.put(ra, pa);
                     // remove all old prevAttempts that refer to this RA
                     for (Iterator<Map.Entry<URL, RequestingApp>> iter =
-                         prevAttempts.entrySet().iterator(); iter.hasNext();)
-                    {
+                         prevAttempts.entrySet().iterator(); iter.hasNext(); ) {
                         Map.Entry<URL, RequestingApp> me = iter.next();
-                        if (me.getValue().equals(ra))
-                        {
+                        if (me.getValue().equals(ra)) {
                             LOGGER.debug("getPasswordAuthentication: removing "
-                                         + me.getKey() + " , " + me.getValue());
+                                + me.getKey() + " , " + me.getValue());
                             iter.remove();
                         }
                     }
                 }
             }
 
-            if (pa == null)
-            {
+            if (pa == null) {
                 return null;
             }
 
@@ -183,31 +196,19 @@ public class HttpAuthenticator extends Authenticator implements Runnable
         }
     }
 
-    private PasswordAuthentication lastResponse;
-    private boolean doRetry;
-
-    private PasswordAuthentication getCredentials(boolean retry)
-    {
+    private PasswordAuthentication getCredentials(boolean retry) {
         this.doRetry = retry;
-        if (SwingUtilities.isEventDispatchThread())
-        {
+        if (SwingUtilities.isEventDispatchThread()) {
             LOGGER.debug("getCredentials runs in the swing event thread");
             run();
-        }
-        else
-        {
-            try
-            {
+        } else {
+            try {
                 LOGGER.debug("getCredentials invokeAndWait in swing event thread");
                 SwingUtilities.invokeAndWait(this);
-            }
-            catch (InterruptedException killed)
-            {
+            } catch (InterruptedException killed) {
                 LOGGER.debug("getCredentials: interrupted");
                 lastResponse = null;
-            }
-            catch (InvocationTargetException bug)
-            {
+            } catch (InvocationTargetException bug) {
                 LOGGER.error("BUG: unexpected exception", bug);
                 lastResponse = null;
             }
@@ -219,61 +220,49 @@ public class HttpAuthenticator extends Authenticator implements Runnable
         return ret;
     }
 
-    public void run()
-    {
-        if (mad == null) // lazy init in case we never need it
-        {
+    public void run() {
+        if (mad == null) { // lazy init in case we never need it
             mad = new MyAuthDialog();
         }
         mad.setRetry(doRetry);
         lastResponse = mad
-                .getPasswordAuthentication(getRequestingHost(), getRequestingPrompt());
+            .getPasswordAuthentication(getRequestingHost(), getRequestingPrompt());
         mad.setRetry(false);
     }
 
-    private class MyAuthDialog implements ActionListener
-    {
-        private int CANCEL = 1;
-        private int OK = 2;
-        private String RETRY_TEXT = "Credentials rejected by server, please try again";
-        private String OK_TEXT = "OK";
-        private String CANCEL_TEXT = "Cancel";
-        private String NETRC_TEXT = "Read credentials from .netrc file";
-
+    private class MyAuthDialog implements ActionListener {
         private int retval;
         private String host;
-        private JLabel hostLabel, promptLabel, iconLabel, retryLabel;
+        private JLabel hostLabel;
+        private JLabel promptLabel;
+        private JLabel iconLabel;
+        private JLabel retryLabel;
         private JDialog dialog;
         private JTextField unField;
         private JPasswordField pwField;
         private JCheckBox netrcBox1;
-        private JButton okButton, cancelButton;
+        private JButton okButton;
+        private JButton cancelButton;
 
         private boolean retry;
 
-        MyAuthDialog()
-        {
+        MyAuthDialog() {
             LOGGER.debug("constrcutor: MyAuthDialog");
         }
 
-        public void setRetry(boolean retry)
-        {
+        public void setRetry(boolean retry) {
             this.retry = retry;
         }
 
-        public PasswordAuthentication getPasswordAuthentication(String host, String prompt)
-        {
-            try
-            {
-                if (dialog != null && netrcBox1.isSelected())
-                {
+        public PasswordAuthentication getPasswordAuthentication(String host, String prompt) {
+            try {
+                if (dialog != null && netrcBox1.isSelected()) {
                     LOGGER.debug(
-                            "getPasswordAuthentication: calling findCredentials()");
+                        "getPasswordAuthentication: calling findCredentials()");
                     NetrcFile f = new NetrcFile();
                     // since we are going to use directly, use strict hostname match
                     PasswordAuthentication pa = f.getCredentials(host, true);
-                    if (pa != null)
-                    {
+                    if (pa != null) {
                         return pa;
                     }
                 }
@@ -281,31 +270,25 @@ public class HttpAuthenticator extends Authenticator implements Runnable
                 init(host, prompt);
                 dialog.setVisible(true);
 
-                if (retval == CANCEL)
-                {
+                if (retval == CANCEL) {
                     return null;
                 }
                 return new PasswordAuthentication(unField.getText(), pwField
-                        .getPassword());
-            }
-            finally
-            {
+                    .getPassword());
+            } finally {
                 // for security reasons, we always want to clear traces of password text 
                 // stored in memory; this appears to be the best we can do
-                if (pwField != null)
-                {
+                if (pwField != null) {
                     pwField.setText(null);
                 }
             }
         }
 
-        private void init(String host, String prompt)
-        {
-            if (dialog == null)
-            {
+        private void init(String host, String prompt) {
+            if (dialog == null) {
                 LOGGER.debug("MyAuthDialog.init: creating JDialog...");
                 this.dialog = new JDialog(Util.findParentFrame(parent),
-                                          "Authentication required", true);
+                    "Authentication required", true);
                 dialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
 
                 // the components
@@ -338,9 +321,6 @@ public class HttpAuthenticator extends Authenticator implements Runnable
                 okButton.addActionListener(this);
                 cancelButton.addActionListener(this);
 
-                // main component
-                JPanel mp = new JPanel(new BorderLayout());
-
                 // top: info panel with logo and text
                 JPanel info = new JPanel(new BorderLayout());
                 info.add(iconLabel, BorderLayout.WEST);
@@ -353,12 +333,13 @@ public class HttpAuthenticator extends Authenticator implements Runnable
                 b.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
                 info.add(b, BorderLayout.CENTER);
 
-                // input area
-                Box input = new Box(BoxLayout.Y_AXIS);
                 JPanel p;
                 p = new JPanel();
                 p.add(new JLabel("Username:"));
                 p.add(unField);
+
+                // input area
+                Box input = new Box(BoxLayout.Y_AXIS);
                 input.add(p);
                 p = new JPanel();
                 p.add(new JLabel("Password:"));
@@ -371,6 +352,9 @@ public class HttpAuthenticator extends Authenticator implements Runnable
                 JPanel buttons = new JPanel();
                 buttons.add(okButton);
                 buttons.add(cancelButton);
+
+                // main component
+                JPanel mp = new JPanel(new BorderLayout());
 
                 mp.add(info, BorderLayout.NORTH);
                 mp.add(input, BorderLayout.CENTER);
@@ -386,33 +370,26 @@ public class HttpAuthenticator extends Authenticator implements Runnable
             checkNetrc();
 
             // set the host/prompt labels if it is a CADC download
-            try
-            {
+            try {
                 // TODO: it would be nice to show a site-specific icon, but favicon.ico is not
                 // supported by ImageIcon
-                if (iconLabel.getIcon() == null)
-                {
+                if (iconLabel.getIcon() == null) {
                     ImageIcon icon = new ImageIcon(Thread.currentThread()
-                                                           .getContextClassLoader()
-                                                           .getResource("images/cadc.jpg"));
+                        .getContextClassLoader()
+                        .getResource("images/cadc.jpg"));
                     iconLabel.setIcon(icon);
                     iconLabel.setBorder(BorderFactory
-                                                .createEmptyBorder(4, 4, 4, 4));
+                        .createEmptyBorder(4, 4, 4, 4));
                 }
-            }
-            catch (Throwable t)
-            {
+            } catch (Throwable t) {
                 LOGGER.debug("failed to load icon: " + t);
             }
 
             promptLabel.setText(prompt);
             hostLabel.setText("server: " + host);
-            if (retry)
-            {
+            if (retry) {
                 retryLabel.setText(RETRY_TEXT);
-            }
-            else
-            {
+            } else {
                 retryLabel.setText(" ");
             }
 
@@ -424,29 +401,21 @@ public class HttpAuthenticator extends Authenticator implements Runnable
 
         // this handles the OK and Cancel buttons and user pressing enter key in either 
         // text component, which is equivalent to OK
-        public void actionPerformed(ActionEvent e)
-        {
-            if (OK_TEXT.equals(e.getActionCommand()))
-            {
+        public void actionPerformed(ActionEvent e) {
+            if (OK_TEXT.equals(e.getActionCommand())) {
                 this.retval = OK;
                 dialog.setVisible(false);
-            }
-            else if (CANCEL_TEXT.equals(e.getActionCommand()))
-            {
+            } else if (CANCEL_TEXT.equals(e.getActionCommand())) {
                 this.retval = CANCEL;
                 dialog.setVisible(false);
-            }
-            else if (NETRC_TEXT.equals(e.getActionCommand()))
-            {
+            } else if (NETRC_TEXT.equals(e.getActionCommand())) {
                 checkNetrc();
             }
         }
 
-        private void checkNetrc()
-        {
+        private void checkNetrc() {
             LOGGER.debug("checkNetrc...");
-            if (!netrcBox1.isSelected())
-            {
+            if (!netrcBox1.isSelected()) {
                 return;
             }
 
@@ -454,8 +423,7 @@ public class HttpAuthenticator extends Authenticator implements Runnable
             NetrcFile netrc = new NetrcFile();
             // since this is for http only, onyl strict hostname matching makes sense
             PasswordAuthentication pw = netrc.getCredentials(host, true);
-            if (pw != null)
-            {
+            if (pw != null) {
                 unField.setText(pw.getUserName());
 
                 // TODO: SECURITY ISSUE
@@ -463,16 +431,13 @@ public class HttpAuthenticator extends Authenticator implements Runnable
                 // convert it to a String and cannot blank it out; hopefully setText(null) above will be
                 // enough to get rid of that String (eventually)
                 pwField.setText(new String(pw.getPassword()));
-            }
-            else
-            {
+            } else {
                 LOGGER.debug("failed to find " + host + " in NetrcFile");
             }
         }
     }
 
-    private class RequestingApp
-    {
+    private class RequestingApp {
         String host;
         int port;
         String protocol;
@@ -484,37 +449,30 @@ public class HttpAuthenticator extends Authenticator implements Runnable
         // gunk is the equality comparison part
         String gunk;
 
-        RequestingApp()
-        {
+        RequestingApp() {
         }
 
-        public String toString()
-        {
+        public String toString() {
             init();
             return "RequestingApp[" + gunk + "," + url + "]";
         }
 
-        private void init()
-        {
-            if (gunk == null)
-            {
+        private void init() {
+            if (gunk == null) {
                 gunk = protocol + "://" + host + ":" + port + "/" + prompt + "/" + scheme;
             }
         }
 
-        public boolean equals(Object o)
-        {
+        public boolean equals(Object o) {
             init();
-            if (o instanceof RequestingApp)
-            {
+            if (o instanceof RequestingApp) {
                 RequestingApp ra = (RequestingApp) o;
                 return gunk.equals(ra.gunk);
             }
             return false;
         }
 
-        public int hashCode()
-        {
+        public int hashCode() {
             init();
             return gunk.hashCode();
         }

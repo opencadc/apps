@@ -27,24 +27,23 @@ package ca.nrc.cadc.appkit.ui;
  * Primary interface for applications. This interface is used by various ApplicationContainer
  * implementations to interact with the application.
  *
- * @version 1.0
  * @author Patrick Dowler
+ * @version 1.0
  */
-public interface Application
-{
-	/**
-	 * Request to quit the application. The various framework classes 
-	 * (ApplicationFrame, AppletFrame, BrowserApplet) call this method
-	 * if a user action indicates they are done. This gives the application 
-	 * a chance to get confirmation, save files, and release resources 
-	 * before quiting.
-	 *
-	 * @return true if the application agrees to quit
-	 */
-	boolean quit();
+public interface Application {
+    /**
+     * Request to quit the application. The various framework classes
+     * (ApplicationFrame, AppletFrame, BrowserApplet) call this method
+     * if a user action indicates they are done. This gives the application
+     * a chance to get confirmation, save files, and release resources
+     * before quiting.
+     *
+     * @return true if the application agrees to quit
+     */
+    boolean quit();
 
-	/**
-	 * The container attaches itself using this method.
-	 */
-	void setApplicationContainer(ApplicationContainer container);
+    /**
+     * The container attaches itself using this method.
+     */
+    void setApplicationContainer(ApplicationContainer container);
 }

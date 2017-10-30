@@ -67,58 +67,64 @@
 ************************************************************************
 */
 
-
 package ca.nrc.cadc.appkit.util;
 
-import javax.swing.*;
-import java.awt.*;
-
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Frame;
+import java.awt.Point;
+import java.awt.Window;
+import javax.swing.JButton;
+import javax.swing.JToolBar;
+import org.apache.log4j.Logger;
 
 /**
  * TODO.
  *
  * @author pdowler
  */
-public class Util
-{
-    private Util() { }
-    
-    public static Frame findParentFrame(Component parent)
-    {
-        while (true)
-        {
-            if (parent == null)
+public class Util {
+    private static final Logger log = Logger.getLogger(Util.class);
+
+    private Util() {
+    }
+
+    public static Frame findParentFrame(Component parent) {
+        while (true) {
+            if (parent == null) {
                 return null;
-            if (parent instanceof Frame)
+            }
+            if (parent instanceof Frame) {
                 return (Frame) parent;
+            }
             parent = parent.getParent();
         }
     }
-    
+
     public static void setPositionRelativeToParent(Window w, Component parent,
-                                                   int hOffset, int vOffset)
-    {
-        try
-        {
+                                                   int horOffset, int verOffset) {
+        try {
             Point p = parent.getLocationOnScreen();
-            int x = (int) p.getX() + hOffset;
-            int y = (int) p.getY() + vOffset;
+            int x = (int) p.getX() + horOffset;
+            int y = (int) p.getY() + verOffset;
             w.setLocation(x, y);
             w.pack();
-        } 
-        catch (Throwable t) { }
+        } catch (Throwable t) {
+            log.info("Caught Throwable exception: " + t);
+        }
     }
-    
-    public static void recursiveSetBackground(Component comp, Color color)
-    {
-        if (comp instanceof JToolBar || comp instanceof JButton)
+
+    public static void recursiveSetBackground(Component comp, Color color) {
+        if (comp instanceof JToolBar || comp instanceof JButton) {
             return;
+        }
         comp.setBackground(color);
-        if (comp instanceof Container)
-        {
+        if (comp instanceof Container) {
             Container cc = (Container) comp;
-            for (int i = 0; i < cc.getComponentCount(); i++)
+            for (int i = 0; i < cc.getComponentCount(); i++) {
                 recursiveSetBackground(cc.getComponent(i), color);
+            }
         }
     }
 }

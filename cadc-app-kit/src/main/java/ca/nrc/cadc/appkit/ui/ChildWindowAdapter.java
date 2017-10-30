@@ -23,25 +23,29 @@
 
 package ca.nrc.cadc.appkit.ui;
 
-import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Calls dispose() on the source Window when it receives a
  * window-closing event. This is handy for child windows
  * of the application that should just be nuked immediately.
  *
- * @version 1.0
  * @author Patrick Dowler
+ * @version 1.0
  */
-public class ChildWindowAdapter extends WindowAdapter
-{
-	private boolean gcOnClose = false;
-	public ChildWindowAdapter() { }
-	public ChildWindowAdapter(boolean gcOnClose) { this.gcOnClose = gcOnClose; }
-	public void windowClosing(WindowEvent e)
-	{
-   		e.getWindow().dispose();
-	}
+public class ChildWindowAdapter extends WindowAdapter {
+    private boolean gcOnClose = false;
+
+    public ChildWindowAdapter() {
+    }
+
+    public ChildWindowAdapter(boolean gcOnClose) {
+        this.gcOnClose = gcOnClose;
+    }
+
+    public void windowClosing(WindowEvent e) {
+        e.getWindow().dispose();
+    }
 }
 
