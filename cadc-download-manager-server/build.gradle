@@ -34,3 +34,4 @@ dependencies {
     testCompile 'org.easymock:easymock:3.+'
 }
 
+apply from: '../opencadc.gradle'
