@@ -44,6 +44,8 @@ public interface Application {
 
     /**
      * The container attaches itself using this method.
+     *
+     * @param container application container to use
      */
     void setApplicationContainer(ApplicationContainer container);
 }

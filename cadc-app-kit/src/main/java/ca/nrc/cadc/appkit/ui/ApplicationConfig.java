@@ -56,11 +56,11 @@ import java.util.Map;
  * In order of priority, the following locations are checked
  * to find the configuration directory:</p>
  *
- * <p><ul>
+ * <ul>
  * <li> [user.home]/.[base] </li>
  * <li> [user.home]/[base] </li>
  * <li> [user.dir] </li>
- * </ul></p>
+ * </ul>
 
  * <p>The above list is only searched for places that the config file could
  * be stored on the system. Thus, if the first location could be
@@ -98,6 +98,8 @@ public class ApplicationConfig {
      * Constructor. Opens the application config file,
      * creating it if necessary. The default values for
      * the base and extension are used.
+     * @param appClass  application class
+     * @param appname   name of app
      */
     public ApplicationConfig(Class appClass, String appname) {
         this.appClass = appClass;
@@ -108,6 +110,9 @@ public class ApplicationConfig {
      * Constructor. Opens the application config file,
      * creating it if necessary. The default values for
      * the base and extension are used.
+     * @param appClass  application class
+     * @param appname   name of app
+     * @param base  base location for application configuration file
      */
     public ApplicationConfig(Class appClass, String appname, String base) {
         this.appClass = appClass;
@@ -119,6 +124,10 @@ public class ApplicationConfig {
      * Constructor. Opens the application config file,
      * creating it if necessary. The default values for
      * the base and extension are used.
+     * @param appClass  application class
+     * @param appname   name of app
+     * @param base  base location for application configuration file
+     * @param extension config file extenson
      */
     public ApplicationConfig(Class appClass, String appname, String base, String extension) {
         this.appClass = appClass;
@@ -171,7 +180,9 @@ public class ApplicationConfig {
      * Make a section the current section. This method does not create
      * a new section by default.
      *
+     * @param section section to be made
      * @return true if the section exists and is now current
+     * @throws IOException on error writing to config file
      */
     public boolean setSection(String section)
         throws IOException {
@@ -182,7 +193,10 @@ public class ApplicationConfig {
     /**
      * Make a section the current section, creating it if necessary.
      *
+     * @param section   section to be made
+     * @param create    boolean
      * @return true if the section exists (even if just created),
+     * @throws IOException on error writing to config file
      */
     public boolean setSection(String section, boolean create)
         throws IOException {
@@ -205,7 +219,9 @@ public class ApplicationConfig {
     /**
      * Retrieve a value for a key in the current section.
      *
+     * @param key that exists in current section
      * @return the value associated with the key, or null if it is not found
+     * @throws IOException on error reading from config file
      */
     public String getValue(String key)
         throws IOException {
@@ -219,7 +235,10 @@ public class ApplicationConfig {
     /**
      * Change sections and retrieve a value for a key.
      *
+     * @param section section to get a value from
+     * @param key   key for value
      * @return the value associated with the key, or null if it is not found.
+     * @throws IOException on error reading from config file
      */
     public String getValue(String section, String key)
         throws IOException {
@@ -235,6 +254,9 @@ public class ApplicationConfig {
      * current section (setSection was never called) then the key
      * is placed in a section called "default", which is created if
      * necessary. This will overwrite the old value if it exists.</p>
+     * @param key   to be put into current section
+     * @param value     associated with key
+     * @throws IOException on error writing to config file
      */
     public void putValue(String key, String value)
         throws IOException {
@@ -255,8 +277,13 @@ public class ApplicationConfig {
      * new section is created if it doesn't exist. This is
      * equivalent to using:</p>
      *
-     * <p><pre>config.setSection(section,true);
-     * config.putValue(key,value);</pre></p>
+     * <pre>config.setSection(section,true);
+     * config.putValue(key,value);</pre>
+     *
+     * @param section   to hold key=value pair
+     * @param key   to be put into current section
+     * @param value     associated with key
+     * @throws IOException on error writing to config file
      */
     public void putValue(String section, String key, String value)
         throws IOException {
@@ -279,6 +306,7 @@ public class ApplicationConfig {
      * actually occurs if the application cannot write files (because
      * it is an untrusted applet) or if the configuration settings
      * are not dirty (see isDirty).
+     * @throws IOException on error writing to config file
      */
     public void writeConfig()
         throws IOException {
@@ -316,6 +344,7 @@ public class ApplicationConfig {
      * no IO occurs until one of the access methods is called.
      * This means the file/resource are not found, opened, and read
      * until some value(s) are actually needed.
+     * @throws IOException on error reading from config file
      */
     protected void readConfig()
         throws IOException {
@@ -342,6 +371,11 @@ public class ApplicationConfig {
         current = null;
     }
 
+    /**
+     *
+     * @param in input stream from config file
+     * @throws IOException on error reading from config file
+     */
     private void readConfig(LineNumberReader in)
         throws IOException {
         boolean eof = false;

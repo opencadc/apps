@@ -46,6 +46,10 @@ public class AppletFrame extends JFrame implements ApplicationContainer {
      * Constructor. The name argument is used in the title bar
      * if the frame (window) and to find the application config
      * object (file or resource).
+     *
+     * @param name  applet name
+     * @param app   application reference
+     * @param applet    applet reference
      */
     public AppletFrame(String name, Application app, Applet applet) {
         super(name);
