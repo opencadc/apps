@@ -7,7 +7,7 @@ script:
 - for mod in cadc-app-kit cadc-download-manager cadc-upload-manager cadc-download-manager-server ; do cd $mod; gradle --info javadoc build install || break -1; cd ..; done
 
 - if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then 
-      for i in cadc-app-kit cadc-download-manager cadc-upload-manager cadc-download-manager-server ; do
+-      for i in cadc-app-kit cadc-download-manager cadc-upload-manager cadc-download-manager-server ; do
          cd $i;
          gradle checkstyleMain || break -1;
          cd ..;
