@@ -87,8 +87,8 @@ public class DataLinkServiceResolver {
     private final Properties props = new Properties();
 
     public DataLinkServiceResolver() {
-        this(System.getProperty("user.home") + "/config/" + DataLinkServiceResolver.class.getSimpleName() +
-            ".properties");
+        this(System.getProperty("user.home") + "/config/" + DataLinkServiceResolver.class.getSimpleName()
+            + ".properties");
     }
 
     DataLinkServiceResolver(final String configFileName) {

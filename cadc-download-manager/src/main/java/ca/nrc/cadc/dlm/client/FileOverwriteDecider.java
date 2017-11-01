@@ -83,116 +83,106 @@ import javax.swing.SwingUtilities;
  *
  * @author pdowler
  */
-public class FileOverwriteDecider implements OverwriteChooser
-{
+public class FileOverwriteDecider implements OverwriteChooser {
     private Component parent;
     private boolean overwriteInit = false;
     private boolean overwriteAll = false;
     private boolean skipAll = false;
-    
-    public FileOverwriteDecider(Component parent)
-    {
+
+    public FileOverwriteDecider(Component parent) {
         this.parent = parent;
     }
-    
-    public boolean overwriteFile(String fileName, long oldSize, long oldLastModified, Long newSize, Long newLastModified)
-    {
-        // unsynchronised non-blocking response
-        if (overwriteAll)
-            return true;
-        if (skipAll)
-            return false;
 
-        try
-        {
+    public boolean overwriteFile(String fileName, long oldSize, long oldLastModified, Long newSize, Long newLastModified) {
+        // unsynchronised non-blocking response
+        if (overwriteAll) {
+            return true;
+        }
+        if (skipAll) {
+            return false;
+        }
+
+        try {
             FOD fod = new FOD(fileName, oldSize, oldLastModified, newSize, newLastModified);
-            synchronized(this)
-            {
-                if ( SwingUtilities.isEventDispatchThread())
-                {
+            synchronized (this) {
+                if (SwingUtilities.isEventDispatchThread()) {
                     fod.run();
-                }
-                else
-                {
+                } else {
                     SwingUtilities.invokeAndWait(fod);
                 }
-                if (fod.madeDecision)
-                {
+                if (fod.madeDecision) {
                     this.overwriteAll = fod.overwriteAll;
                     this.skipAll = fod.skipAll;
                 }
             }
             return fod.overwrite;
-        }
-        catch(InterruptedException oops) 
-        { 
+        } catch (InterruptedException oops) {
             oops.printStackTrace();
-            return false; 
-        }
-        catch(InvocationTargetException itex)
-        {
+            return false;
+        } catch (InvocationTargetException itex) {
             itex.printStackTrace();
             throw (RuntimeException) itex.getTargetException(); // a RuntimeException from FOD.run()
         }
     }
-    
-    private class FOD implements Runnable
-    {
+
+    private class FOD implements Runnable {
         public boolean overwrite = false;
         public boolean overwriteAll = false;
         public boolean skipAll = false;
-        
+
         public boolean madeDecision = false;
-        
+
         String fileName;
-        long oldSize, oldLastModified, newSize, newLastModified;
-        
-        public String toString() { return "FOD[" + fileName + "]"; }
-        
-        FOD(String fileName, long oldSize, long oldLastModified, long newSize, long newLastModified)
-        {
+        long oldSize;
+        long oldLastModified;
+        long newSize;
+        long newLastModified;
+
+        FOD(String fileName, long oldSize, long oldLastModified, long newSize, long newLastModified) {
             this.fileName = fileName;
             this.oldSize = oldSize;
             this.oldLastModified = oldLastModified;
             this.newSize = newSize;
             this.newLastModified = newLastModified;
         }
-        
-        public void run()
-        {
+
+        public String toString() {
+            return "FOD[" + fileName + "]";
+        }
+
+        public void run() {
             // check if another caller got in and user decided something global
-            if (FileOverwriteDecider.this.overwriteAll || FileOverwriteDecider.this.skipAll)
-            {
+            if (FileOverwriteDecider.this.overwriteAll || FileOverwriteDecider.this.skipAll) {
                 this.overwrite = FileOverwriteDecider.this.overwriteAll;
                 return;
             }
-            
-            try
-            {
-                Object[] possibilities = { "Yes", "Yes to All", "No", "No to All" };
+
+            try {
+                Object[] possibilities = {"Yes", "Yes to All", "No", "No to All"};
 
                 String oldSizeStr = Long.toString(oldSize) + " bytes";
                 String newSizeStr = Long.toString(newSize) + " bytes";
-                if (newSize == -1) // unknown size
+                if (newSize == -1) { // unknown size
                     newSizeStr = "?";
+                }
                 String relativeAge = "a NEWER";
-                if (newLastModified < oldLastModified)
+                if (newLastModified < oldLastModified) {
                     relativeAge = "an OLDER";
+                }
 
                 int option = JOptionPane.showOptionDialog(parent,
                     "File exists: \n"
                         + "\n  filename: " + fileName
                         + "\n  size: " + oldSizeStr
                         + "\n  modified: " + new Date(oldLastModified)
-                        + "\n\nReplace the existing file with "+relativeAge+" one?\n"
-                        + "\n  size: " + newSizeStr  
+                        + "\n\nReplace the existing file with " + relativeAge + " one?\n"
+                        + "\n  size: " + newSizeStr
                         + "\n  modified: " + new Date(newLastModified),
-                        "Save File",
+                    "Save File",
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.QUESTION_MESSAGE, null, possibilities,
                     possibilities[0]);
-                switch (option)
-                {
+                switch (option) {
                     case 0:
                         this.overwrite = true;
                         break;
@@ -213,8 +203,9 @@ public class FileOverwriteDecider implements OverwriteChooser
                     default:
                         throw new RuntimeException("oops: found a bug!");
                 }
+            } catch (Throwable t) {
+                t.printStackTrace();
             }
-            catch(Throwable t) { t.printStackTrace(); }
         }
     }
 }

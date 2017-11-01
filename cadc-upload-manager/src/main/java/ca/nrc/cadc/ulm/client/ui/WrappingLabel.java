@@ -31,29 +31,29 @@
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
+
 package ca.nrc.cadc.ulm.client.ui;
 
 import ca.nrc.cadc.util.StringUtil;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Label;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import javax.swing.JTextArea;
 
 
-public class WrappingLabel extends JTextArea
-{
+public class WrappingLabel extends JTextArea {
     private Vector<String> innerText;
     private int maxLength;
 
 
-    public WrappingLabel(final int maxLength)
-    {
+    public WrappingLabel(final int maxLength) {
         this(null, maxLength);
     }
 
-    public WrappingLabel(final String text, final int maxLength)
-    {
+    public WrappingLabel(final String text, final int maxLength) {
         this.maxLength = maxLength;
         setLineWrap(true);
         setWrapStyleWord(true);
@@ -63,43 +63,35 @@ public class WrappingLabel extends JTextArea
     /**
      * <p>Defines the single line of text this component will display.  If
      * the value of text is null or empty string, nothing is displayed.</p>
-
+     *
      * <p>The default value of this property is null.</p>
-
-     * This is a JavaBeans bound property.
+     * <p>This is a JavaBeans bound property.</p>
      *
      * @param text The text to set.
      */
     @Override
-    public void setText(final String text)
-    {
-        if (!StringUtil.hasText(text))
-        {
+    public void setText(final String text) {
+        if (!StringUtil.hasText(text)) {
             innerText = new Vector<>();
-        }
-        else
-        {
+        } else {
             final StringTokenizer st = new StringTokenizer(text, "\n");
 
             // we know we'll need at least this many lines
             innerText = new Vector<>(st.countTokens());
 
-            while (st.hasMoreTokens())
-            {
+            while (st.hasMoreTokens()) {
                 // make sure we don't exceed maximum length
                 final String nextLine = st.nextToken();
                 final StringBuilder buf = new StringBuilder();
 
                 for (final StringTokenizer st2 =
                      new StringTokenizer(nextLine, " ", true);
-                     st2.hasMoreTokens(); )
-                {
+                     st2.hasMoreTokens(); ) {
                     final String nextWord = st2.nextToken();
 
                     if ((buf.length() > 0)
                         && ((buf.length() + nextWord.length())
-                            > getMaxLength()))
-                    {
+                        > getMaxLength())) {
                         // We would exceed max length, set the buffer into the
                         // array & start a new buffer.
                         innerText.addElement(buf.toString());
@@ -122,15 +114,12 @@ public class WrappingLabel extends JTextArea
      * @return Dimension instance of the preferred size.
      */
     @Override
-    public Dimension getPreferredSize()
-    {
+    public Dimension getPreferredSize() {
         FontMetrics fm = getFontMetrics(getFont());
         int maxWidth = 0;
-        for (int i = 0; i < getInnerText().size(); ++i)
-        {
+        for (int i = 0; i < getInnerText().size(); ++i) {
             int mw = fm.stringWidth(getInnerText().elementAt(i));
-            if (mw > maxWidth)
-            {
+            if (mw > maxWidth) {
                 maxWidth = mw;
             }
         }
@@ -140,8 +129,7 @@ public class WrappingLabel extends JTextArea
     }
 
     @Override
-    public void paint(final Graphics g)
-    {
+    public void paint(final Graphics g) {
         //
         // Start at ascent with offset in y.
         // Start at 0 for x.
@@ -150,38 +138,30 @@ public class WrappingLabel extends JTextArea
         g.setColor(getForeground());
 
         final FontMetrics fm = g.getFontMetrics(getFont());
-        int yLoc = fm.getAscent();
+        int yloc = fm.getAscent();
         final Dimension dim = getSize();
 
-        for (final String element : getInnerText())
-        {
+        for (final String element : getInnerText()) {
             final int xLoc;
 
-            if (getAlignmentX() == Label.CENTER)
-            {
+            if (getAlignmentX() == Label.CENTER) {
                 xLoc = (dim.width - fm.stringWidth(element)) / 2;
-            }
-            else if (getAlignmentX() == Label.RIGHT)
-            {
+            } else if (getAlignmentX() == Label.RIGHT) {
                 xLoc = dim.width - fm.stringWidth(element);
-            }
-            else
-            {
+            } else {
                 xLoc = 0;
             }
 
-            g.drawString(element, xLoc, yLoc);
-            yLoc += fm.getHeight();
+            g.drawString(element, xLoc, yloc);
+            yloc += fm.getHeight();
         }
     }
 
-    public Vector<String> getInnerText()
-    {
+    public Vector<String> getInnerText() {
         return innerText;
     }
 
-    public int getMaxLength()
-    {
+    public int getMaxLength() {
         return maxLength;
     }
 }

@@ -69,14 +69,8 @@
 
 package ca.nrc.cadc.ulm.client.ui;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.DataNode;
@@ -88,6 +82,10 @@ import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import ca.nrc.cadc.vos.client.VOSpaceTransferListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -95,30 +93,21 @@ import ca.nrc.cadc.vos.client.VOSpaceTransferListener;
  *
  * @author majorb
  */
-public class UploadFile implements VOSpaceCommand
-{
+public class UploadFile implements VOSpaceCommand {
     protected static final Logger log = Logger.getLogger(UploadFile.class);
 
     private DataNode dataNode;
     private File file;
 
 
-    public UploadFile(DataNode dataNode, File file)
-    {
-        if (dataNode == null)
-        {
+    public UploadFile(DataNode dataNode, File file) {
+        if (dataNode == null) {
             throw new IllegalArgumentException("dataNode cannot be null.");
-        }
-        else if (file == null)
-        {
+        } else if (file == null) {
             throw new IllegalArgumentException("file cannot be null.");
-        }
-        else if (file.isDirectory())
-        {
+        } else if (file.isDirectory()) {
             throw new IllegalArgumentException("not a file.");
-        }
-        else if (!file.canRead())
-        {
+        } else if (!file.canRead()) {
             throw new IllegalArgumentException("cannot read file.");
         }
 
@@ -128,16 +117,12 @@ public class UploadFile implements VOSpaceCommand
 
 
     @Override
-    public void execute(VOSpaceClient vospaceClient) throws Exception
-    {
+    public void execute(VOSpaceClient vospaceClient) throws Exception {
         // see if the node exists
         log.debug("Checking node: " + dataNode);
-        try
-        {
+        try {
             vospaceClient.getNode(dataNode.getUri().getPath(), "limit=0&detail=min");
-        }
-        catch (NodeNotFoundException e)
-        {
+        } catch (NodeNotFoundException e) {
             // create it if it doesn't exist
 
             // create the data node (and any directories above that don't
@@ -152,14 +137,13 @@ public class UploadFile implements VOSpaceCommand
         final List<Protocol> protocols = new ArrayList<>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
 
-        if (AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject()) == AuthMethod.CERT)
-        {
+        if (AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject()) == AuthMethod.CERT) {
             protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
         }
 
         Transfer transfer = new Transfer(dataNode.getUri().getURI(),
-                                         Direction.pushToVoSpace, null,
-                                         protocols);
+            Direction.pushToVoSpace, null,
+            protocols);
         ClientTransfer clientTransfer = vospaceClient.createTransfer(transfer);
 
         clientTransfer.setMaxRetries(Integer.MAX_VALUE);
@@ -169,25 +153,19 @@ public class UploadFile implements VOSpaceCommand
         clientTransfer.runTransfer();
 
         ExecutionPhase ep = clientTransfer.getPhase();
-        if (ExecutionPhase.ERROR.equals(ep))
-        {
+        if (ExecutionPhase.ERROR.equals(ep)) {
             ErrorSummary es = clientTransfer.getServerError();
             throw new RuntimeException("Internal error: " + es
-                    .getSummaryMessage());
-        }
-        else if (ExecutionPhase.ABORTED.equals(ep))
-        {
+                .getSummaryMessage());
+        } else if (ExecutionPhase.ABORTED.equals(ep)) {
             throw new RuntimeException("Upload aborted");
-        }
-        else if (!ExecutionPhase.COMPLETED.equals(ep))
-        {
+        } else if (!ExecutionPhase.COMPLETED.equals(ep)) {
             throw new RuntimeException("Unexpected upload state: " + ep.name());
         }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Upload file " + dataNode.getUri();
     }
 

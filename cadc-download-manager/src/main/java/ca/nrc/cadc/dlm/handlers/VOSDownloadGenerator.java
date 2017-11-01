@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.dlm.handlers;
 
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
@@ -80,8 +79,6 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.vos.VOSURI;
-import org.apache.log4j.Logger;
-
 import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -89,62 +86,61 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  * Download generator for VOSpace identifiers. This implementation uses a custom
  * VOSpace view (view=manifest). This feature is implemented by the CANFAR VOSpace
  * code and allows clients to get both data nodes and container nodes in a simple fashion.
- * 
+ *
  * @author pdowler
  */
-public class VOSDownloadGenerator implements DownloadGenerator
-{
+public class VOSDownloadGenerator implements DownloadGenerator {
     private static final Logger log = Logger.getLogger(VOSDownloadGenerator.class);
-    
+
     private RegistryClient regClient;
     private String runID;
     private String forceAuthMethod;
-    
-    public VOSDownloadGenerator()
-    {
+
+    public VOSDownloadGenerator() {
         this(new RegistryClient());
     }
-    
-    public VOSDownloadGenerator(RegistryClient rc)
-    {
+
+    public VOSDownloadGenerator(RegistryClient rc) {
         this.regClient = rc;
     }
 
-    public void setParameters(Map<String, List<String>> params)
-    {
+    public void setParameters(Map<String, List<String>> params) {
         List<String> val = params.get("runid");
-        if (val != null && !val.isEmpty())
+        if (val != null && !val.isEmpty()) {
             this.runID = val.get(0);
+        }
         val = params.get("auth");
-        if (val != null && !val.isEmpty())
+        if (val != null && !val.isEmpty()) {
             this.forceAuthMethod = val.get(0);
+        }
         log.debug("force auth method: " + forceAuthMethod);
     }
 
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri)
-    {
-        try
-        {
+    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+        try {
             log.debug("downloadIterator: " + uri);
             VOSURI vos = new VOSURI(uri);
-            URI resourceID = vos.getServiceURI();
-            
+
             StringBuilder sb = new StringBuilder();
             sb.append(vos.getPath());
             sb.append("?view=manifest");
-                        
-            if (forceAuthMethod != null)
+
+            if (forceAuthMethod != null) {
                 sb.append("&auth=").append(forceAuthMethod);
-            
-            if (runID != null)
+            }
+
+            if (runID != null) {
                 sb.append("&runid=").append(NetUtil.encode(runID));
+            }
 
             // VOSPACE_NODES_20 doesn't support AuthMethod.COOKIE
+            URI resourceID = vos.getServiceURI();
             URL serviceUrl = regClient.getServiceURL(
                 resourceID, Standards.VOSPACE_NODES_20, AuthMethod.COOKIE);
 
@@ -156,11 +152,9 @@ public class VOSDownloadGenerator implements DownloadGenerator
             get.run();
 
             Throwable t1 = get.getThrowable(); // report this fail if password fails
-            if ( get.getThrowable() != null)
-            {
+            if (get.getThrowable() != null) {
                 if (get.getResponseCode() == 401 // no cookie or cookie invalid
-                        || get.getResponseCode() == 403 ) // no cookie and private node
-                {
+                    || get.getResponseCode() == 403) { // no cookie and private node
                     // this will only actually work in the webstart application since
                     // it can prompt for a password
                     serviceUrl = regClient.getServiceURL(
@@ -170,31 +164,28 @@ public class VOSDownloadGenerator implements DownloadGenerator
                     bos = new ByteArrayOutputStream();
                     get = new HttpDownload(url, bos);
                     get.run();
-                    if (get.getThrowable() == null)
+                    if (get.getThrowable() == null) {
                         t1 = null; // recovered from previous fail
+                    }
                 }
             }
-            if (t1 != null) // fail + possible retry fail: report first fail
+            if (t1 != null) { // fail + possible retry fail: report first fail
                 return new FailIterator(uri, "failed to resolve URI: " + t1.getMessage());
-            
-            if ( ManifestReader.CONTENT_TYPE.equals(get.getContentType()) ) // view=manifest
-            {
+            }
+
+            if (ManifestReader.CONTENT_TYPE.equals(get.getContentType())) { // view=manifest
                 String responseContent = bos.toString("UTF-8");
                 log.debug("response from " + url + "\n" + responseContent);
                 ManifestReader r = new ManifestReader();
                 return r.read(responseContent);
             }
-            
-            return new FailIterator(uri, "unable to download " + uri 
+
+            return new FailIterator(uri, "unable to download " + uri
                 + " with view=manifest [" + get.getResponseCode() + ", " + get.getContentType() + "]");
-        }
-        catch(MalformedURLException bug)
-        {
+        } catch (MalformedURLException bug) {
             log.error("failed to read DataLink result table", bug);
             throw new RuntimeException("BUG: failed to create DataLink query URL: " + bug);
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             log.debug("failed to read DataLink result table", ex);
             return new FailIterator(uri, "failed to read output from view=manifest: " + ex.toString());
         }

@@ -31,6 +31,7 @@
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
+
 package ca.nrc.cadc.ulm.client.ui;
 
 import java.io.File;
@@ -39,12 +40,11 @@ import java.io.File;
 /**
  * Simple callback to signal completion.
  */
-public interface SourceDirectoryChooserCallback
-{
+public interface SourceDirectoryChooserCallback {
     /**
      * Callback to caller with the chosen file.
      *
-     * @param chosenFile        The Chosen file.
+     * @param chosenFile The Chosen file.
      */
     void onCallback(final File chosenFile);
 }

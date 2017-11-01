@@ -71,84 +71,81 @@
 
 package ca.nrc.cadc.dlm.client;
 
-import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.appkit.ui.BrowserApplet;
-
-import javax.swing.JApplet;
+import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JApplet;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * TODO
  *
- * @version $Version$
  * @author pdowler
+ * @version $Version$
  */
-public class AppletWrapper extends JApplet
-{
+public class AppletWrapper extends JApplet {
     //private static String SERVER_NAME = "ca.nrc.cadc.net.serverName";
+    private static Logger log = Logger.getLogger(AppletWrapper.class);
     private GraphicUI ui;
-	
-    public void init()
-    {
-        try
-        {   
+
+    public void init() {
+        try {
             // temporary hack to set a system property in applet mode
             //String serverName = fixNull(getParameter(SERVER_NAME));
             //System.setProperty(SERVER_NAME, serverName);
-            
+
             String uriStr = fixNull(getParameter("uris"));
             String paramStr = fixNull(getParameter("params"));
 
             List<String> uris = DownloadUtil.decodeListURI(uriStr);
-            Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
-            
+            Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+
             this.ui = new GraphicUI(Level.INFO);
             ui.add(uris, params);
-            
+
             BrowserApplet f = new BrowserApplet(Constants.name, ui, this);
             this.validate();
-        }
-        catch(Throwable oops)
-        {
-            try
-            {
+        } catch (Throwable oops) {
+            try {
                 // temporary
                 oops.printStackTrace();
-            }
-            catch(Throwable ignore) { }
-            finally
-            {
+            } catch (Throwable ignore) {
+                log.info("Throwable exception thrown trying to start downloadManager thread. " + ignore);
+            } finally {
                 // terminate
                 ui.stop();
             }
         }
     }
-    
-    public void start()
-    {
+
+    public void start() {
         ui.start();
     }
-    
-    public void stop()
-    {
+
+    public void stop() {
         ui.stop();
-        try { ui.getApplicationContainer().getConfig().writeConfig(); }
-        catch(IOException ignore) { }
+        try {
+            ui.getApplicationContainer().getConfig().writeConfig();
+        } catch (IOException ignore) {
+            log.info("Ignoring IOException" + ignore);
+        }
     }
-    
+
     // convert string 'null' and empty string to a null, trim() and return
-    private String fixNull(String s)
-    {
-        if (s == null)
+    private String fixNull(String s) {
+        if (s == null) {
             return null;
-        if ( "null".equals(s) )
+        }
+        if ("null".equals(s)) {
             return null;
+        }
         s = s.trim();
-        if (s.length() == 0)
+        if (s.length() == 0) {
             return null;
+        }
         return s;
     }
 }

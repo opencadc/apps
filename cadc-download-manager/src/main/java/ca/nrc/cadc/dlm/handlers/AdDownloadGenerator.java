@@ -86,19 +86,14 @@ import org.apache.log4j.Logger;
 
 /**
  * Download generator for CADC archive identifiers.
- * 
+ *
  * @author pdowler
  */
-public class AdDownloadGenerator implements DownloadGenerator
-{
+public class AdDownloadGenerator implements DownloadGenerator {
     private static final Logger log = Logger.getLogger(AdDownloadGenerator.class);
-
-    private AdSchemeHandler ad;
-    private Map<String,List<String>> params;
-
     private static final Set<String> PARAMS;
-    static
-    {
+
+    static {
         PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
         PARAMS.add("logkey");
         PARAMS.add("logvalue");
@@ -106,32 +101,29 @@ public class AdDownloadGenerator implements DownloadGenerator
         PARAMS.add("runid");
     }
 
-    public AdDownloadGenerator() 
-    {
+    private AdSchemeHandler ad;
+    private Map<String, List<String>> params;
+
+    public AdDownloadGenerator() {
         this.ad = new AdSchemeHandler();
     }
-    
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri)
-    {
-        try
-        {
+
+    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+        try {
             URL url = ad.getURL(uri);
-            if (params != null)
-            {
+            if (params != null) {
                 StringBuilder sb = new StringBuilder(url.toExternalForm());
                 boolean first = true;
-                Iterator<Map.Entry<String,List<String>>> i = params.entrySet().iterator();
-                while ( i.hasNext() )
-                {
-                    Map.Entry<String,List<String>> me = i.next();
-                    if ( PARAMS.contains(me.getKey()) && me.getValue() != null )
-                    {
-                        for (String v : me.getValue())
-                        {
-                            if (first)
+                Iterator<Map.Entry<String, List<String>>> i = params.entrySet().iterator();
+                while (i.hasNext()) {
+                    Map.Entry<String, List<String>> me = i.next();
+                    if (PARAMS.contains(me.getKey()) && me.getValue() != null) {
+                        for (String v : me.getValue()) {
+                            if (first) {
                                 sb.append("?");
-                            else
+                            } else {
                                 sb.append("&");
+                            }
                             first = false;
                             sb.append(me.getKey());
                             sb.append("=");
@@ -142,15 +134,12 @@ public class AdDownloadGenerator implements DownloadGenerator
                 url = new URL(sb.toString());
             }
             return new SingleDownloadIterator(uri, url);
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             return new FailIterator(uri, "failed to resolve URI: " + ex.getMessage());
         }
     }
 
-    public void setParameters(Map<String, List<String>> params)
-    {
+    public void setParameters(Map<String, List<String>> params) {
         this.params = params;
     }
 }

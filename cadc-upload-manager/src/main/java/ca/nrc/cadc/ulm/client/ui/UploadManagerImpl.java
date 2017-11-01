@@ -31,65 +31,58 @@
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
+
 package ca.nrc.cadc.ulm.client.ui;
 
+import ca.nrc.cadc.vos.VOSURI;
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-
 import javax.security.auth.Subject;
-
-import ca.nrc.cadc.vos.VOSURI;
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 
 /**
  * The main manager to manage the logic of the uploads.  Reports to UI elements
  * via the listeners.
  */
-public class UploadManagerImpl implements UploadManager
-{
+public class UploadManagerImpl implements UploadManager {
     // If we don't use a different logger here, then it will try to log to the
     // AWT console outside the EDT.
-//    private static final Logger LOGGER =
-//            Logger.getLogger(UploadManagerImpl.class);
+    //    private static final Logger LOGGER =
+    //            Logger.getLogger(UploadManagerImpl.class);
     private static final int MAX_COMMAND_COUNT = 500;
-
-    private File sourceDirectory;
     private final VOSURI targetVOSpaceURI;
     private final VOSpaceClient voSpaceClient;
+    private final CommandQueue commandQueue;
+    private final List<CommandQueueListener> commandQueueListeners =
+        new ArrayList<>();
+    private File sourceDirectory;
     private Subject subject;
-
     private boolean stopIssued;
-
     private ExecutorService producerExecutorService;
     private ExecutorService consumerExecutorService;
-    private final CommandQueue commandQueue;
-
-    private final List<CommandQueueListener> commandQueueListeners =
-            new ArrayList<>();
 
 
     /**
      * Only available constructor.  Complete.
      *
-     * @param targetVOSpaceURI      The URI of the target VOSpace.
-     * @param vospaceClient         The VOSpace client instance to use.
-     * @param commandQueueListener  The main listener.
-     * @param subject               The Subject to use.
+     * @param targetVOSpaceURI     The URI of the target VOSpace.
+     * @param vospaceClient        The VOSpace client instance to use.
+     * @param commandQueueListener The main listener.
+     * @param subject              The Subject to use.
      */
     public UploadManagerImpl(final VOSURI targetVOSpaceURI,
                              final VOSpaceClient vospaceClient,
                              final CommandQueueListener commandQueueListener,
-                             Subject subject)
-    {
+                             Subject subject) {
         this.targetVOSpaceURI = targetVOSpaceURI;
         this.voSpaceClient = vospaceClient;
         this.commandQueue = new CommandQueue(MAX_COMMAND_COUNT,
-                                             commandQueueListener);
+            commandQueueListener);
         this.subject = subject;
     }
 
@@ -97,11 +90,10 @@ public class UploadManagerImpl implements UploadManager
     /**
      * Begin the UploadManager's Producer and Consumer threads.
      *
-     * @param sourceDirectory       The directory to start at.
+     * @param sourceDirectory The directory to start at.
      */
     @Override
-    public void start(File sourceDirectory)
-    {
+    public void start(File sourceDirectory) {
         this.sourceDirectory = sourceDirectory;
         initializeCommandController();
     }
@@ -109,23 +101,22 @@ public class UploadManagerImpl implements UploadManager
     /**
      * Create the command controller and set it.
      */
-    protected void initializeCommandController()
-    {
+    protected void initializeCommandController() {
         setConsumerExecutorService(
-                Executors.newFixedThreadPool(1, new CommandThreadFactory(
-                        "Consumer")));
+            Executors.newFixedThreadPool(1, new CommandThreadFactory(
+                "Consumer")));
 
         setProducerExecutorService(
-                Executors.newSingleThreadExecutor(
-                        new CommandThreadFactory("Producer")));
+            Executors.newSingleThreadExecutor(
+                new CommandThreadFactory("Producer")));
 
         getProducerExecutorService().execute(
-                new FileSystemScanner(getSourceDirectory(),
-                                      getTargetVOSpaceURI(),
-                                      getCommandQueue()));
+            new FileSystemScanner(getSourceDirectory(),
+                getTargetVOSpaceURI(),
+                getCommandQueue()));
         getConsumerExecutorService().execute(
-                new CommandExecutor(getVOSpaceClient(), getCommandQueue(),
-                                    subject));
+            new CommandExecutor(getVOSpaceClient(), getCommandQueue(),
+                subject));
 
         // Shutdown the producer thread when it's finished.  The consumer can
         // block on the queue until the upload manager is closed.
@@ -136,17 +127,13 @@ public class UploadManagerImpl implements UploadManager
      * Shutdown the Manager.  This is a hard stop for an abort.
      */
     @Override
-    public void stop()
-    {
+    public void stop() {
         stopIssued = true;
 
-        try
-        {
+        try {
             getConsumerExecutorService().shutdownNow();
             getCommandQueue().clear();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -157,86 +144,72 @@ public class UploadManagerImpl implements UploadManager
      * @return True if aborted, False otherwise.
      */
     @Override
-    public boolean isStopIssued()
-    {
+    public boolean isStopIssued() {
         return stopIssued;
     }
 
-    public File getSourceDirectory()
-    {
+    public File getSourceDirectory() {
         return sourceDirectory;
     }
 
-    public VOSURI getTargetVOSpaceURI()
-    {
+    public VOSURI getTargetVOSpaceURI() {
         return targetVOSpaceURI;
     }
 
-    public VOSpaceClient getVOSpaceClient()
-    {
+    public VOSpaceClient getVOSpaceClient() {
         return voSpaceClient;
     }
-    
-    public ExecutorService getProducerExecutorService()
-    {
+
+    public ExecutorService getProducerExecutorService() {
         return producerExecutorService;
     }
-    
-    public void setProducerExecutorService(ExecutorService executorService)
-    {
+
+    public void setProducerExecutorService(ExecutorService executorService) {
         this.producerExecutorService = executorService;
     }
-    
-    public ExecutorService getConsumerExecutorService()
-    {
+
+    public ExecutorService getConsumerExecutorService() {
         return consumerExecutorService;
     }
-    
-    public void setConsumerExecutorService(ExecutorService executorService)
-    {
+
+    public void setConsumerExecutorService(ExecutorService executorService) {
         this.consumerExecutorService = executorService;
     }
 
-    public CommandQueue getCommandQueue()
-    {
+    public CommandQueue getCommandQueue() {
         return commandQueue;
     }
 
     public void registerCommandQueueListener(
-            final CommandQueueListener commandQueueListener)
-    {
+        final CommandQueueListener commandQueueListener) {
         getCommandQueueListeners().add(commandQueueListener);
     }
 
-    public List<CommandQueueListener> getCommandQueueListeners()
-    {
+    public List<CommandQueueListener> getCommandQueueListeners() {
         return commandQueueListeners;
     }
-    
+
     /**
      * ThreadFactory to create named daemon threads for command execution
      * and file scanning.
      */
-    private class CommandThreadFactory implements ThreadFactory
-    {
-        
+    private class CommandThreadFactory implements ThreadFactory {
+
         private String role;
-        
-        CommandThreadFactory(String role)
-        {
+
+        CommandThreadFactory(String role) {
             this.role = role;
         }
 
         @Override
-        public Thread newThread(final Runnable r)
-        {
+        public Thread newThread(final Runnable r) {
             final Thread next = new Thread(r);
             next.setDaemon(true);
             next.setName("UploadContainer-" + role);
 
             return next;
         }
-        
+
     }
 
 }

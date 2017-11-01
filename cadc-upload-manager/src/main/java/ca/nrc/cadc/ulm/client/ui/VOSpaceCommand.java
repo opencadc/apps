@@ -73,15 +73,14 @@ import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 /**
  * Inteface for individual vospace command implementations.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public interface VOSpaceCommand
-{
-    
+public interface VOSpaceCommand {
+
     /**
      * Execute the command using the vospace client provided.
+     *
      * @param vospaceClient The interface to vospace
      * @throws Exception If the command failed.
      */

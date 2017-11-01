@@ -69,52 +69,44 @@
 
 package ca.nrc.cadc.ulm.client.ui;
 
-import org.apache.log4j.Logger;
-
 import ca.nrc.cadc.vos.ContainerNode;
 import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
+import org.apache.log4j.Logger;
 
 /**
  * Class to create the vospace directory denoted by the supplied
  * container node.
- *  
- * @author majorb
  *
+ * @author majorb
  */
-public class CreateDirectory implements VOSpaceCommand
-{
+public class CreateDirectory implements VOSpaceCommand {
     protected static final Logger log = Logger.getLogger(CreateDirectory.class);
-    
+
     private ContainerNode containerNode;
-    
-    public CreateDirectory(ContainerNode containerNode)
-    {
-        if (containerNode == null)
+
+    public CreateDirectory(ContainerNode containerNode) {
+        if (containerNode == null) {
             throw new IllegalArgumentException("containerNode cannot be null.");
+        }
         this.containerNode = containerNode;
     }
 
     @Override
-    public void execute(VOSpaceClient vospaceClient) throws Exception
-    {
-        try
-        {
+    public void execute(VOSpaceClient vospaceClient) throws Exception {
+        try {
             // see if the node exists
             log.debug("Creating node: " + containerNode.getUri());
             vospaceClient.getNode(containerNode.getUri().getPath());
             log.debug("Node already exists: " + containerNode.getUri());
-        }
-        catch (NodeNotFoundException e)
-        {
+        } catch (NodeNotFoundException e) {
             // create it if it doesn't
             vospaceClient.createNode(containerNode);
         }
     }
-    
+
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Create directory " + containerNode.getUri();
     }
 

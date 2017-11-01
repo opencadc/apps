@@ -69,89 +69,68 @@
 
 package ca.nrc.cadc.ulm.client.ui;
 
+import ca.nrc.cadc.vos.client.VOSpaceClient;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.vos.client.VOSpaceClient;
 
 /**
  * Executes the commands in the command queue.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public class CommandExecutor implements Runnable
-{
-    
+public class CommandExecutor implements Runnable {
+
     protected static final Logger log = Logger.getLogger(CommandExecutor.class);
-    
+
     private VOSpaceClient vospaceClient;
     private CommandQueue queue;
     private Subject subject;
-    
+
     public CommandExecutor(VOSpaceClient vospaceClient, CommandQueue queue,
-                           Subject subject)
-    {
+                           Subject subject) {
         this.vospaceClient = vospaceClient;
         this.queue = queue;
         this.subject = subject;
     }
-    
+
     /**
      * Executes the commands in the queue.
      */
-    public void run()
-    {
+    public void run() {
         Throwable throwable;
-        try
-        {
-            while (true)
-            {
+        try {
+            while (true) {
                 throwable = null;
                 // take() will block if queue is empty
                 final VOSpaceCommand nextCommand = queue.take();
                 log.info("Executing command: " + nextCommand);
-                try
-                {
+                try {
                     PrivilegedExceptionAction<Object> action =
-                            new PrivilegedExceptionAction<Object>()
-                    {
-                        public Object run() throws Exception
-                        {
-                            nextCommand.execute(vospaceClient);
-                            return null;
-                        }
-                    };
+                        new PrivilegedExceptionAction<Object>() {
+                            public Object run() throws Exception {
+                                nextCommand.execute(vospaceClient);
+                                return null;
+                            }
+                        };
                     Subject.doAs(subject, action);
-                }
-                catch (Throwable t)
-                {
-                    if (t instanceof PrivilegedActionException)
-                    {
+                } catch (Throwable t) {
+                    if (t instanceof PrivilegedActionException) {
                         throwable = t.getCause();
-                    }
-                    else
-                    {
+                    } else {
                         throwable = t;
                     }
 
                     log.info("Error executing command: " + nextCommand
-                             + ": " + throwable);
-                }
-                finally
-                {
+                        + ": " + throwable);
+                } finally {
                     log.debug("Finished command: " + nextCommand
-                              + ", throwable=" + throwable);
+                        + ", throwable=" + throwable);
                     queue.commandCompleted(nextCommand, throwable);
                 }
             }
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             // vm exiting...
         }
 

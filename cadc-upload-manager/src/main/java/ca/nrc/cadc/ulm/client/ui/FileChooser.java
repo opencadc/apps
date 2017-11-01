@@ -31,38 +31,38 @@
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  ************************************************************************
  */
+
 package ca.nrc.cadc.ulm.client.ui;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 
 
 /**
  * Generic interface for a file chooser.
  */
-public interface FileChooser
-{
+public interface FileChooser {
     /**
      * Show the file chooser dialog.
      *
-     * @param parent        The Component parent (Container).
-     * @param acceptText    The text for an accepted choice.
-     * @return              integer return code.
+     * @param parent     The Component parent (Container).
+     * @param acceptText The text for an accepted choice.
+     * @return integer return code.
      */
     int showDialog(final Component parent, final String acceptText);
 
     /**
      * Show the open file item chooser dialog.
      *
-     * @param parent        The Component parent (Container).
-     * @return              integer return code.
+     * @param parent The Component parent (Container).
+     * @return integer return code.
      */
     int showOpenDialog(final Component parent);
 
     /**
      * Obtain the selected file item.
      *
-     * @return  File object, or null if none chosen.
+     * @return File object, or null if none chosen.
      */
     File getSelectedFile();
 }

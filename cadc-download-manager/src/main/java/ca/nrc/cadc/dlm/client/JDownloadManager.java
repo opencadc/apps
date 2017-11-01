@@ -70,10 +70,10 @@
 
 package ca.nrc.cadc.dlm.client;
 
-import ca.nrc.cadc.dlm.ManifestReader;
 import ca.nrc.cadc.appkit.util.HttpAuthenticator;
 import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.ManifestReader;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpTransfer;
 import ca.nrc.cadc.net.event.TransferEvent;
@@ -94,7 +94,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -118,12 +117,11 @@ import org.apache.log4j.Logger;
 /**
  * Manage download of multiple files simultaneously.
  * Created on 8-Aug-2005.
- * 
- * @version $Version$
+ *
  * @author pdowler
+ * @version $Version$
  */
-public class JDownloadManager extends JPanel implements ChangeListener, TransferListener
-{
+public class JDownloadManager extends JPanel implements ChangeListener, TransferListener {
     private static final long serialVersionUID = 201008051500L;
     private static Logger log = Logger.getLogger(JDownloadManager.class);
 
@@ -139,7 +137,7 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
     private JPanel tc;
     private Box status;
     private Box downloads;
-    
+
     // status/controls
     private Component clearButton;
     private Component cancelButton;
@@ -155,30 +153,29 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
     private int numFailed = 0;
 
     private FileOverwriteDecider fod;
-    
+
     private List downloadListeners;
     private DownloadManager downloadManager;
     private Set<URL> queuedURL = new HashSet<URL>();
-    
+
     private File initialDir;
-    
-    public JDownloadManager()
-    {
+
+    public JDownloadManager() {
         this(DownloadManager.DEFAULT_THREAD_COUNT, false, null);
     }
-    
-    public JDownloadManager(int initialThreadCount, boolean retryEnabled)
-    {
+
+    public JDownloadManager(int initialThreadCount, boolean retryEnabled) {
         this(initialThreadCount, retryEnabled, null);
     }
-    
-    public JDownloadManager(int initialThreadCount, boolean retryEnabled, File initialDir)
-    {
+
+    public JDownloadManager(int initialThreadCount, boolean retryEnabled, File initialDir) {
         super(new BorderLayout());
-        if (initialThreadCount < 1)
+        if (initialThreadCount < 1) {
             initialThreadCount = 1;
-        if (initialThreadCount > DownloadManager.MAX_THREAD_COUNT)
+        }
+        if (initialThreadCount > DownloadManager.MAX_THREAD_COUNT) {
             initialThreadCount = DownloadManager.MAX_THREAD_COUNT;
+        }
 
         SpinnerThreadControl threadControl = new SpinnerThreadControl(new Integer(initialThreadCount), DownloadManager.MAX_THREAD_COUNT);
         downloadManager = new DownloadManager(threadControl, retryEnabled, initialThreadCount, initialDir);
@@ -186,23 +183,23 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
 
         // configure custom authentication
         Authenticator.setDefault(new HttpAuthenticator(this));
-        
+
         // use a single shared FOD so that global decisions stick
         this.fod = new FileOverwriteDecider(this);
-        
+
         JPanel scrollable = new JPanel(new BorderLayout());
         this.downloads = new Box(BoxLayout.Y_AXIS);
         scrollable.add(downloads, BorderLayout.NORTH);
         JPanel extraSpace = new JPanel();
         extraSpace.setBackground(Color.WHITE);
         scrollable.add(extraSpace, BorderLayout.CENTER); // take up all extra space
-        
+
         this.tc = new JPanel();
         //FlowLayout flo = (FlowLayout) this.tc.getLayout();
         //flo.setHgap(30);
 
         //JPanel jtc = new JPanel();
-        JFormattedTextField tf = ((JSpinner.DefaultEditor)threadControl.getEditor()).getTextField();
+        JFormattedTextField tf = ((JSpinner.DefaultEditor) threadControl.getEditor()).getTextField();
         tf.setEditable(false);
         tc.add(new JLabel("max simultaneous downloads:"));
         tc.add(threadControl);
@@ -211,16 +208,16 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
         //this.retryControl = new JCheckBox("retry when server is busy",retryEnabled);
         //retryControl.addChangeListener(this);
         //tc.add(retryControl);
-        
+
         this.status = new Box(BoxLayout.Y_AXIS);
         this.completeLabel = new JLabel(COMPLETED + "0");
-        this.cancelLabel =   new JLabel(CANCELLED + "0");
-        this.failLabel =     new JLabel(FAILED + "0");
-        this.totalLabel =    new JLabel(TOTAL + "0");
+        this.cancelLabel = new JLabel(CANCELLED + "0");
+        this.failLabel = new JLabel(FAILED + "0");
+        this.totalLabel = new JLabel(TOTAL + "0");
         this.progress = new JProgressBar();
         progress.setMinimum(0);
         // add an empty border to the exterior
-        progress.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4,20,4,20), progress.getBorder()));
+        progress.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(4, 20, 4, 20), progress.getBorder()));
         status.add(progress);
         Box tmp = new Box(BoxLayout.X_AXIS);
         tmp.add(completeLabel);
@@ -228,17 +225,17 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
         tmp.add(failLabel);
         tmp.add(totalLabel);
         status.add(tmp);
-        
+
         JPanel buttons = new JPanel();
         this.clearButton = buttons.add(new JButton(new ClearAction()));
         this.cancelButton = buttons.add(new JButton(new CancelAction()));
-        
+
         Box south = new Box(BoxLayout.Y_AXIS);
         south.add(tc);
         south.add(status);
         south.add(buttons);
-        
-        
+
+
         JScrollPane sp = new JScrollPane(scrollable);
         this.add(sp, BorderLayout.CENTER);
         this.add(south, BorderLayout.SOUTH);
@@ -250,325 +247,215 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
         addDownloadListener(new ManifestDownloadListener());
     }
 
-    public void stateChanged(ChangeEvent e)
-    {
-        if (e.getSource() != null && e.getSource() == retryControl)
-        {
+    public void stateChanged(ChangeEvent e) {
+        if (e.getSource() != null && e.getSource() == retryControl) {
             boolean enabled = (retryControl.getSelectedObjects() != null);
             log.debug("stateChanged: retry -> " + enabled);
             this.downloadManager.setRetryEnabled(enabled);
         }
     }
 
-    private class CancelAction extends AbstractAction
-    {
-        public CancelAction() 
-        {
-            super("Cancel"); 
-            putValue(Action.SHORT_DESCRIPTION, "Cancel all downloads immediately.");
-        }
-        
-        public void actionPerformed(ActionEvent e)
-        {
-            log.debug("CancelAction.actionPerformed()");
-            stop();
-            cancelButton.setEnabled(false);
-        }
-    }
-    private class ClearAction extends AbstractAction
-    {
-        private int type = -1;
-
-        public ClearAction()
-        {
-            super("Clear");
-            putValue(Action.SHORT_DESCRIPTION, "Remove all completed and cancelled downloads from the list.");
-        }
-        
-        public ClearAction(String s, int type) 
-        {
-            super(s);
-            this.type = type;
-            switch(type)
-            {
-                case TransferEvent.COMPLETED:
-                    putValue(Action.SHORT_DESCRIPTION, "Remove all completed downloads from the list.");
-                    break;
-                case TransferEvent.CANCELLED:
-                    putValue(Action.SHORT_DESCRIPTION, "Remove all cancelled downloads from the list.");
-                    break;
-                case TransferEvent.FAILED:
-                    putValue(Action.SHORT_DESCRIPTION, "Remove all failed downloads from the list.");
-                    break;
-            }
-        }
-        
-        public void actionPerformed(ActionEvent e)
-        {
-            log.debug("ClearAction.actionPerformed()");
-            ArrayList removals = new ArrayList();
-            for (int i=0; i<downloads.getComponentCount(); i++)
-            {
-                JDownload jdl = (JDownload) downloads.getComponent(i);
-                TransferEvent te = jdl.getLastEvent();
-                if (te != null && doClear(te.getState()))
-                    removals.add(jdl);
-            }
-            for (int i=0; i<removals.size(); i++)
-                downloads.remove( (Component) removals.get(i));
-            validateTree();
-            repaint();
-        }
-        
-        private boolean doClear(int state)
-        {
-            if (this.type == state)
-                return true;
-            if (state == TransferEvent.COMPLETED || state == TransferEvent.CANCELLED)
-                return true;
-            return false;
-        }
-    }
-    
-    public int getThreadCount() 
-    {
+    public int getThreadCount() {
         return downloadManager.getThreadCount();
     }
-    public boolean getRetryEnabled()
-    {
-        return true; //(retryControl.getSelectedObjects() != null);
-    }
-    
-    public void setThreadCount(int tc) 
-    {
+
+    public void setThreadCount(int tc) {
         downloadManager.setThreadCount(tc);
     }
-       
-    public void setInitialDir(File initialDir) { this.initialDir = initialDir; }
-    
-    public File getInitialDir() { return initialDir; }
+
+    public boolean getRetryEnabled() {
+        return true; //(retryControl.getSelectedObjects() != null);
+    }
+
+    public File getInitialDir() {
+        return initialDir;
+    }
+
+    public void setInitialDir(File initialDir) {
+        this.initialDir = initialDir;
+    }
+
+    public File getDestinationDir() {
+        return downloadManager.getDestinationDir();
+    }
 
     public void setDestinationDir(File destDir) {
         downloadManager.setDestinationDir(destDir);
     }
 
-    public File getDestinationDir() { 
-        return downloadManager.getDestinationDir();
-    }
-    
-    public void addChangeListener(ChangeListener listener)
-    {
+    public void addChangeListener(ChangeListener listener) {
         downloadManager.addChangeListener(listener);
     }
-    
+
     /**
      * Register for download events.
      *
      * @param dl the listener
      */
-    public void addDownloadListener(TransferListener dl)
-    {
-        if (dl == null)
+    public void addDownloadListener(TransferListener dl) {
+        if (dl == null) {
             return;
-        if (downloadListeners == null)
+        }
+        if (downloadListeners == null) {
             this.downloadListeners = new ArrayList();
+        }
         downloadListeners.add(dl);
     }
-    
-    public void removeDownloadListener(TransferListener dl)
-    {
-        if (dl == null)
+
+    public void removeDownloadListener(TransferListener dl) {
+        if (dl == null) {
             return;
-        if (downloadListeners == null)
+        }
+        if (downloadListeners == null) {
             return;
+        }
         downloadListeners.remove(dl);
     }
-    
+
     // DownloadListener
-    public void transferEvent(TransferEvent e)
-    {
+    public void transferEvent(TransferEvent e) {
         log.debug("transferEvent: " + e);
-        switch(e.getState())
-        {
+        switch (e.getState()) {
             case TransferEvent.RETRYING:
             case TransferEvent.CANCELLED:
             case TransferEvent.COMPLETED:
             case TransferEvent.FAILED:
-                if (SwingUtilities.isEventDispatchThread())
+                if (SwingUtilities.isEventDispatchThread()) {
                     new UpdateUI(e).run();
-                else
+                } else {
                     SwingUtilities.invokeLater(new UpdateUI(e));
+                }
+                break;
+            default:
+                // Checkstyle requires default. No action was here before
+                break;
         }
-        
+
         // rebroadcast event to other listeners
-        if (downloadListeners == null || downloadListeners.size() == 0)
-        {
+        if (downloadListeners == null || downloadListeners.size() == 0) {
             log.debug("downloadListeners: none");
             return;
         }
         log.debug("downloadListeners: " + downloadListeners.size());
-        for (int i=0; i<downloadListeners.size(); i++)
-        {
+        for (int i = 0; i < downloadListeners.size(); i++) {
             TransferListener tl = (TransferListener) downloadListeners.get(i);
             tl.transferEvent(e);
         }
     }
-    
-    public String getEventHeader()
-    {
+
+    public String getEventHeader() {
         return null;
     }
-    
-    public void choseDestinationDir(Component parent)
-    {
-        try
-        {
+
+    public void choseDestinationDir(Component parent) {
+        try {
             log.debug("initialDir: " + getInitialDir());
             MyFileChooser chooser = new MyFileChooser(getInitialDir());
-            
+
             int returnVal = chooser.showDialog(parent, "Select");
-            if (returnVal == JFileChooser.APPROVE_OPTION)
-            {
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File dest = chooser.getSelectedFile();
                 downloadManager.setDestinationDir(dest);
                 String estr = null;
-                if (!downloadManager.getDestinationDir().isDirectory()) // in case the user types something in
+                if (!downloadManager.getDestinationDir().isDirectory()) { // in case the user types something in
                     estr = "'" + downloadManager.getDestinationDir().getAbsolutePath() + "' is not a directory";
-                else if (!downloadManager.getDestinationDir().canWrite())
+                } else if (!downloadManager.getDestinationDir().canWrite()) {
                     estr = "'" + downloadManager.getDestinationDir().getAbsolutePath() + "' is not writable";
-                if (estr != null)
-                {
+                }
+                if (estr != null) {
                     JOptionPane.showMessageDialog(parent, estr, "Error", JOptionPane.ERROR_MESSAGE);
                     downloadManager.setDestinationDir(null);
                     choseDestinationDir(parent); // recursive
-                }
-                else
-                {
+                } else {
                     log.info("destination directory: " + dest.getAbsolutePath());
                     downloadManager.fireChangeEvent();
                 }
-            }
-            else
+            } else {
                 downloadManager.setDestinationDir(null);
-        }
-        catch(RuntimeException rex)
-        {
+            }
+        } catch (RuntimeException rex) {
             log.error("failed to determine destination dir", rex);
         }
         log.debug("destDir: " + downloadManager.getDestinationDir());
     }
-    
-    public void start()
-    {
-        
+
+    public void start() {
+
         downloadManager.start();
-        
-        if ( SwingUtilities.isEventDispatchThread() )
-        {
+
+        if (SwingUtilities.isEventDispatchThread()) {
             log.debug("invoking doStart() directly");
             downloadManager.startThreadControl();
-        }
-        else
-            try
-            {
+        } else {
+            try {
                 log.debug("invoking doStart() via invokeAndWait");
-                SwingUtilities.invokeAndWait(new Runnable() 
-                { 
-                    public void run() {downloadManager.startThreadControl(); } 
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        downloadManager.startThreadControl();
+                    }
                 });
+            } catch (Throwable ignore) {
+                log.info("Throwable exception thrown trying to start downloadManager thread. " + ignore);
             }
-            catch(Throwable ignore) { }
+        }
     }
-    
+
     /**
      * Terminate all downloads and release resources.
      */
-    public void stop()
-    {
+    public void stop() {
 
         downloadManager.stop();
 
-        if ( SwingUtilities.isEventDispatchThread() )
+        if (SwingUtilities.isEventDispatchThread()) {
             downloadManager.stopThreadControl();
-        else
-            try
-            {
-                SwingUtilities.invokeAndWait(new Runnable() 
-                { 
-                    public void run() { downloadManager.stopThreadControl(); } 
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        downloadManager.stopThreadControl();
+                    }
                 });
+            } catch (Throwable ignore) {
+                log.info("Throwable exception thrown trying to stop downloadManager thread. " + ignore);
             }
-            catch(Throwable ignore) { }
-    }
-    
-    private class UpdateUI implements Runnable
-    {
-        TransferEvent e;
-        UpdateUI(TransferEvent e) { this.e = e; }
-        public void run()
-        {
-            switch(e.getState())
-            {
-                case TransferEvent.RETRYING:
-                    log.info(e.getStateLabel() + ": " + e.getURL());
-                    break;
-                    
-                case TransferEvent.FAILED:
-                    if (e.getFile() == null)
-                        log.error(e.getStateLabel() + ": " + e.getURL() + " -- " + e.getError().getMessage());
-                    else
-                        log.error(e.getStateLabel() + ": " + e.getURL() + " -> " + e.getFile() + " -- " + e.getError().getMessage());
-                    numFailed++;
-                    break;
-                case TransferEvent.CANCELLED:
-                    log.info(e.getStateLabel() + ": " + e.getURL() + " -> " + e.getFile());
-                    numCancelled++;
-                    break;
-                case TransferEvent.COMPLETED:
-                    log.info(e.getStateLabel() + ": " + e.getURL() + " -> " + e.getFile());
-                    numCompleted++;
-                    break;
-            }
-            updateStatus();
         }
     }
-    private void updateStatus()
-    {
-        int tot = numCompleted + numCancelled + numFailed;
+
+    private void updateStatus() {
         completeLabel.setText(COMPLETED + numCompleted);
         cancelLabel.setText(CANCELLED + numCancelled);
         failLabel.setText(FAILED + numFailed);
+
+        int tot = numCompleted + numCancelled + numFailed;
         totalLabel.setText(TOTAL + tot + " of " + numTotal);
         progress.setMaximum(numTotal);
         progress.setValue(tot);
-        if (tot == numTotal && cancelButton.isEnabled())
+        if (tot == numTotal && cancelButton.isEnabled()) {
             cancelButton.setEnabled(false);
-        else if ( !cancelButton.isEnabled() )
+        } else if (!cancelButton.isEnabled()) {
             cancelButton.setEnabled(true);
+        }
         repaint();
     }
 
-    public void add(Iterator<DownloadDescriptor> downloads)
-    {
-        while ( downloads.hasNext() )
-        {
+    public void add(Iterator<DownloadDescriptor> downloads) {
+        while (downloads.hasNext()) {
             DownloadDescriptor dd = downloads.next();
-            if (DownloadDescriptor.OK.equals(dd.status))
-            {
+            if (DownloadDescriptor.OK.equals(dd.status)) {
                 File dest = downloadManager.getDestinationDir();
-                if (dd.destination != null)
+                if (dd.destination != null) {
                     dest = new File(dest, dd.destination);
+                }
                 HttpDownload dl = new HttpDownload(userAgent, dd.url, dest);
                 this.add(dd, dl);
-            }
-            else
-            {
+            } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append("failed to setup download: ");
-                if (dd.uri != null)
+                if (dd.uri != null) {
                     sb.append(dd.uri);
-                if (dd.destination != null)
-                {
+                }
+                if (dd.destination != null) {
                     sb.append(" -> ");
                     sb.append(dd.destination);
                 }
@@ -582,38 +469,36 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
     /**
      * Add a new Download to the queue. This method will silently do nothing and return if the user
      * cancelled the selection of a destination directory.
+     *
      * @param dl
      */
-    private void add(final DownloadDescriptor dd, final HttpDownload dl)
-    {
-        if ( SwingUtilities.isEventDispatchThread())
+    private void add(final DownloadDescriptor dd, final HttpDownload dl) {
+        if (SwingUtilities.isEventDispatchThread()) {
             doAddDownload(dd, dl);
-        else
-            SwingUtilities.invokeLater(new Runnable()
-            {
-               public void run()
-               {
-                   doAddDownload(dd, dl);
-               }
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    doAddDownload(dd, dl);
+                }
             });
+        }
     }
-    
-    // implementation to be invoked in the UI event thread
-    private void doAddDownload(DownloadDescriptor dd, HttpDownload dl)
-    {
-        if (downloadManager.getDestinationDir() == null)
-            return; // user cancelled dest dir selection dialog, nothing to do
 
-        if ( queuedURL.contains(dd.url) )
-        {
+    // implementation to be invoked in the UI event thread
+    private void doAddDownload(DownloadDescriptor dd, HttpDownload dl) {
+        if (downloadManager.getDestinationDir() == null) {
+            return; // user cancelled dest dir selection dialog, nothing to do
+        }
+
+        if (queuedURL.contains(dd.url)) {
             StringBuilder sb = new StringBuilder();
             sb.append("duplicate URL: ");
-            if (dd.uri != null)
+            if (dd.uri != null) {
                 sb.append(dd.uri);
+            }
             sb.append(" -> ");
-                sb.append(dd.url);
-            if (dd.destination != null)
-            {
+            sb.append(dd.url);
+            if (dd.destination != null) {
                 sb.append(" -> ");
                 sb.append(dd.destination);
             }
@@ -637,37 +522,133 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
         updateStatus();
     }
 
-    private class ManifestDownloadListener implements TransferListener
-    {
-        public String getEventHeader()
-        {
+    private class CancelAction extends AbstractAction {
+        public CancelAction() {
+            super("Cancel");
+            putValue(Action.SHORT_DESCRIPTION, "Cancel all downloads immediately.");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            log.debug("CancelAction.actionPerformed()");
+            stop();
+            cancelButton.setEnabled(false);
+        }
+    }
+
+    private class ClearAction extends AbstractAction {
+        private int type = -1;
+
+        public ClearAction() {
+            super("Clear");
+            putValue(Action.SHORT_DESCRIPTION, "Remove all completed and cancelled downloads from the list.");
+        }
+
+        public ClearAction(String s, int type) {
+            super(s);
+            this.type = type;
+            switch (type) {
+                case TransferEvent.COMPLETED:
+                    putValue(Action.SHORT_DESCRIPTION, "Remove all completed downloads from the list.");
+                    break;
+                case TransferEvent.CANCELLED:
+                    putValue(Action.SHORT_DESCRIPTION, "Remove all cancelled downloads from the list.");
+                    break;
+                case TransferEvent.FAILED:
+                    putValue(Action.SHORT_DESCRIPTION, "Remove all failed downloads from the list.");
+                    break;
+                default:
+                    // Checkstyle requires a default block. Nothing was here before.
+                    break;
+            }
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            log.debug("ClearAction.actionPerformed()");
+            ArrayList removals = new ArrayList();
+            for (int i = 0; i < downloads.getComponentCount(); i++) {
+                JDownload jdl = (JDownload) downloads.getComponent(i);
+                TransferEvent te = jdl.getLastEvent();
+                if (te != null && doClear(te.getState())) {
+                    removals.add(jdl);
+                }
+            }
+            for (int i = 0; i < removals.size(); i++) {
+                downloads.remove((Component) removals.get(i));
+            }
+            validateTree();
+            repaint();
+        }
+
+        private boolean doClear(int state) {
+            if (this.type == state) {
+                return true;
+            }
+            if (state == TransferEvent.COMPLETED || state == TransferEvent.CANCELLED) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private class UpdateUI implements Runnable {
+        TransferEvent te;
+
+        UpdateUI(TransferEvent e) {
+            this.te = e;
+        }
+
+        public void run() {
+            switch (te.getState()) {
+                case TransferEvent.RETRYING:
+                    log.info(te.getStateLabel() + ": " + te.getURL());
+                    break;
+                case TransferEvent.FAILED:
+                    if (te.getFile() == null) {
+                        log.error(te.getStateLabel() + ": " + te.getURL() + " -- " + te.getError().getMessage());
+                    } else {
+                        log.error(te.getStateLabel() + ": " + te.getURL() + " -> " + te.getFile() + " -- " + te.getError().getMessage());
+                    }
+                    numFailed++;
+                    break;
+                case TransferEvent.CANCELLED:
+                    log.info(te.getStateLabel() + ": " + te.getURL() + " -> " + te.getFile());
+                    numCancelled++;
+                    break;
+                case TransferEvent.COMPLETED:
+                    log.info(te.getStateLabel() + ": " + te.getURL() + " -> " + te.getFile());
+                    numCompleted++;
+                    break;
+                default:
+                    // Checkstyle requires a default block. Nothing was here before.
+                    break;
+            }
+            updateStatus();
+        }
+    }
+
+    private class ManifestDownloadListener implements TransferListener {
+        public String getEventHeader() {
             return null;
         }
 
-        public void transferEvent(TransferEvent e)
-        {
+        public void transferEvent(TransferEvent e) {
             log.debug("ManifestDownloadListener.transferEvent: " + e);
             // check for possible recursive download
-            if (e.getState() == TransferEvent.COMPLETED)
-            {
+            if (e.getState() == TransferEvent.COMPLETED) {
                 FileMetadata meta = e.getFileMetadata();
                 log.debug("file metadata: " + meta);
-                if (meta != null && ManifestReader.CONTENT_TYPE.equals(meta.getContentType()))
-                {
+                if (meta != null && ManifestReader.CONTENT_TYPE.equals(meta.getContentType())) {
                     // TODO: figure out which thread calls this...
                     // should spawn a thread to do this or have one standing
                     // by since the current thread is probably the one running the
                     // download and we want to free it up asap
                     log.debug("ManifestDownloadListener.transferEvent: current thread: " + Thread.currentThread().getName());
-                    try
-                    {
+                    try {
                         log.debug("manifest download: " + e.getFile());
                         ManifestReader mr = new ManifestReader();
                         Iterator<DownloadDescriptor> iter = mr.read(new FileReader(e.getFile()));
                         add(iter);
-                    }
-                    catch(IOException ex)
-                    {
+                    } catch (IOException ex) {
                         log.error("failed to read download manifest " + e.getFile(), ex);
                     }
                 }

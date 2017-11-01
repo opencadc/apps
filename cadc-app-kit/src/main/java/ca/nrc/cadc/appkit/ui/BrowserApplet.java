@@ -26,7 +26,6 @@ package ca.nrc.cadc.appkit.ui;
 import java.applet.AppletContext;
 import java.awt.Component;
 import java.awt.Container;
-
 import javax.swing.JApplet;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenuBar;
@@ -40,94 +39,94 @@ import javax.swing.JRootPane;
  * name="height". How this is actually accomplished in a
  * particular browser is highly variable.
  *
- * @version 1.0
  * @author Patrick Dowler
+ * @version 1.0
  */
-public class BrowserApplet implements ApplicationContainer
-{
-	Application app;
-	ApplicationConfig config;
-	JApplet applet;
-	
-	public BrowserApplet(String name, Application app, JApplet applet)
-	{
-		super();
-		this.app = app;
-		this.applet = applet;
+public class BrowserApplet implements ApplicationContainer {
+    Application app;
+    ApplicationConfig config;
+    JApplet applet;
 
-		readParameters();
-		config = new ApplicationConfig(app.getClass(), name);
-		readConfig();
-		app.setApplicationContainer(this);
-	}
+    public BrowserApplet(String name, Application app, JApplet applet) {
+        super();
+        this.app = app;
+        this.applet = applet;
 
-	public void setVisible(boolean v)
-	{
-		System.out.println("BrowserApplet.setVisible()");
-		if (v)
-			applet.validate();
-	}
-	public AppletContext getAppletContext() { return applet.getAppletContext(); }
-	
-	public ApplicationConfig getConfig() { return config; }
-	
-	public void quit()
-	{
-		throw new UnsupportedOperationException("'quit' not allowed in a BrowserApplet");
-	}
-	
-	private void readParameters()
-	{
-		String s;
-		s = applet.getParameter("width");
-		int w = Toolkit.toInt(s, 300);
-		s = applet.getParameter("height");
-		int h = Toolkit.toInt(s, 300);
-		applet.setSize(w,h);
-	}
+        readParameters();
+        config = new ApplicationConfig(app.getClass(), name);
+        readConfig();
+        app.setApplicationContainer(this);
+    }
 
-	private void readConfig() { }
+    public void setVisible(boolean v) {
+        System.out.println("BrowserApplet.setVisible()");
+        if (v) {
+            applet.validate();
+        }
+    }
 
-	/**
-	 * @see ApplicationContainer#getContentPane()
-	 */
-	public Container getContentPane()
-	{
-		return applet.getContentPane();
-	}
+    public AppletContext getAppletContext() {
+        return applet.getAppletContext();
+    }
 
-	/**
-	 * @see ApplicationContainer#getGlassPane()
-	 */
-	public Component getGlassPane()
-	{
-		return applet.getGlassPane();
-	}
+    public ApplicationConfig getConfig() {
+        return config;
+    }
 
-	/**
-	 * @see ApplicationContainer#getJMenuBar()
-	 */
-	public JMenuBar getJMenuBar()
-	{
-		return applet.getJMenuBar();
-	}
-	public void setJMenuBar(JMenuBar m) { applet.setJMenuBar(m); }
-	
-	/**
-	 * @see ApplicationContainer#getLayeredPane()
-	 */
-	public JLayeredPane getLayeredPane()
-	{
-		return applet.getLayeredPane();
-	}
+    public void quit() {
+        throw new UnsupportedOperationException("'quit' not allowed in a BrowserApplet");
+    }
 
-	/**
-	 * @see ApplicationContainer#getRootPane()
-	 */
-	public JRootPane getRootPane()
-	{
-		return applet.getRootPane();
-	}
+    private void readParameters() {
+        String s;
+        s = applet.getParameter("width");
+        int w = Toolkit.toInt(s, 300);
+        s = applet.getParameter("height");
+        int h = Toolkit.toInt(s, 300);
+        applet.setSize(w, h);
+    }
+
+    private void readConfig() {
+    }
+
+    /**
+     * @see ApplicationContainer#getContentPane()
+     */
+    public Container getContentPane() {
+        return applet.getContentPane();
+    }
+
+    /**
+     * @see ApplicationContainer#getGlassPane()
+     */
+    public Component getGlassPane() {
+        return applet.getGlassPane();
+    }
+
+    /**
+     * @see ApplicationContainer#getJMenuBar()
+     */
+    public JMenuBar getJMenuBar() {
+        return applet.getJMenuBar();
+    }
+
+    public void setJMenuBar(JMenuBar m) {
+        applet.setJMenuBar(m);
+    }
+
+    /**
+     * @see ApplicationContainer#getLayeredPane()
+     */
+    public JLayeredPane getLayeredPane() {
+        return applet.getLayeredPane();
+    }
+
+    /**
+     * @see ApplicationContainer#getRootPane()
+     */
+    public JRootPane getRootPane() {
+        return applet.getRootPane();
+    }
 }
 
 // end of BrowserApplet.java

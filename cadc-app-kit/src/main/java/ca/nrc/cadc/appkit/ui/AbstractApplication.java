@@ -23,12 +23,12 @@
 
 package ca.nrc.cadc.appkit.ui;
 
+import java.awt.LayoutManager;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.net.MalformedURLException;
-import java.awt.LayoutManager;
+import java.net.URL;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -40,150 +40,148 @@ import javax.swing.JPanel;
  * and enable or disable double-buffering and they need to implement the makeUI()
  * method where they actually construct the UI
  *
- * @version 1.0 
  * @author Patrick Dowler
+ * @version 1.0
  */
-public abstract class AbstractApplication extends JPanel implements Application
-{
-  	private ApplicationContainer ac;
-  	private String baseResourceURL;
+public abstract class AbstractApplication extends JPanel implements Application {
+    private ApplicationContainer ac;
+    private String baseResourceURL;
 
-	public AbstractApplication()
-	{
-		super();
-    }
-    public AbstractApplication(boolean doubleBuffered)
-    {
-    	super(doubleBuffered);
-    }
-    public AbstractApplication(LayoutManager layout)
-    {
-    	super(layout);
-    }
-    public AbstractApplication(LayoutManager layout, boolean doubleBuffered)
-    {
-    	super(layout, doubleBuffered);
+    public AbstractApplication() {
+        super();
     }
 
- 	/**
-  	 * The GUI can be constructed using information from the
-  	 * <code>getApplicationContainer()</code> method, which includes
-  	 * the access to the AppletContext (if in applet mode) and 
-  	 * possibly to an ApplicationConfig object.
-  	 */
-  	protected abstract void makeUI();
-  	
+    public AbstractApplication(boolean doubleBuffered) {
+        super(doubleBuffered);
+    }
+
+    public AbstractApplication(LayoutManager layout) {
+        super(layout);
+    }
+
+    public AbstractApplication(LayoutManager layout, boolean doubleBuffered) {
+        super(layout, doubleBuffered);
+    }
+
+    /**
+     * The GUI can be constructed using information from the
+     * <code>getApplicationContainer()</code> method, which includes
+     * the access to the AppletContext (if in applet mode) and
+     * possibly to an ApplicationConfig object.
+     */
+    protected abstract void makeUI();
+
     /**
      * The default method always returns true immediately.
-     * 
+     *
      * @return true
      */
-	public boolean quit() { return true; }
+    public boolean quit() {
+        return true;
+    }
 
-  	/**
-  	 * Stores the container reference and then calls makeUI.
-	 *
-	 * @param ac			The ApplicationContainer instance.
-  	 */
-	public void setApplicationContainer(ApplicationContainer ac) 
-  	{
-  		this.ac = ac;
-  		makeUI();
-  		ac.getContentPane().add(this);
-  	}
-	
-  	/**
-	 * @return the value supplied via setApplicationContainer()
-	 */
-	public ApplicationContainer getApplicationContainer() { return ac; }
+    /**
+     * @return the value supplied via setApplicationContainer()
+     */
+    public ApplicationContainer getApplicationContainer() {
+        return ac;
+    }
 
-	/**
-	 * Retrieve an image resource. The supplied filename should be relative to the location
-	 * of the application class (i.e. the subclass of AbstractApplication) without the path
-	 * components that are part of the class name. Typically, one might put something like
-	 * "images/MyIcon.png" in the same jar file as the application class(es); this could
-	 * be subsequently loaded via <code>getImageIcon("images/MyIcon.png")</code>.
-	 *
-	 * @param c				The Class to use to determine the URL.
-	 * @param name			The name of image file name.
-	 * @return an ImageIcon holding the specified image
-	 * @throws MalformedURLException	For a bad image URL.
-	 */
-	public ImageIcon getImageIcon(Class c, String name)
-		throws MalformedURLException
-	{
-		if (baseResourceURL == null)
-			baseResourceURL = Toolkit.getBaseResourceURL(c);
-		String str = baseResourceURL + name;
-		return new ImageIcon( new URL(str) );
-	}
-	
-	public String getTextResource(Class c, String name)
-		throws MalformedURLException, IOException
-	{
-		String lineSep = System.getProperty("line.separator");
-		if (baseResourceURL == null)
-			baseResourceURL = Toolkit.getBaseResourceURL(c);
-		String url = baseResourceURL + name;
-		StringBuilder sb = new StringBuilder();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				new URL(url).openStream()));
-		String s = reader.readLine();
-		while ( s != null )
-			sb.append(s).append(lineSep);
-		reader.close();
-		return sb.toString();
-	}
+    /**
+     * Stores the container reference and then calls makeUI.
+     *
+     * @param ac The ApplicationContainer instance.
+     */
+    public void setApplicationContainer(ApplicationContainer ac) {
+        this.ac = ac;
+        makeUI();
+        ac.getContentPane().add(this);
+    }
 
- 	public void showInfoDialog(String msg)
-	{
-		JOptionPane.showMessageDialog(this,
-	  		msg,
-	  		"Information",
-			JOptionPane.INFORMATION_MESSAGE);
-	}
-	public void showWarningDialog(String msg)
-	{
-		JOptionPane.showMessageDialog(this,
-	  		msg,
-	  		"Warning",
-			JOptionPane.WARNING_MESSAGE);
-	}
-	public void showErrorDialog(String msg)
-	{
-		JOptionPane.showMessageDialog(this,
-	  		msg,
-	  		"Error",
-			JOptionPane.ERROR_MESSAGE);
-	}
-	
-	public boolean getConfirmation(String msg)
-	{
-		int i = JOptionPane.showConfirmDialog(this,
-			msg,
-			"Confirm",
-			JOptionPane.OK_CANCEL_OPTION);
-		return (i == JOptionPane.OK_OPTION);
-	}
-	
-	public String getStringInput(String msg)
-	{
-		return JOptionPane.showInputDialog(this,
-			msg,
-			"Enter",
-			JOptionPane.QUESTION_MESSAGE);
-	}
-	
-	public String getStringInput(String msg, String title, String[] options)
-	{
-		return (String) JOptionPane.showInputDialog(this,
-			msg, 
-			title,
-			JOptionPane.QUESTION_MESSAGE, 
-			null, 
-			options, 
-			options[0]);
-	}
+    /**
+     * Retrieve an image resource. The supplied filename should be relative to the location
+     * of the application class (i.e. the subclass of AbstractApplication) without the path
+     * components that are part of the class name. Typically, one might put something like
+     * "images/MyIcon.png" in the same jar file as the application class(es); this could
+     * be subsequently loaded via <code>getImageIcon("images/MyIcon.png")</code>.
+     *
+     * @param c    The Class to use to determine the URL.
+     * @param name The name of image file name.
+     * @return an ImageIcon holding the specified image
+     * @throws MalformedURLException For a bad image URL.
+     */
+    public ImageIcon getImageIcon(Class c, String name)
+        throws MalformedURLException {
+        if (baseResourceURL == null) {
+            baseResourceURL = Toolkit.getBaseResourceURL(c);
+        }
+        String str = baseResourceURL + name;
+        return new ImageIcon(new URL(str));
+    }
+
+    public String getTextResource(Class c, String name)
+        throws MalformedURLException, IOException {
+        String lineSep = System.getProperty("line.separator");
+        if (baseResourceURL == null) {
+            baseResourceURL = Toolkit.getBaseResourceURL(c);
+        }
+        String url = baseResourceURL + name;
+        StringBuilder sb = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+            new URL(url).openStream()));
+        String s = reader.readLine();
+        while (s != null) {
+            sb.append(s).append(lineSep);
+        }
+        reader.close();
+        return sb.toString();
+    }
+
+    public void showInfoDialog(String msg) {
+        JOptionPane.showMessageDialog(this,
+            msg,
+            "Information",
+            JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void showWarningDialog(String msg) {
+        JOptionPane.showMessageDialog(this,
+            msg,
+            "Warning",
+            JOptionPane.WARNING_MESSAGE);
+    }
+
+    public void showErrorDialog(String msg) {
+        JOptionPane.showMessageDialog(this,
+            msg,
+            "Error",
+            JOptionPane.ERROR_MESSAGE);
+    }
+
+    public boolean getConfirmation(String msg) {
+        int i = JOptionPane.showConfirmDialog(this,
+            msg,
+            "Confirm",
+            JOptionPane.OK_CANCEL_OPTION);
+        return (i == JOptionPane.OK_OPTION);
+    }
+
+    public String getStringInput(String msg) {
+        return JOptionPane.showInputDialog(this,
+            msg,
+            "Enter",
+            JOptionPane.QUESTION_MESSAGE);
+    }
+
+    public String getStringInput(String msg, String title, String[] options) {
+        return (String) JOptionPane.showInputDialog(this,
+            msg,
+            title,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
+    }
 }
 
 // end of GUIApplication.java

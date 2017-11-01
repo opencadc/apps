@@ -72,25 +72,24 @@ package ca.nrc.cadc.ulm.client.ui;
 /**
  * Implementations of CommandQueueListener will receive notifications as described
  * by the methods in this interface.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public interface CommandQueueListener
-{
-    
+public interface CommandQueueListener {
+
     /**
      * Indicates that production has started.
      */
     void productionStarted();
-    
+
     /**
      * Indicates that command production is complete.
      */
     void productionComplete();
-    
+
     /**
      * Indicates that a command has been processed
+     *
      * @param commandsProcessed Total number that have been processed.
      * @param commandsRemaining Total known number remaining to be processed.
      * @param error             Last command's error.  Null when no error.

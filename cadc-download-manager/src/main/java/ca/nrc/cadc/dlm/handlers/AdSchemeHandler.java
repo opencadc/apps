@@ -33,8 +33,6 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.SchemeHandler;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import org.apache.log4j.Logger;
-
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -42,88 +40,86 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
- * SchemeHandler implementation for the Archive Directory (ad) system. 
+ * SchemeHandler implementation for the Archive Directory (ad) system.
  * This class can convert an AD URI into a URL. This is an alternate version
  * that uses the RegistryClient to find the data web service base URL.
- * 
+ *
  * @author pdowler
  */
-public class AdSchemeHandler implements SchemeHandler
-{
-    private static final Logger log = Logger.getLogger(AdSchemeHandler.class);
-
+public class AdSchemeHandler implements SchemeHandler {
     public static final String SCHEME = "ad";
-    
+    private static final Logger log = Logger.getLogger(AdSchemeHandler.class);
     private static final String DATA_URI = "ivo://cadc.nrc.ca/data";
-    
+
     private String baseURL;
 
-    public AdSchemeHandler()
-    {
-        try
-        {
+    public AdSchemeHandler() {
+        try {
             RegistryClient rc = new RegistryClient();
             AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
-            if (am == null)
-            {
+            if (am == null) {
                 am = AuthMethod.ANON;
             }
             URL serviceURL = rc.getServiceURL(URI.create(DATA_URI), Standards.DATA_10, am);
             this.baseURL = serviceURL.toExternalForm();
-        }
-        catch(Throwable t)
-        {
+        } catch (Throwable t) {
             log.error("failed to find CADC data service URL", t);
             throw new RuntimeException("BUG: failed to find CADC data service URL", t);
         }
         log.debug("CADC data service URL: " + baseURL);
     }
 
-    public URL getURL(URI uri)
-    {
-        if (!SCHEME.equals(uri.getScheme()))
-            throw new IllegalArgumentException("invalid scheme in " + uri);
+    private static String encodeString(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException ignore) {
+            log.debug("UnsupportedEncodingException: " + ignore.toString());
+        }
+        return null;
+    }
 
-        try
-        {
+    public URL getURL(URI uri) {
+        if (!SCHEME.equals(uri.getScheme())) {
+            throw new IllegalArgumentException("invalid scheme in " + uri);
+        }
+
+        try {
             StringBuilder sb = createURL(uri);
             URL url = new URL(sb.toString());
             log.debug(uri + " --> " + url);
             return url;
-        }
-        catch(MalformedURLException ex)
-        {
+        } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG", ex);
         }
     }
-    
+
     /**
      * Convert a URI to a List of URL(s).
      *
      * @param uri a CADC storage system URI (ad scheme)
-     * @throws IllegalArgumentException if the URI scheme is invalid
      * @return a list with a single URL to the identified resource
+     * @throws IllegalArgumentException if the URI scheme is invalid
      */
     public List<URL> toURL(URI uri)
-        throws IllegalArgumentException
-    {
-        if (!SCHEME.equals(uri.getScheme()))
+        throws IllegalArgumentException {
+        if (!SCHEME.equals(uri.getScheme())) {
             throw new IllegalArgumentException("invalid scheme in " + uri);
-        
+        }
+
         URL url = getURL(uri);
         List<URL> ret = new ArrayList<URL>();
         ret.add(url);
         return ret;
     }
 
-
-    private StringBuilder createURL(URI uri)
-    {
-        String[]  path = uri.getSchemeSpecificPart().split("/");
-        if (path.length != 2)
+    private StringBuilder createURL(URI uri) {
+        String[] path = uri.getSchemeSpecificPart().split("/");
+        if (path.length != 2) {
             throw new IllegalArgumentException("malformed AD URI, expected 2 path componets, found " + path.length);
+        }
         String arc = path[0];
         String fid = path[1];
 
@@ -134,12 +130,5 @@ public class AdSchemeHandler implements SchemeHandler
         sb.append("/");
         sb.append(encodeString(fid));
         return sb;
-    }
-    
-    private static String encodeString(String str)
-    {
-        try { return URLEncoder.encode(str, "UTF-8"); }
-        catch(UnsupportedEncodingException ignore) { }
-        return null;
     }
 }

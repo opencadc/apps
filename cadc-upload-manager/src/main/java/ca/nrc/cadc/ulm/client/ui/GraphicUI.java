@@ -69,16 +69,20 @@
 
 package ca.nrc.cadc.ulm.client.ui;
 
-
+import ca.nrc.cadc.appkit.ui.AbstractApplication;
 import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
-import ca.nrc.cadc.appkit.ui.AbstractApplication;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import javax.security.auth.Subject;
 import javax.swing.BorderFactory;
 import javax.swing.JFileChooser;
@@ -89,15 +93,8 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * <p>The main class for graphical output display.  Care has been taken to adhere
@@ -113,27 +110,22 @@ import java.io.Writer;
  * @author jenkinsd
  */
 public class GraphicUI extends AbstractApplication
-        implements ChangeListener, UserInterface
-{
+    implements ChangeListener, UserInterface {
     private static final String NAME = "MainUI";
 
     private static final long serialVersionUID = 201210201041L;
     private static Logger LOGGER = Logger.getLogger(GraphicUI.class);
-
+    private final VOSURI targetVOSpaceURI;
+    private final VOSpaceClient voSpaceClient;
     private LogWriter logWriter;
     private JTabbedPane tabPane;
     private JUploadManager uploadManager;
     private ConditionVar uiInitCond;
-
-    private final VOSURI targetVOSpaceURI;
-    private final VOSpaceClient voSpaceClient;
-
     private Subject subject;
 
 
     public GraphicUI(final Level logLevel, final VOSURI targetVOSpaceURI,
-                     final VOSpaceClient voSpaceClient, Subject subject)
-    {
+                     final VOSpaceClient voSpaceClient, Subject subject) {
         super(new BorderLayout());
         LOGGER.setLevel(logLevel);
         setName(NAME);
@@ -154,8 +146,7 @@ public class GraphicUI extends AbstractApplication
      * possibly to an ApplicationConfig object.
      */
     @Override
-    protected void makeUI()
-    {
+    protected void makeUI() {
 
         tabPane = new JTabbedPane();
         getTabPane().setName("tabPane");
@@ -163,25 +154,25 @@ public class GraphicUI extends AbstractApplication
         logWriter = new LogWriter(new JTextArea());
 
         Log4jInit.setLevel("ca.nrc.cadc", LOGGER.getLevel(),
-                           new BufferedWriter(getLogWriter()));
+            new BufferedWriter(getLogWriter()));
 
         addMainPane();
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         setUploadManager(
-                new JUploadManager(getTargetVOSpaceURI(),
-                                   getVOSpaceClient(), subject));
+            new JUploadManager(getTargetVOSpaceURI(),
+                getVOSpaceClient(), subject));
 
         getTabPane().addTab("Upload",
-                            getUploadManager());
+            getUploadManager());
 
         final JScrollPane sp =
-                createLogScrollPane(
-                        getLogWriter().getLogTextArea());
+            createLogScrollPane(
+                getLogWriter().getLogTextArea());
         getTabPane().addTab("Log Messages", sp);
 
         Util.recursiveSetBackground(GraphicUI.this,
-                                    Color.WHITE);
+            Color.WHITE);
         getTabPane().setVisible(true);
 
         DirectoryChooser dirChooser = new DirectoryChooser();
@@ -190,8 +181,7 @@ public class GraphicUI extends AbstractApplication
     }
 
     @Override
-    public void paint(Graphics g)
-    {
+    public void paint(Graphics g) {
         super.paint(g);
         uiInitCond.setNotifyAll();
     }
@@ -199,8 +189,7 @@ public class GraphicUI extends AbstractApplication
     /**
      * Add the tabbed pane.
      */
-    protected void addMainPane()
-    {
+    protected void addMainPane() {
         add(getTabPane(), BorderLayout.CENTER);
     }
 
@@ -210,8 +199,7 @@ public class GraphicUI extends AbstractApplication
      * @param logTextArea The JTextArea to scroll.
      * @return The JScrollPane instance.
      */
-    protected JScrollPane createLogScrollPane(final JTextArea logTextArea)
-    {
+    protected JScrollPane createLogScrollPane(final JTextArea logTextArea) {
         return new JScrollPane(logTextArea);
     }
 
@@ -221,8 +209,7 @@ public class GraphicUI extends AbstractApplication
      * @param e a ChangeEvent object
      */
     @Override
-    public void stateChanged(final ChangeEvent e)
-    {
+    public void stateChanged(final ChangeEvent e) {
 
     }
 
@@ -232,188 +219,146 @@ public class GraphicUI extends AbstractApplication
      * @return true
      */
     @Override
-    public boolean quit()
-    {
+    public boolean quit() {
         final boolean ret = getConfirmation("OK to quit?");
 
-        if (ret && (getUploadManager() != null))
-        {
+        if (ret && (getUploadManager() != null)) {
             getUploadManager().stop();
         }
 
         return ret;
     }
 
-    public JTabbedPane getTabPane()
-    {
+    public JTabbedPane getTabPane() {
         return tabPane;
     }
 
-    public LogWriter getLogWriter()
-    {
+    public LogWriter getLogWriter() {
         return logWriter;
     }
 
-    public JUploadManager getUploadManager()
-    {
+    public JUploadManager getUploadManager() {
         return uploadManager;
     }
 
-    public void setUploadManager(final JUploadManager uploadManager)
-    {
+    public void setUploadManager(final JUploadManager uploadManager) {
         this.uploadManager = uploadManager;
     }
 
-    public VOSURI getTargetVOSpaceURI()
-    {
+    public VOSURI getTargetVOSpaceURI() {
         return targetVOSpaceURI;
     }
 
-    public VOSpaceClient getVOSpaceClient()
-    {
+    public VOSpaceClient getVOSpaceClient() {
         return voSpaceClient;
     }
 
     public void selectSourceDirectory(final Component parent,
-                                      final SourceDirectoryChooserCallback callback)
-    {
-        try
-        {
+                                      final SourceDirectoryChooserCallback callback) {
+        try {
             final SourceDirectoryChooser fileChooser =
-                    getSourceDirectoryChooser();
+                getSourceDirectoryChooser();
             final int returnVal = fileChooser.showDialog(parent, "Select");
 
-            if (returnVal == JFileChooser.APPROVE_OPTION)
-            {
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
                 final File sourceDirectory = fileChooser.getSelectedFile();
 
                 final String estr;
                 // in case the user types something in
-                if (!sourceDirectory.isDirectory())
-                {
+                if (!sourceDirectory.isDirectory()) {
                     estr = "'" + sourceDirectory.getAbsolutePath()
-                           + "' is not a directory";
-                }
-                else if (!sourceDirectory.canRead())
-                {
+                        + "' is not a directory";
+                } else if (!sourceDirectory.canRead()) {
                     estr = "'" + sourceDirectory.getAbsolutePath()
-                           + "' is not writable";
-                }
-                else
-                {
+                        + "' is not writable";
+                } else {
                     estr = null;
                 }
 
-                if (estr != null)
-                {
+                if (estr != null) {
                     handleError(estr, parent, callback); // recursive
-                }
-                else
-                {
+                } else {
                     LOGGER.info("Source directory: "
-                                + sourceDirectory.getAbsolutePath());
+                        + sourceDirectory.getAbsolutePath());
 
-                    if (callback != null)
-                    {
+                    if (callback != null) {
                         callback.onCallback(sourceDirectory);
                     }
                 }
             }
-        }
-        catch (RuntimeException rex)
-        {
+        } catch (RuntimeException rex) {
             rex.printStackTrace();
             LOGGER.error("Failed to determine Source Directory", rex);
         }
     }
 
     protected void handleError(final String message, final Component parent,
-                               final SourceDirectoryChooserCallback callback)
-    {
+                               final SourceDirectoryChooserCallback callback) {
         JOptionPane.showMessageDialog(parent, message, "Error",
-                                      JOptionPane.ERROR_MESSAGE);
+            JOptionPane.ERROR_MESSAGE);
         selectSourceDirectory(parent, callback);
     }
 
-    protected SourceDirectoryChooser getSourceDirectoryChooser()
-    {
+    protected SourceDirectoryChooser getSourceDirectoryChooser() {
         return new SourceDirectoryChooser(null, "sourceDirectoryChooser");
     }
 
 
-    private class LogWriter extends Writer
-    {
+    private class LogWriter extends Writer {
         private final JTextArea logTextArea;
 
 
-        LogWriter(final JTextArea textArea)
-        {
+        LogWriter(final JTextArea textArea) {
             super();
             logTextArea = textArea;
         }
 
 
         @Override
-        public void close() throws IOException
-        {
+        public void close() throws IOException {
         }
 
         @Override
-        public void flush() throws IOException
-        {
+        public void flush() throws IOException {
         }
 
-        public JTextArea getLogTextArea()
-        {
+        public JTextArea getLogTextArea() {
             return logTextArea;
         }
 
         @Override
         public void write(final char[] cbuf, final int off, final int len)
-                throws IOException
-        {
+            throws IOException {
             String logMessage = new String(cbuf, off, len);
-            if (getLogTextArea() != null)
-            {
+            if (getLogTextArea() != null) {
                 getLogTextArea().append(logMessage);
-            }
-            else
-            {
+            } else {
                 System.out.println(logMessage);
             }
         }
     }
 
-    protected class DirectoryChooser implements Runnable
-    {
+    protected class DirectoryChooser implements Runnable {
 
         @Override
-        public void run()
-        {
-            try
-            {
+        public void run() {
+            try {
                 uiInitCond.waitForTrue();
 
-                SwingUtilities.invokeAndWait((new Runnable()
-                {
-                    public void run()
-                    {
+                SwingUtilities.invokeAndWait((new Runnable() {
+                    public void run() {
                         selectSourceDirectory(GraphicUI.this,
-                                              new SourceDirectoryChooserCallback()
-                                              {
-                                                  @Override
-                                                  public void onCallback(
-                                                          final File chosenDirectory)
-                                                  {
-                                                      getUploadManager()
-                                                              .start(chosenDirectory);
-                                                  }
-                                              });
+                            new SourceDirectoryChooserCallback() {
+                                @Override
+                                public void onCallback(
+                                    final File chosenDirectory) {
+                                    getUploadManager()
+                                        .start(chosenDirectory);
+                                }
+                            });
                     }
                 }));
-            }
-            catch (final Exception e)
-            {
+            } catch (final Exception e) {
                 LOGGER.fatal("Error caught.", e);
                 e.printStackTrace();
                 System.exit(-1);

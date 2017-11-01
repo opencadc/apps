@@ -23,67 +23,66 @@
 
 package ca.nrc.cadc.appkit.ui;
 
+import ca.nrc.cadc.appkit.util.Util;
 import java.io.IOException;
 import java.net.URL;
 import javax.swing.JFrame;
+import org.apache.log4j.Logger;
 
 /**
  * Miscellaneous static methods.
  *
- * @version 1.0
  * @author Patrick Dowler
+ * @version 1.0
  */
-public class Toolkit
-{
-	/**
-	 * Get the base URL for the specified class. If the class is in 
-	 * the same classpath entry or jar file as other resources, 
-	 * then the returned value can be used to construct URLs to 
-	 * other resources.
-	 *
-	 * @param c				The Class to use to create a URL for.
-	 * @return base URL string, not including the name of the arg class
-	 */
-	public static String getBaseResourceURL(Class c)
-	{
-		String s = c.getName() + ".class";
-		URL u = c.getClassLoader().getResource(s);
-		if (u != null)
-		{
-			String us = u.toString();
-			return us.substring(0, us.length() - s.length());
-		}
-		return null;
-	}
-    
-    public static int toInt(String s, int def)
-    {
-        try { return Integer.parseInt(s); }
-        catch(NumberFormatException ignore) { }
+public class Toolkit {
+    private static final Logger log = Logger.getLogger(Toolkit.class);
+
+    /**
+     * Get the base URL for the specified class. If the class is in
+     * the same classpath entry or jar file as other resources,
+     * then the returned value can be used to construct URLs to
+     * other resources.
+     *
+     * @param c The Class to use to create a URL for.
+     * @return base URL string, not including the name of the arg class
+     */
+    public static String getBaseResourceURL(Class c) {
+        String s = c.getName() + ".class";
+        URL u = c.getClassLoader().getResource(s);
+        if (u != null) {
+            String us = u.toString();
+            return us.substring(0, us.length() - s.length());
+        }
+        return null;
+    }
+
+    public static int toInt(String s, int def) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ignore) {
+            log.info("Ignoring NumberFormatException: " + ignore);
+        }
         return def;
     }
-    
-    public static void doWindowGeometry(JFrame frame, ApplicationConfig config)
-    {
+
+    public static void doWindowGeometry(JFrame frame, ApplicationConfig config) {
         String s;
-    	try
-    	{
-      		if ( config.setSection("geometry") )
-      		{
-      			int w = Toolkit.toInt(config.getValue("width"), 300);
-				int h = Toolkit.toInt(config.getValue("height"), 300);
-				int x = Toolkit.toInt(config.getValue("xpos"), 100);
-				int y = Toolkit.toInt(config.getValue("ypos"), 100);
-      			frame.setSize(w,h);
-      			frame.setLocation(x,y);
-      		}
-      		else
-      		{
-      			frame.setSize(300,300);
-      			frame.setLocation(100,100);
-      		}
-      	}
-      	catch (IOException ignore) { }
+        try {
+            if (config.setSection("geometry")) {
+                int w = Toolkit.toInt(config.getValue("width"), 300);
+                int h = Toolkit.toInt(config.getValue("height"), 300);
+                int x = Toolkit.toInt(config.getValue("xpos"), 100);
+                int y = Toolkit.toInt(config.getValue("ypos"), 100);
+                frame.setSize(w, h);
+                frame.setLocation(x, y);
+            } else {
+                frame.setSize(300, 300);
+                frame.setLocation(100, 100);
+            }
+        } catch (IOException ignore) {
+            log.info("Ignoring IOException: " + ignore);
+        }
     }
 }
 

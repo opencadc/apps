@@ -69,150 +69,128 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.appkit.ui.Application;
+import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.AuthMethod;
-import java.awt.Component;
-import java.security.PrivilegedAction;
-
-import javax.security.auth.Subject;
-
-import org.apache.log4j.Level;
-
 import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
-import ca.nrc.cadc.appkit.ui.Application;
-import ca.nrc.cadc.appkit.ui.ApplicationFrame;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.awt.Component;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.security.auth.Subject;
+import org.apache.log4j.Level;
 
 /**
  * TODO
  *
- * @version $Version$
  * @author pdowler
+ * @version $Version$
  */
-public class Main
-{
+public class Main {
     //private static Logger log = Logger.getLogger(Main.class);
     private static UserInterface ui;
 
-    public static void main(final String[] args)
-    {
-        try
-        {
+    public static void main(final String[] args) {
+        try {
             final ArgumentMap am = new ArgumentMap(args);
-            if ( am.isSet("h") || am.isSet("help") )
-            {
+            if (am.isSet("h") || am.isSet("help")) {
                 usage();
                 System.exit(0);
             }
             Level level = Level.WARN;
-            if ( am.isSet("d") || am.isSet("debug") )
+            if (am.isSet("d") || am.isSet("debug")) {
                 level = Level.DEBUG;
-            else if ( am.isSet("v") || am.isSet("verbose") )
+            } else if (am.isSet("v") || am.isSet("verbose")) {
                 level = Level.INFO;
-            else if ( am.isSet("q") || am.isSet("quiet") )
+            } else if (am.isSet("q") || am.isSet("quiet")) {
                 level = Level.OFF;
+            }
             final Level logLevel = level;
-            
+
             Subject subject = new Subject();
-            
+
             // Cookie based authentication
             boolean cookieCreds = false;
             String ssoCookieStr = fixNull(am.getValue("ssocookie"));
-            if (ssoCookieStr != null)
-            {
-                  String ssoCookieDomain = 
-                      fixNull(am.getValue("ssocookiedomain"));
-                  if (ssoCookieDomain == null)
-                  {
-                      System.out.
-                      println("Missing ssocookiedomain argument...");
-                      Main.usage();
-                      System.exit(-1);
-                  }
-                  final String[] domains = ssoCookieDomain.split(",");
-                  if (domains.length < 1)
-                  {
-                      System.out.
-                      println("Invalid ssocookiedomain argument: " + ssoCookieDomain);
-                      Main.usage();
-                      System.exit(-1);
-                  }
-                  for (String domain : domains)
-                  {
-                      SSOCookieCredential cred = new SSOCookieCredential(ssoCookieStr, domain.trim());
-                      subject.getPublicCredentials().add(cred);
-                      cookieCreds = true;
-                  }
+            if (ssoCookieStr != null) {
+                String ssoCookieDomain =
+                    fixNull(am.getValue("ssocookiedomain"));
+                if (ssoCookieDomain == null) {
+                    System.out.println("Missing ssocookiedomain argument...");
+                    Main.usage();
+                    System.exit(-1);
+                }
+                final String[] domains = ssoCookieDomain.split(",");
+                if (domains.length < 1) {
+                    System.out.println("Invalid ssocookiedomain argument: " + ssoCookieDomain);
+                    Main.usage();
+                    System.exit(-1);
+                }
+                for (String domain : domains) {
+                    SSOCookieCredential cred = new SSOCookieCredential(ssoCookieStr, domain.trim());
+                    subject.getPublicCredentials().add(cred);
+                    cookieCreds = true;
+                }
             }
 
             final boolean headless = am.isSet("headless");
 
             String str = null;
-            if (!headless && !cookieCreds)
+            if (!headless && !cookieCreds) {
                 str = AuthMethod.PASSWORD.getValue();
+            }
             final String forceAuthMethod = str;
-            
+
             final ConditionVar downloadCompleteCond = new ConditionVar();
 
-            
-            boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>()
-            {
-                public Boolean run()
-                {
+
+            boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>() {
+                public Boolean run() {
                     //String uriStr = fixNull(am.getValue("uris"));
                     String paramStr = fixNull(am.getValue("params"));
                     //List<String> uris = DownloadUtil.decodeListURI(uriStr);
-                    Map<String,List<String>> params = DownloadUtil.decodeParamMap(paramStr);
-                    
+                    Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+
                     List<String> uris = new ArrayList<>();
-                    for (String arg : args)
-                    {
-                        if (! arg.startsWith("-"))
-                        {
+                    for (String arg : args) {
+                        if (!arg.startsWith("-")) {
                             // take care in case environment keeps all space seperated args
                             // as a single arg, eg single <argument> element in JNLP
                             String[] sas = arg.split(" ");
-                            for (String a :sas)
+                            for (String a : sas) {
                                 uris.add(a);
+                            }
                         }
                     }
-                    if (forceAuthMethod != null)
-                    {
+                    if (forceAuthMethod != null) {
                         List<String> am = new ArrayList<>();
                         am.add(forceAuthMethod);
                         params.put("auth", am);
                     }
-                    if (headless)
-                    {
+                    if (headless) {
                         boolean decompress = am.isSet("decompress");
                         boolean overwrite = am.isSet("overwrite");
                         String dest = am.getValue("dest");
                         String thStr = am.getValue("threads");
                         boolean retry = am.isSet("retry");
                         Integer threads = null;
-                        if (thStr != null)
-                            try
-                            {
+                        if (thStr != null) {
+                            try {
                                 threads = new Integer(thStr);
-                            }
-                            catch(NumberFormatException ex)
-                            {
+                            } catch (NumberFormatException ex) {
                                 throw new IllegalArgumentException("failed to parse '" + thStr + "' as an integer");
                             }
+                        }
                         downloadCompleteCond.set(false);
                         ui = new ConsoleUI(logLevel, threads, retry, dest, decompress, overwrite, downloadCompleteCond);
-                    }
-                    else
-                    {
+                    } else {
                         ui = new GraphicUI(logLevel);
-                        ApplicationFrame frame  = new ApplicationFrame(Constants.name, (Application)ui);
-                        frame.getContentPane().add((Component)ui);
+                        ApplicationFrame frame = new ApplicationFrame(Constants.name, (Application) ui);
+                        frame.getContentPane().add((Component) ui);
                         frame.setVisible(true);
                     }
 
@@ -221,47 +199,41 @@ public class Main
                     return true;
                 }
             });
-            
-            if (!result)
-            {
+
+            if (!result) {
                 System.err.println("Error occurred during execution..");
             }
-            
+
             // if running headless, don't exit
             // until the downloads have been completed.
-            if (headless)
-            {
+            if (headless) {
                 downloadCompleteCond.waitForTrue();
             }
-        }
-        catch(IllegalArgumentException ex)
-        {
+        } catch (IllegalArgumentException ex) {
             System.err.println("fatal error during startup");
             ex.printStackTrace();
             usage();
             System.exit(1);
-        }
-        catch(Throwable oops) 
-        {
+        } catch (Throwable oops) {
             System.err.println("fatal error during startup");
             oops.printStackTrace();
             System.exit(2);
         }
     }
-    
+
     // convert string 'null' and empty string to a null, trim() and return
-    private static String fixNull(String s)
-    {
-        if (s == null || "null".equals(s) )
+    private static String fixNull(String s) {
+        if (s == null || "null".equals(s)) {
             return null;
+        }
         s = s.trim();
-        if (s.length() == 0)
+        if (s.length() == 0) {
             return null;
+        }
         return s;
     }
 
-    private static void usage()
-    {
+    private static void usage() {
         System.out.println("cadc-download-manager -h || --help");
         System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of URIs>");
         System.out.println("         [ --fragment=<common fragment to append to all URIs> ]");

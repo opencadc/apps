@@ -70,13 +70,10 @@
 package ca.nrc.cadc.ulm.client.ui;
 
 
-
 /**
  * An interface for UI behaviour.
- * 
- * @author jenkinsd
  *
+ * @author jenkinsd
  */
-public interface UserInterface
-{
+public interface UserInterface {
 }

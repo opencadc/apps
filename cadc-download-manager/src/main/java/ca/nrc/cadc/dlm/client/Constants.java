@@ -74,7 +74,6 @@ package ca.nrc.cadc.dlm.client;
  *
  * @author pdowler
  */
-public class Constants
-{
-    public static String name ="DownloadManager";
+public class Constants {
+    public static String name = "DownloadManager";
 }

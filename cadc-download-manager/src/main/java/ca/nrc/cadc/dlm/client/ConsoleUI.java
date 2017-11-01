@@ -70,11 +70,6 @@
 package ca.nrc.cadc.dlm.client;
 
 import ca.nrc.cadc.dlm.DownloadDescriptor;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpTransfer;
@@ -82,154 +77,122 @@ import ca.nrc.cadc.net.event.TransferEvent;
 import ca.nrc.cadc.net.event.TransferListener;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
  * The interface for system console output display.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public class ConsoleUI implements UserInterface, TransferListener
-{
+public class ConsoleUI implements UserInterface, TransferListener {
     private static Logger log = Logger.getLogger(ConsoleUI.class);
-
+    private final List<HttpDownload> downloads = new ArrayList<HttpDownload>();
     private File downloadDir;
     private DownloadManager downloadManager;
-    private final List<HttpDownload> downloads = new ArrayList<HttpDownload>();
     private ConditionVar engineInitCond;
     private ConditionVar downloadsCompeleteCond;
     private Integer activeDownloadRequests;
     private String userAgent;
     private boolean decompress;
     private boolean overwrite;
-    
-    public ConsoleUI(Level logLevel, Integer threads, Boolean retry, String dest, boolean decompress, boolean overwrite, ConditionVar downloadsCompleteCond)
-    {
+
+    public ConsoleUI(Level logLevel, Integer threads, Boolean retry, String dest, boolean decompress, boolean overwrite, ConditionVar downloadsCompleteCond) {
         Log4jInit.setLevel("ca.nrc.cadc", logLevel);
-        
+
         this.downloadsCompeleteCond = downloadsCompleteCond;
         this.userAgent = "CADC DownloadManager(ConsoleUI) " + HttpTransfer.DEFAULT_USER_AGENT;
         this.decompress = decompress;
         this.overwrite = overwrite;
-        
+
         int initialThreads = DownloadManager.DEFAULT_THREAD_COUNT;
-        if (threads != null)
-        {
-            if (threads.intValue() < 1 || threads.intValue() > DownloadManager.MAX_THREAD_COUNT)
+        if (threads != null) {
+            if (threads.intValue() < 1 || threads.intValue() > DownloadManager.MAX_THREAD_COUNT) {
                 throw new IllegalArgumentException("number of threads is out of allowed range [1,"
-                        + DownloadManager.MAX_THREAD_COUNT + "]");
+                    + DownloadManager.MAX_THREAD_COUNT + "]");
+            }
             initialThreads = threads.intValue();
         }
 
         boolean initialRetryEnabled = false;
-        if (retry != null)
-        {
+        if (retry != null) {
             initialRetryEnabled = retry.booleanValue();
         }
-                
-        if (dest != null)
-        {
+
+        if (dest != null) {
             File tmp = new File(dest);
-            if (!tmp.exists() ||  !tmp.isDirectory() || !tmp.canWrite())
+            if (!tmp.exists() || !tmp.isDirectory() || !tmp.canWrite()) {
                 throw new IllegalArgumentException("cannot download file(s) to " + dest);
+            }
             this.downloadDir = tmp;
         }
-        
-        if (downloadDir == null)
-        {
+
+        if (downloadDir == null) {
             String currentDir = System.getProperty("user.dir");
             downloadDir = new File(currentDir);
-            if ( !downloadDir.exists() || !downloadDir.isDirectory() || !downloadDir.canWrite())
+            if (!downloadDir.exists() || !downloadDir.isDirectory() || !downloadDir.canWrite()) {
                 throw new RuntimeException("Cannot write to directory " + currentDir);
+            }
         }
 
         ThreadControl threadControl = new StaticThreadControl(initialThreads);
         log.debug("creating Downloadmanager: " + initialThreads + "," + downloadDir);
         this.downloadManager = new DownloadManager(threadControl, initialRetryEnabled, initialThreads, downloadDir);
         downloadManager.addDownloadListener(this);
-        
+
         this.engineInitCond = new ConditionVar();
         engineInitCond.set(false);
-        
+
         // start the download initialization process
         new Thread(new DelayedInit()).start();
-        
+
     }
-    
-    public void add(List<String> uris, Map<String,List<String>> params)
-    {
+
+    public void add(List<String> uris, Map<String, List<String>> params) {
         Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(uris, params);
-        while ( i.hasNext() )
-        {
+        while (i.hasNext()) {
             DownloadDescriptor dd = i.next();
-            if (dd.error == null)
+            if (dd.error == null) {
                 addDownload(dd);
-            else
-            {
+            } else {
                 logError(dd);
             }
         }
     }
 
-    private void addDownload(DownloadDescriptor dd)
-    {
-        if (downloadDir == null)
+    private void addDownload(DownloadDescriptor dd) {
+        if (downloadDir == null) {
             this.downloadDir = new File(System.getProperty("user.dir"));
+        }
         HttpDownload dl = new HttpDownload(userAgent, dd.url, downloadDir);
         dl.setOverwrite(overwrite);
         dl.setDecompress(decompress);
-        synchronized(downloads)
-        {
+        synchronized (downloads) {
             downloads.add(dl);
         }
     }
-    
-    private void logError(DownloadDescriptor dd)
-    {
+
+    private void logError(DownloadDescriptor dd) {
         // TODO: display in a window? create a Download in FAILED state?
         String msg = "[error] cannot download " + dd.uri + " because: " + dd.error;
         System.err.println(msg);
     }
-    
-    public void start()
-    {
-        if (downloadManager != null)
+
+    public void start() {
+        if (downloadManager != null) {
             downloadManager.start();
-        engineInitCond.setNotifyAll();
-    }
-    
-    private class DelayedInit implements Runnable
-    {
-        public void run()
-        {
-            try
-            {
-                log.debug("waiting for engineInit");
-                engineInitCond.waitForTrue();
-                log.debug("initializing: " + downloads.size() + " downloads");
-                synchronized (downloads)
-                {
-                    activeDownloadRequests = downloads.size();
-                    for (int i=0; i<downloads.size(); i++)
-                        downloadManager.addDownload(downloads.get(i));
-                    downloads.clear();
-                }
-            }
-            catch(Throwable t) 
-            { 
-                log.error("DelayedInit failed: " + t);
-            }
         }
+        engineInitCond.setNotifyAll();
     }
 
     @Override
-    public void transferEvent(TransferEvent e)
-    {
-        switch(e.getState())
-        {
+    public void transferEvent(TransferEvent e) {
+        switch (e.getState()) {
             case TransferEvent.TRANSFERING:
                 log.info("downloading -> " + e.getFile());
                 break;
@@ -241,12 +204,11 @@ public class ConsoleUI implements UserInterface, TransferListener
             case TransferEvent.DELETED:
                 log.info("removed: " + e.getFile());
                 break;
-                
+
             case TransferEvent.COMPLETED:
             case TransferEvent.CANCELLED:
             case TransferEvent.FAILED:
-                synchronized (downloads)
-                {
+                synchronized (downloads) {
                     activeDownloadRequests--;
                 }
                 StringBuffer sb = new StringBuffer();
@@ -254,8 +216,7 @@ public class ConsoleUI implements UserInterface, TransferListener
                 sb.append(": ");
 
                 sb.append(e.getURL().toString());
-                if (e.getFile() != null)
-                {
+                if (e.getFile() != null) {
                     sb.append(" -> ");
                     sb.append(e.getFile().getAbsolutePath());
                 }
@@ -265,18 +226,35 @@ public class ConsoleUI implements UserInterface, TransferListener
             default:
                 log.debug("transferEvent: " + e);
         }
-        if (activeDownloadRequests == 0)
-        {
+        if (activeDownloadRequests == 0) {
             log.debug("All downloads in a final state, exiting.");
             downloadsCompeleteCond.setNotifyAll();
         }
-        
+
     }
 
     @Override
-    public String getEventHeader()
-    {
+    public String getEventHeader() {
         return null;
     }
-    
+
+    private class DelayedInit implements Runnable {
+        public void run() {
+            try {
+                log.debug("waiting for engineInit");
+                engineInitCond.waitForTrue();
+                log.debug("initializing: " + downloads.size() + " downloads");
+                synchronized (downloads) {
+                    activeDownloadRequests = downloads.size();
+                    for (int i = 0; i < downloads.size(); i++) {
+                        downloadManager.addDownload(downloads.get(i));
+                    }
+                    downloads.clear();
+                }
+            } catch (Throwable t) {
+                log.error("DelayedInit failed: " + t);
+            }
+        }
+    }
+
 }

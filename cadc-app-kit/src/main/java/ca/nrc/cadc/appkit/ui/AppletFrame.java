@@ -34,50 +34,55 @@ import javax.swing.JFrame;
  * classpath, but the configuration is never saved so changes
  * are lost.
  *
- * @version 1.0
  * @author Patrick Dowler
+ * @version 1.0
  */
-public class AppletFrame extends JFrame implements ApplicationContainer
-{
-	Application app;
-	Applet applet;
-	ApplicationConfig config;
+public class AppletFrame extends JFrame implements ApplicationContainer {
+    Application app;
+    Applet applet;
+    ApplicationConfig config;
 
-	/**
-	 * Constructor. The name argument is used in the title bar
-	 * if the frame (window) and to find the application config
-	 * object (file or resource).
-	 */
-	public AppletFrame(String name, Application app, Applet applet)
-	{
-		super(name);
-		this.app = app;
-		this.applet = applet;
-		
-		config = new ApplicationConfig(app.getClass(), name);
-		readConfig();
-		app.setApplicationContainer(this);
-		
-		this.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
-		this.addWindowListener( new AppletWindowAdapter(this) );
-	}
+    /**
+     * Constructor. The name argument is used in the title bar
+     * if the frame (window) and to find the application config
+     * object (file or resource).
+     *
+     * @param name  applet name
+     * @param app   application reference
+     * @param applet    applet reference
+     */
+    public AppletFrame(String name, Application app, Applet applet) {
+        super(name);
+        this.app = app;
+        this.applet = applet;
 
-	public AppletContext getAppletContext() { return applet.getAppletContext(); }
-	
-	public ApplicationConfig getConfig() { return config; }
-	
-	public void quit()
-	{
-		if ( !app.quit() )
-			return;
-		//writeConfig();
-		dispose();
-		//applet.destroy()
-	}
+        config = new ApplicationConfig(app.getClass(), name);
+        readConfig();
+        app.setApplicationContainer(this);
 
-	protected void readConfig()
-	{
-    	Toolkit.doWindowGeometry(this, config);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new AppletWindowAdapter(this));
+    }
+
+    public AppletContext getAppletContext() {
+        return applet.getAppletContext();
+    }
+
+    public ApplicationConfig getConfig() {
+        return config;
+    }
+
+    public void quit() {
+        if (!app.quit()) {
+            return;
+        }
+        //writeConfig();
+        dispose();
+        //applet.destroy()
+    }
+
+    protected void readConfig() {
+        Toolkit.doWindowGeometry(this, config);
     }
 }
 

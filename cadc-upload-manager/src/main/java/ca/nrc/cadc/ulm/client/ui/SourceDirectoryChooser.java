@@ -71,22 +71,21 @@
 package ca.nrc.cadc.ulm.client.ui;
 
 import ca.nrc.cadc.appkit.util.Util;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.HeadlessException;
 import java.io.File;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 
 
-class SourceDirectoryChooser
-{
+class SourceDirectoryChooser {
+    private final String fileChooserName;
     private File initialDir;
     private File selectedFile;
-    private final String fileChooserName;
 
 
     public SourceDirectoryChooser(final File initialDir,
-                                  final String fileChooserName)
-    {
+                                  final String fileChooserName) {
         this.initialDir = initialDir;
         this.fileChooserName = fileChooserName;
     }
@@ -95,17 +94,15 @@ class SourceDirectoryChooser
     /**
      * Display the contained FileChooser.
      *
-     * @param parent        The parent component (Container).
-     * @param acceptText    The accept text.
-     * @return              The return code.
+     * @param parent     The parent component (Container).
+     * @param acceptText The accept text.
+     * @return The return code.
      */
-    public int showDialog(final Component parent, final String acceptText)
-    {
+    public int showDialog(final Component parent, final String acceptText) {
         final FileChooser fileChooser = getFileChooser(parent, acceptText);
         final int ret = showDialog(fileChooser, parent, acceptText);
 
-        if (ret == JFileChooser.APPROVE_OPTION)
-        {
+        if (ret == JFileChooser.APPROVE_OPTION) {
             setSelectedFile(fileChooser.getSelectedFile());
         }
 
@@ -113,69 +110,60 @@ class SourceDirectoryChooser
     }
 
     /**
-     * Obtain an appropriate instance of a FileChooser.
-     *
-     * @param parent        The Parent component (Container).
-     * @param acceptText    The accept text.
-     * @return              FileChooser instance.
-     */
-    protected FileChooser getFileChooser(final Component parent,
-                                         final String acceptText)
-    {
-        return new SwingImpl(getInitialDir());
-    }
-
-    /**
      * Display the file chooser and return the code.
      *
-     * @param fileChooser       The FileChooser to display.
-     * @param parent            The parent component.
-     * @param acceptText        The text for acceptance.
-     * @return                  int return code.
+     * @param fileChooser The FileChooser to display.
+     * @param parent      The parent component.
+     * @param acceptText  The text for acceptance.
+     * @return int return code.
      */
     protected int showDialog(final FileChooser fileChooser,
-                             final Component parent, final String acceptText)
-    {
+                             final Component parent, final String acceptText) {
         return fileChooser.showOpenDialog(parent);
     }
 
-    private class SwingImpl extends JFileChooser implements FileChooser
-    {
-        SwingImpl(final File initialDir)
-        {
+    /**
+     * Obtain an appropriate instance of a FileChooser.
+     *
+     * @param parent     The Parent component (Container).
+     * @param acceptText The accept text.
+     * @return FileChooser instance.
+     */
+    protected FileChooser getFileChooser(final Component parent,
+                                         final String acceptText) {
+        return new SwingImpl(getInitialDir());
+    }
+
+    public String getFileChooserName() {
+        return fileChooserName;
+    }
+
+    public File getInitialDir() {
+        return initialDir;
+    }
+
+    public File getSelectedFile() {
+        return selectedFile;
+    }
+
+    public void setSelectedFile(File selectedFile) {
+        this.selectedFile = selectedFile;
+    }
+
+    private class SwingImpl extends JFileChooser implements FileChooser {
+        SwingImpl(final File initialDir) {
             super(initialDir);
 
             setName(getFileChooserName());
             setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         }
-        
+
         protected JDialog createDialog(Component parent)
-                throws HeadlessException
-        {
+            throws HeadlessException {
             final JDialog dialog = super.createDialog(null);
             Util.setPositionRelativeToParent(dialog, parent, 20, 20);
 
             return dialog;
         }
-    }
-
-    public String getFileChooserName()
-    {
-        return fileChooserName;
-    }
-
-    public File getInitialDir()
-    {
-        return initialDir;
-    }
-
-    public File getSelectedFile()
-    {
-        return selectedFile;
-    }
-
-    public void setSelectedFile(File selectedFile)
-    {
-        this.selectedFile = selectedFile;
     }
 }

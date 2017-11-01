@@ -72,46 +72,38 @@ package ca.nrc.cadc.dlm.client;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.event.TransferEvent;
 import ca.nrc.cadc.net.event.TransferListener;
+import ca.nrc.cadc.thread.Queue;
+import ca.nrc.cadc.thread.QueueUpdater;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import ca.nrc.cadc.thread.Queue;
-import ca.nrc.cadc.thread.QueueUpdater;
-import javax.swing.SpinnerModel;
 import org.apache.log4j.Logger;
 
 /**
  * Handles the core download logic.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public class DownloadManager implements ChangeListener, TransferListener
-{
-    private static Logger log = Logger.getLogger(DownloadManager.class);
-
-    private static boolean testing = false;
-    private boolean debug = false;
-    
+public class DownloadManager implements ChangeListener, TransferListener {
     static final int MAX_THREAD_COUNT = 11;
     static final int DEFAULT_THREAD_COUNT = 1;
-
+    private static Logger log = Logger.getLogger(DownloadManager.class);
+    private static boolean testing = false;
+    private boolean debug = false;
     private ThreadPool pool;
     private ThreadControl threadControl;
     private boolean retryEnabled;
-    
+
     private List changeListeners;
     private List downloadListeners;
-    
+
     private File destDir;
-    
-    public DownloadManager(ThreadControl threadControl, boolean retryEnabled, int initialThreadCount, File destinationDir)
-    {
+    private String workerBasename = "DownloadManager.WorkerThread: ";
+
+    public DownloadManager(ThreadControl threadControl, boolean retryEnabled, int initialThreadCount, File destinationDir) {
         this.threadControl = threadControl;
         this.retryEnabled = retryEnabled;
         log.debug("threads: " + getThreadCount());
@@ -119,181 +111,167 @@ public class DownloadManager implements ChangeListener, TransferListener
         setDestinationDir(destinationDir);
     }
 
-    public void setDebug(boolean debug) { this.debug = debug; }
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
 
-    public boolean getRetryEnabled()
-    {
+    public boolean getRetryEnabled() {
         return retryEnabled;
     }
 
-    public void setRetryEnabled(boolean retryEnabled)
-    {
+    public void setRetryEnabled(boolean retryEnabled) {
         this.retryEnabled = retryEnabled;
     }
-    
-    public int getThreadCount() 
-    {
-        return ((Integer)threadControl.getValue()).intValue(); 
+
+    public int getThreadCount() {
+        return ((Integer) threadControl.getValue()).intValue();
     }
 
-    public void setThreadCount(int tc) 
-    {
+    public void setThreadCount(int tc) {
         threadControl.setValue(new Integer(tc));
     }
 
-    public void setDestinationDir(File destDir) { this.destDir = destDir; }
+    public File getDestinationDir() {
+        return destDir;
+    }
 
-    public File getDestinationDir() { return destDir; } 
-    
-    public void start()
-    {
-        if (pool == null)
-        {
+    public void setDestinationDir(File destDir) {
+        this.destDir = destDir;
+    }
+
+    public void start() {
+        if (pool == null) {
             log.debug("creating ThreadPool");
             this.pool = new ThreadPool();
             threadControl.addListener(pool);
         }
     }
-    
+
     /**
      * Terminate all downloads and release resources.
      */
-    public void stop()
-    {
-        if (pool != null)
-        {    
+    public void stop() {
+        if (pool != null) {
             pool.terminate();
             pool = null;
         }
     }
-    
-    public void startThreadControl()
-    {
+
+    public void startThreadControl() {
         threadControl.start();
     }
-    
-    public void stopThreadControl()
-    {
+
+    public void stopThreadControl() {
         threadControl.stop();
     }
-    
+
     /**
-     * Register for change events. This class fires events when configuration items 
+     * Register for change events. This class fires events when configuration items
      * (thread pool size, destination directory) are changed/set by the user.
-     * 
+     *
      * @param cl the listener
      */
-    public void addChangeListener(ChangeListener cl)
-    {
-        if (changeListeners == null)
+    public void addChangeListener(ChangeListener cl) {
+        if (changeListeners == null) {
             this.changeListeners = new ArrayList();
+        }
         changeListeners.add(cl);
     }
-    
-    public void removeChangeListener(ChangeListener cl)
-    {
-        if (changeListeners == null)
+
+    public void removeChangeListener(ChangeListener cl) {
+        if (changeListeners == null) {
             return;
+        }
         changeListeners.remove(cl);
     }
 
-    public void stateChanged(ChangeEvent e)
-    {
+    public void stateChanged(ChangeEvent e) {
         fireChangeEvent();
     }
-    
-    void fireChangeEvent()
-    {
-        if (changeListeners == null)
+
+    void fireChangeEvent() {
+        if (changeListeners == null) {
             return;
+        }
         ChangeEvent e = new ChangeEvent(this);
-        for (int i = 0; i < changeListeners.size(); i++)
+        for (int i = 0; i < changeListeners.size(); i++) {
             ((ChangeListener) changeListeners.get(i)).stateChanged(e);
+        }
     }
-    
+
     /**
      * Register for download events.
      *
      * @param dl the listener
      */
-    public void addDownloadListener(TransferListener dl)
-    {
-        if (dl == null)
+    public void addDownloadListener(TransferListener dl) {
+        if (dl == null) {
             return;
-        if (downloadListeners == null)
+        }
+        if (downloadListeners == null) {
             this.downloadListeners = new ArrayList();
+        }
         downloadListeners.add(dl);
     }
-    
-    public void removeDownloadListener(TransferListener dl)
-    {
-        if (dl == null)
+
+    public void removeDownloadListener(TransferListener dl) {
+        if (dl == null) {
             return;
-        if (downloadListeners == null)
+        }
+        if (downloadListeners == null) {
             return;
+        }
         downloadListeners.remove(dl);
     }
-    
+
     // DownloadListener
-    public void transferEvent(TransferEvent e)
-    {
+    public void transferEvent(TransferEvent e) {
         log.debug("transferEvent: " + e);
         // rebroadcast event to other listeners
-        if (downloadListeners == null || downloadListeners.size() == 0)
+        if (downloadListeners == null || downloadListeners.size() == 0) {
             return;
-        for (int i=0; i<downloadListeners.size(); i++)
-        {
+        }
+        for (int i = 0; i < downloadListeners.size(); i++) {
             TransferListener dl = (TransferListener) downloadListeners.get(i);
             dl.transferEvent(e);
         }
     }
 
-    public String getEventHeader()
-    {
+    public String getEventHeader() {
         return null;
     }
-    
-    public void addDownload(final HttpDownload dl)
-    {
+
+    public void addDownload(final HttpDownload dl) {
         dl.setTransferListener(this);
         pool.add(dl);
     }
-    
-    private String workerBasename = "DownloadManager.WorkerThread: ";
 
-    private class ThreadPool implements ThreadControlListener
-    {
+    private class ThreadPool implements ThreadControlListener {
         private Queue tasks;
         private ArrayList threads;
         private int numWorkers;
 
-        public ThreadPool()
-        {
+        public ThreadPool() {
             this.tasks = new Queue();
             this.threads = new ArrayList(MAX_THREAD_COUNT);
             threadValueChanged(null); // init threads
         }
-        
-        public void add(HttpDownload task)
-        {
+
+        public void add(HttpDownload task) {
             log.debug("queueing: " + task);
             tasks.push(task);
         }
 
-        public void terminate()
-        {
+        public void terminate() {
             log.debug("ThreadPool.terminate()");
-            
+
             // terminate thread pool members
             numWorkers = 0;
-            synchronized(threads) // vs sync block in WorkerThread.run() that calls threads.remove(this) after an interrupt
-            {
-                for (int i=0; i<threads.size(); i++)
-                {
+            synchronized (threads) { // vs sync block in WorkerThread.run() that calls threads.remove(this) after an interrupt
+                for (int i = 0; i < threads.size(); i++) {
                     log.debug("ThreadPool.terminate() interrupting WorkerThread " + i);
                     WorkerThread wt = (WorkerThread) threads.get(i);
-                    synchronized(wt)
-                    {
+                    synchronized (wt) {
                         log.debug("ThreadPool.terminate(): interrupting " + wt.getName());
                         wt.interrupt();
                     }
@@ -305,30 +283,26 @@ public class DownloadManager implements ChangeListener, TransferListener
             tasks.update(new QueueFlush());
             log.debug("ThreadPool.terminate() DONE");
         }
-        
-        public void threadValueChanged(Integer newValue)
-        {
-            log.debug("ThreadPool: stateChanged("+newValue+")");
+
+        public void threadValueChanged(Integer newValue) {
+            log.debug("ThreadPool: stateChanged(" + newValue + ")");
             this.numWorkers = ((Integer) threadControl.getValue()).intValue();
-            if (numWorkers < 1)
-            {
+            if (numWorkers < 1) {
                 threadControl.setValue(new Integer(1));
                 return;
             }
-            if (numWorkers > MAX_THREAD_COUNT)
-            {
+            if (numWorkers > MAX_THREAD_COUNT) {
                 threadControl.setValue(new Integer(MAX_THREAD_COUNT));
                 return;
             }
-                
+
             log.debug("current thread count: " + threads.size() + " new size: " + numWorkers);
-            if (threads.size() == numWorkers)
+            if (threads.size() == numWorkers) {
                 return;
-            
-            synchronized(threads)
-            {
-                while (threads.size() < numWorkers)
-                {
+            }
+
+            synchronized (threads) {
+                while (threads.size() < numWorkers) {
                     log.debug("adding worker thread");
                     WorkerThread t = new WorkerThread();
                     t.setPriority(Thread.MIN_PRIORITY); // mainly IO blocked anyway, so keep the UI thread happy
@@ -336,28 +310,24 @@ public class DownloadManager implements ChangeListener, TransferListener
                     t.start();
                 }
             }
-            
-            if (numWorkers == 11)
-            {
+
+            if (numWorkers == 11) {
                 // TODO: play a little guitar riff?
             }
-            
+
             // it is possible that the state didn't actually change in cases where 
             // we enforced the min or max values above, but this should be harmless
             fireChangeEvent();
         }
 
         // this updater runs through the queue, removes Downloads, and terminates them
-        private class QueueFlush implements QueueUpdater
-        {
+        private class QueueFlush implements QueueUpdater {
             // this method has exclusive access to the queue contents, so we do not
             // have to worry about a WorkerThread taking something with pop()
-            public boolean update(List list)
-            {
+            public boolean update(List list) {
                 int count = 0;
                 ListIterator i = list.listIterator();
-                while ( i.hasNext() )
-                {
+                while (i.hasNext()) {
                     HttpDownload dl = (HttpDownload) i.next();
                     log.debug("ThreadPool: terminating queued download");
                     dl.terminate();
@@ -367,52 +337,42 @@ public class DownloadManager implements ChangeListener, TransferListener
                 return (count > 0);
             }
         }
-    
-        private class WorkerThread extends Thread
-        {
+
+        private class WorkerThread extends Thread {
             HttpDownload currentTask;
-            
-            WorkerThread()
-            {
+
+            WorkerThread() {
                 super();
                 setDaemon(true);
                 setName(workerBasename);
             }
 
             // threads keep running as long as they are in the threads list
-            public void run()
-            {
+            public void run() {
                 log.debug(workerBasename + "START");
                 boolean cont = true;
-                while (cont)
-                {
-                    try
-                    {
+                while (cont) {
+                    try {
                         Object tmp = tasks.pop(); // block here
-                        synchronized(this) 
-                        {
+                        synchronized (this) {
                             currentTask = (HttpDownload) tmp;
                         }
-                        synchronized(threads) 
-                        {
-                            cont = threads.contains(this); 
+                        synchronized (threads) {
+                            cont = threads.contains(this);
                         }
-                        if (cont)
-                        {
+                        if (cont) {
                             log.debug(workerBasename + "still part of pool");
                             // set thread name so thread dumps are intelligible
                             setName(workerBasename + currentTask);
                             int mr = 0;
-                            if (getRetryEnabled())
+                            if (getRetryEnabled()) {
                                 mr = Integer.MAX_VALUE;
+                            }
                             currentTask.setMaxRetries(mr);
                             currentTask.run();
-                        }
-                        else
-                        {
+                        } else {
                             log.debug(workerBasename + "no longer part of pool");
-                            synchronized(this) // vs sync block in terminate()
-                            {
+                            synchronized (this) { // vs sync block in terminate()
                                 // make sure to clear interrupt flag from an interrupt() in stateChanged()
                                 // in case it comes after pop() and before threads.contains()
                                 interrupted();
@@ -422,20 +382,16 @@ public class DownloadManager implements ChangeListener, TransferListener
                                 currentTask = null;
                             }
                         }
-                    }
-                    catch (InterruptedException ignore)
-                    {
+                    } catch (InterruptedException ignore) {
                         // pop() was interrupted, let finally and while condition decide if we
                         // should loop or return
-                    }
-                    finally
-                    {
+                    } finally {
                         setName(workerBasename);
-                        synchronized(this) { currentTask = null; }
-                        synchronized(threads)
-                        {
-                            if (threads.size() > numWorkers)
-                            {
+                        synchronized (this) {
+                            currentTask = null;
+                        }
+                        synchronized (threads) {
+                            if (threads.size() > numWorkers) {
                                 log.debug(workerBasename + "numWorkers=" + numWorkers + " threads.size() = " + threads.size());
                                 threads.remove(this);
                             }

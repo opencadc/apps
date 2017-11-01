@@ -75,61 +75,50 @@ import java.util.List;
 /**
  * Defines the behaviour of the thread control with a set number
  * of threads.
- * 
- * @author majorb
  *
+ * @author majorb
  */
-public class StaticThreadControl implements ThreadControl
-{
-    
+public class StaticThreadControl implements ThreadControl {
+
     List<ThreadControlListener> listeners = new ArrayList<ThreadControlListener>();
-    
+
     private int threadCount;
-    
-    public StaticThreadControl(int threadCount)
-    {
+
+    public StaticThreadControl(int threadCount) {
         this.threadCount = threadCount;
     }
 
     @Override
-    public void addListener(ThreadControlListener listener)
-    {
-        if (!listeners.contains(listener))
-        {
+    public void addListener(ThreadControlListener listener) {
+        if (!listeners.contains(listener)) {
             listeners.add(listener);
         }
     }
-    
+
     @Override
-    public void removeListener(ThreadControlListener listener)
-    {
-        if (listeners.contains(listener))
-        {
+    public void removeListener(ThreadControlListener listener) {
+        if (listeners.contains(listener)) {
             listeners.remove(listener);
         }
     }
 
     @Override
-    public Integer getValue()
-    {
+    public Integer getValue() {
         return threadCount;
     }
 
     @Override
-    public void setValue(Integer value)
-    {
+    public void setValue(Integer value) {
         threadCount = value;
     }
 
     @Override
-    public void start()
-    {
+    public void start() {
         // Nothing to do
     }
 
     @Override
-    public void stop()
-    {
+    public void stop() {
         // Nothing to do
     }
 
