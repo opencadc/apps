@@ -16,7 +16,7 @@ repositories {
     }
 }
 
-version = '1.1'
+version = '1.2'
 group = 'org.opencadc'
 sourceCompatibility = 1.7
 
@@ -29,6 +29,7 @@ dependencies {
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-app-kit:1.+'
     compile 'org.opencadc:cadc-download-manager:[1.1,)'
+    compile 'org.opencadc:cadc-web-util:[1.0.11, )'
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'

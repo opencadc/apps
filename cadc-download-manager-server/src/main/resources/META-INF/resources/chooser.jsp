@@ -72,11 +72,13 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
-
+<%@ page import="ca.nrc.cadc.config.ApplicationConfiguration" %>
 <%@ page import="ca.nrc.cadc.dlm.server.ServerUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
 <%@ page import="ca.nrc.cadc.dlm.server.UrlListServlet" %>
 <%
+    final ApplicationConfiguration configuration = new ApplicationConfiguration();
+    boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable",true);
     String uris = (String) request.getAttribute("uris");
     String params = (String) request.getAttribute("params");
 %>
@@ -119,14 +121,16 @@ String bodyFooter = skin + "bodyFooter";
         <div style="padding-left: 2em; padding-right: 2em">
         <table width="66%">
             <tbody>
-                <tr>
-                    <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.WEBSTART %>" /></td>
-                    <td valign="top">
-                    
-                    <jsp:include page='javaWebStartDescription.html' flush='true' />
-                    
-                    </td>
-                </tr>
+                <c:if test="${enableWebstart eq 'true'}" >
+                    <tr>
+                        <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.WEBSTART %>" /></td>
+                        <td valign="top">
+
+                        <jsp:include page='javaWebStartDescription.html' flush='true' />
+
+                        </td>
+                    </tr>
+                </c:if>
                 <tr><td><br/></td></tr>
                 <tr>
                     <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.URLS %>" /></td>
@@ -160,14 +164,27 @@ String bodyFooter = skin + "bodyFooter";
     
     
     <h2>Help</h2>
-    
-    <h3>
-        I want to use the Java option but it didn't work. How can I fix it?
-    </h3>
-    <p>
-        For general help on getting applets or webstart working, we 
-        have a <a href="/JavaTest">Java Test Page</a> with instructions.
-    </p>
+
+    <c:if test="<%=enableWebstart%>" >
+        <h3>
+            I want to use the Java option but it didn't work. How can I fix it?
+        </h3>
+        <p>
+            For general help on getting applets or webstart working, we
+            have a <a href="/JavaTest">Java Test Page</a> with instructions.
+        </p>
+    </c:if>
+    <c:if test="not <%=enableWebstart%>" >
+        <h3>
+            I want to use the Java option but I don't see it on the page. How can I get it?
+        </h3>
+        <p>
+            The download manager configuration file org.opencadc.dlm-server.properties
+            has a value for enabling the webstart option. The value is probably set to false
+            in this file. Setting it to true and reloading the Download Manager should display
+            the webstart option.
+        </p>
+    </c:if>
     <h3>
         <i>wget</i> is not working
     </h3>

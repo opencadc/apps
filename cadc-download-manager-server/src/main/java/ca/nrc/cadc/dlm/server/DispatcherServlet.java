@@ -109,7 +109,7 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DispatcherServlet extends HttpServlet {
-    private static final long serialVersionUID = 201208071730L;
+    private static final long serialVersionUID = 201712011100L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
 
@@ -118,6 +118,8 @@ public class DispatcherServlet extends HttpServlet {
     public static String WEBSTART = "Java Webstart";
 
     private static int ONE_YEAR = 365 * 24 * 3600;
+
+    public static String DEFAULT_CONFIG_FILE_PATH = System.getProperty("user.home") + "/config/org.opencadc.dlm-server.properties";
 
     /**
      * Checks cookie and request param for download method preference; tries to set a cookie
