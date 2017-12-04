@@ -77,8 +77,8 @@
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
 <%@ page import="ca.nrc.cadc.dlm.server.UrlListServlet" %>
 <%
-    final ApplicationConfiguration configuration = new ApplicationConfiguration();
-    boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable",true);
+    ApplicationConfiguration configuration = new ApplicationConfiguraton(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
+    boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
     String uris = (String) request.getAttribute("uris");
     String params = (String) request.getAttribute("params");
 %>
@@ -121,7 +121,7 @@ String bodyFooter = skin + "bodyFooter";
         <div style="padding-left: 2em; padding-right: 2em">
         <table width="66%">
             <tbody>
-                <c:if test="${enableWebstart eq 'true'}" >
+                <c:if test="<%=enableWebstart%>" >
                     <tr>
                         <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.WEBSTART %>" /></td>
                         <td valign="top">
@@ -172,17 +172,6 @@ String bodyFooter = skin + "bodyFooter";
         <p>
             For general help on getting applets or webstart working, we
             have a <a href="/JavaTest">Java Test Page</a> with instructions.
-        </p>
-    </c:if>
-    <c:if test="not <%=enableWebstart%>" >
-        <h3>
-            I want to use the Java option but I don't see it on the page. How can I get it?
-        </h3>
-        <p>
-            The download manager configuration file org.opencadc.dlm-server.properties
-            has a value for enabling the webstart option. The value is probably set to false
-            in this file. Setting it to true and reloading the Download Manager should display
-            the webstart option.
         </p>
     </c:if>
     <h3>
