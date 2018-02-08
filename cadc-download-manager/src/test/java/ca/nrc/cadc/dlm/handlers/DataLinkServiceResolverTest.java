@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2018.                            (c) 2018.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,34 +68,54 @@
 
 package ca.nrc.cadc.dlm.handlers;
 
-import org.junit.Test;
-
+import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.net.URI;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DataLinkServiceResolverTest {
-
+    private static final Logger log = Logger.getLogger(DataLinkServiceResolverTest.class);
+    
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.dlm.handlers", Level.INFO);
+    }
+    
     @Test
     public void getResourceID() throws Exception {
         final File tmpFile = File.createTempFile(DataLinkServiceResolver.class.getSimpleName(), ".properties");
         final Writer writer = new FileWriter(tmpFile);
 
         // Add a lot of space at the end to accommodate bad config files.
-        writer.write(DataLinkServiceResolver.DEFAULT_KEY + "=ivo://com.example/id              " +
-            "        ");
+        writer.write(DataLinkServiceResolver.DEFAULT_KEY + "=ivo://com.example/id              "
+                + "        ");
         writer.flush();
         writer.close();
 
         final DataLinkServiceResolver testSubject = new DataLinkServiceResolver(tmpFile.getAbsolutePath());
 
         try {
-            org.junit.Assert.assertEquals("Wrong URI.", URI.create("ivo://com.example/id"),
-                testSubject.getResourceID(URI.create("caom:ARCHIVE/file/name")));
-        }
-        finally {
+            Assert.assertEquals("Wrong URI.", URI.create("ivo://com.example/id"),
+                    testSubject.getResourceID(URI.create("caom:ARCHIVE/file/name")));
+            
+            String expected = "ivo://example.net/place";
+            URI pubID = URI.create(expected + "?dataset");
+            URI actual = testSubject.getResourceID(pubID);
+            log.info(pubID + " -> " + actual);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals("ivo publisher ID", expected, actual.toASCIIString());
+            
+            expected = "ivo://example.net/path/to/collection";
+            pubID = URI.create(expected + "?dataset/product");
+            actual = testSubject.getResourceID(pubID);
+            log.info(pubID + " -> " + actual);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals("ivo publisher ID", expected, actual.toASCIIString());
+        } finally {
             tmpFile.delete();
         }
     }
