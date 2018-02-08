@@ -110,8 +110,9 @@ public class DataLinkServiceResolver {
 
     /**
      * Find the DataLink service resourceIdentifier for the specified publisherID.
-     * The current implementation ignores the publisherID and simply looks up a
-     * configured the service in a configuration file.
+     * The current implementation extracts the resourceID from publisherID (ivo scheme,
+     * e.g. a registered DataCollection with a DataLink capability)
+     * and otherwise looks up a configured service in a configuration file.
      *
      * @param publisherID The URI to resolve a link for.
      * @return URI instance, or null if no value found.
