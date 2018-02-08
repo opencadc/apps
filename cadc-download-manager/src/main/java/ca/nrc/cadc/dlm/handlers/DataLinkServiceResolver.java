@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,6 +70,7 @@ package ca.nrc.cadc.dlm.handlers;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -118,10 +119,19 @@ public class DataLinkServiceResolver {
     public URI getResourceID(URI publisherID) {
         final String key;
 
+        // standard IVOA publisherID handling: extract resourceID from publisherID
         if ("ivo".equals(publisherID.getScheme())) {
-            final String publisherIDPath = publisherID.getPath();
-            key = publisherIDPath.startsWith("/") ? publisherIDPath.substring(1) : publisherIDPath;
-        } else if ("caom".equals(publisherID.getScheme())) {
+            try {
+                URI ret = new URI(publisherID.getScheme(), publisherID.getHost(), publisherID.getPath(), null);
+                log.info("datalink service: " + ret);
+                return ret;
+            } catch (URISyntaxException bug) {
+                throw new RuntimeException("BUG: failed to extract resourceID from publisherID " + publisherID);
+            }
+        } 
+        
+        // fallback to config for caom PlaneURI
+        if ("caom".equals(publisherID.getScheme())) {
             String ssp = publisherID.getSchemeSpecificPart();
             String[] ss = ssp.split("/");
             key = ss[0];
