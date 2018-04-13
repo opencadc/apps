@@ -124,10 +124,15 @@ public class DataLinkClient implements DownloadGenerator {
     String cutout;
     boolean downloadOnly = false;
     String requestFail;
+    
+    private final List<String> skipSemantics = new ArrayList<>();
 
     public DataLinkClient() {
         this.regClient = new RegistryClient();
         this.resolver = new DataLinkServiceResolver();
+        skipSemantics.add("#preview");
+        skipSemantics.add("http://www.openadc.org/caom2#thumbnail");
+        skipSemantics.add("http://www.openadc.org/caom2#pkg");
     }
 
     @Override
@@ -429,15 +434,15 @@ public class DataLinkClient implements DownloadGenerator {
                     curRow = null;
                     log.debug("skip: downloadOnly");
                 }
-
+                
                 // semantics filtering
                 if (curRow != null && semIndex >= 0) {
                     String sem = (String) curRow.get(semIndex);
                     String sdef = (String) curRow.get(sdIndex);
 
-                    if (cutout == null) {
-                        // TODO: filter on semantics (currently ALL) instead of productType above
-                        log.debug("pass: " + url);
+                    if (skipSemantics.contains(sem)) {
+                        curRow = null;
+                        log.debug("skip: " + url + " semantics: " + sem);
                     } else if (CUTOUT.equals(sem)) {
                         String standardID = getServiceProperty(sdef, "standardID");
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
@@ -447,9 +452,11 @@ public class DataLinkClient implements DownloadGenerator {
                             curRow = null;
                             log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + cutout);
                         }
-                    } else {
+                    } else if (cutout != null) {
                         curRow = null;
                         log.debug("skip: " + url + " semantics: " + sem + " cutout: " + cutout);
+                    } else {
+                        log.debug("pass: " + url);
                     }
                 }
             }
