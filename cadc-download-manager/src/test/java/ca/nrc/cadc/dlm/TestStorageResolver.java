@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009.                            (c) 2009.
+ *  (c) 2011.                            (c) 2011.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,117 +62,104 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 4 $
+ *  $Revision: 5 $
  *
  ************************************************************************
  */
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.net.StorageResolver;
+
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.util.Objects;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 
 /**
- * Description of a download.
- *
  * @author pdowler
  */
-public class DownloadDescriptor {
-    public static final String OK = "OK";
-    public static final String ERROR = "ERROR";
+public class TestStorageResolver implements DownloadGenerator, StorageResolver {
+    private static final String SCHEME = "test";
 
-    public String status;
-    public String uri;
-    public URL url;
-    public String destination;
-    public String error;
+    private Map<String, List<String>> params;
 
     /**
-     * Constructor.
+     * Returns the scheme for the storage resolver.
      *
-     * @param url the URL to download the data from
+     * @return a String representing the schema.
      */
-    public DownloadDescriptor(URL url) {
-        this(null, url, null);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param uri original URI (optional)
-     * @param url the URL to download the data from
-     */
-    public DownloadDescriptor(String uri, URL url) {
-        this(uri, url, null);
-    }
-
-    /**
-     * Constructor. A download URL may be derived from a URI; the URI is
-     * not used but just attached to aid in error reporting.
-     *
-     * @param uri         original URI (optional)
-     * @param url         the URL to download the data from
-     * @param destination the relative path where file should be stored (optional)
-     */
-    public DownloadDescriptor(String uri, URL url, String destination) {
-        this.status = OK;
-        this.uri = uri;
-        this.url = url;
-        this.destination = destination;
-    }
-
-    /**
-     * Constructor for a download that could not be performed. The error message
-     * describes the reason for failure.
-     *
-     * @param uri   original URI (optional)
-     * @param error message describing the failure
-     */
-    public DownloadDescriptor(String uri, String error) {
-        this(uri, error, null);
-    }
-
-    /**
-     * Constructor for a download that could not be performed. The error message
-     * describes the reason for failure.
-     *
-     * @param uri         (optional)
-     * @param error       message describing the failure
-     * @param destination the relative path where file would have been stored (optional)
-     */
-    public DownloadDescriptor(String uri, String error, String destination) {
-        this.status = ERROR;
-        this.uri = uri;
-        this.error = error;
-        this.destination = destination;
-    }
-
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DownloadDescriptor that = (DownloadDescriptor) o;
-        return Objects.equals(uri, that.uri);
+    public String getScheme() {
+        return SCHEME;
     }
 
+    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+        if (!"test".equals(uri.getScheme())) {
+            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("http://");
+        sb.append(uri.getHost());
+        sb.append(uri.getPath());
+
+        if (params != null && params.size() > 0) {
+            String sep = "?";
+            for (Map.Entry<String, List<String>> me : params.entrySet()) {
+                String key = me.getKey();
+                for (String val : me.getValue()) {
+                    sb.append(sep).append(key).append("=").append(val);
+                    sep = "&";
+                }
+            }
+        }
+
+        String surl = sb.toString();
+
+        try {
+            return new SingleDownloadIterator(uri, new URL(surl));
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: invalid url: " + surl, ex);
+        }
+    }
+
+    /**
+     * Convert the specified URI to one or more URL(s).
+     *
+     * @param uri the URI to convert
+     * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
+     */
     @Override
-    public int hashCode() {
-
-        return Objects.hash(uri);
-    }
-
-    @Override
-    public String toString() {
-        if (url != null) {
-            return this.getClass().getSimpleName() + "["
-                + status + "," + uri + "," + url + "," + destination + "]";
+    public URL toURL(URI uri) throws IllegalArgumentException {
+        if (!"test".equals(uri.getScheme())) {
+            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
         }
-        return this.getClass().getSimpleName() + "["
-            + status + "," + uri + "," + error + "," + destination + "]";
+
+        final StringBuilder sb = new StringBuilder();
+        sb.append("http://");
+        sb.append(uri.getHost());
+        sb.append(uri.getPath());
+
+        if (uri.getFragment() != null) {
+            sb.append("?").append(uri.getFragment());
+        }
+
+        final String surl = sb.toString();
+
+        try {
+            return new URL(surl);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("invalid URL: " + surl, ex);
+        }
     }
 
+    public void setParameters(Map<String, List<String>> map) {
+        this.params = map;
+    }
 }
