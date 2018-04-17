@@ -1,9 +1,10 @@
+
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009.                            (c) 2009.
+ *  (c) 2018.                            (c) 2018.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,117 +63,83 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 4 $
  *
  ************************************************************************
  */
 
 package ca.nrc.cadc.dlm;
 
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
 import java.net.URL;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-/**
- * Description of a download.
- *
- * @author pdowler
- */
-public class DownloadDescriptor {
-    public static final String OK = "OK";
-    public static final String ERROR = "ERROR";
+public class DownloadUtilTest {
 
-    public String status;
-    public String uri;
-    public URL url;
-    public String destination;
-    public String error;
+    @Test
+    public void iterateURLsRemoveDuplicates() throws Exception {
+        final List<String> uriList = new ArrayList<>();
 
-    /**
-     * Constructor.
-     *
-     * @param url the URL to download the data from
-     */
-    public DownloadDescriptor(URL url) {
-        this(null, url, null);
-    }
+        uriList.add("test://mysite.ca/path/2");
+        uriList.add("test://mysite.ca/path/3");
+        uriList.add("test://mysite.ca/path/4");
+        uriList.add("test://mysite.ca/path/5");
+        uriList.add("test://mysite.ca/path/2");
+        uriList.add("test://mysite.ca/path/6");
 
-    /**
-     * Constructor.
-     *
-     * @param uri original URI (optional)
-     * @param url the URL to download the data from
-     */
-    public DownloadDescriptor(String uri, URL url) {
-        this(uri, url, null);
-    }
+        final List<DownloadDescriptor> expected = new ArrayList<>();
+        expected.add(new DownloadDescriptor(uriList.get(0), new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor(uriList.get(1), new URL("http://mysite.ca/path/3")));
+        expected.add(new DownloadDescriptor(uriList.get(2), new URL("http://mysite.ca/path/4")));
+        expected.add(new DownloadDescriptor(uriList.get(3), new URL("http://mysite.ca/path/5")));
+        expected.add(new DownloadDescriptor(uriList.get(5), new URL("http://mysite.ca/path/6")));
 
-    /**
-     * Constructor. A download URL may be derived from a URI; the URI is
-     * not used but just attached to aid in error reporting.
-     *
-     * @param uri         original URI (optional)
-     * @param url         the URL to download the data from
-     * @param destination the relative path where file should be stored (optional)
-     */
-    public DownloadDescriptor(String uri, URL url, String destination) {
-        this.status = OK;
-        this.uri = uri;
-        this.url = url;
-        this.destination = destination;
-    }
+        // Dump test results into a list for easy validation.
+        final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
+        final Map<String, List<String>> params = Collections.emptyMap();
 
-    /**
-     * Constructor for a download that could not be performed. The error message
-     * describes the reason for failure.
-     *
-     * @param uri   original URI (optional)
-     * @param error message describing the failure
-     */
-    public DownloadDescriptor(String uri, String error) {
-        this(uri, error, null);
-    }
-
-    /**
-     * Constructor for a download that could not be performed. The error message
-     * describes the reason for failure.
-     *
-     * @param uri         (optional)
-     * @param error       message describing the failure
-     * @param destination the relative path where file would have been stored (optional)
-     */
-    public DownloadDescriptor(String uri, String error, String destination) {
-        this.status = ERROR;
-        this.uri = uri;
-        this.error = error;
-        this.destination = destination;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
+        for (final Iterator<DownloadDescriptor> iterator =
+             DownloadUtil.iterateURLs(uriList, params, true); iterator.hasNext(); ) {
+            downloadDescriptorList.add(iterator.next());
         }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
+
+        assertEquals("Should have 5 items due to a duplicate.", expected, downloadDescriptorList);
+    }
+
+    @Test
+    public void iterateURLsWithDuplicates() throws Exception {
+        final List<String> uriList = new ArrayList<>();
+
+        uriList.add("test://mysite.ca/path/2");
+        uriList.add("test://mysite.ca/path/3");
+        uriList.add("test://mysite.ca/path/4");
+        uriList.add("test://mysite.ca/path/5");
+        uriList.add("test://mysite.ca/path/2");
+        uriList.add("test://mysite.ca/path/6");
+
+        final List<DownloadDescriptor> expected = new ArrayList<>();
+        expected.add(new DownloadDescriptor(uriList.get(0), new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor(uriList.get(1), new URL("http://mysite.ca/path/3")));
+        expected.add(new DownloadDescriptor(uriList.get(2), new URL("http://mysite.ca/path/4")));
+        expected.add(new DownloadDescriptor(uriList.get(3), new URL("http://mysite.ca/path/5")));
+        expected.add(new DownloadDescriptor(uriList.get(4), new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor(uriList.get(5), new URL("http://mysite.ca/path/6")));
+
+        // Dump test results into a list for easy validation.
+        final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
+        final Map<String, List<String>> params = Collections.emptyMap();
+
+        for (final Iterator<DownloadDescriptor> iterator =
+             DownloadUtil.iterateURLs(uriList, params, false); iterator.hasNext(); ) {
+            downloadDescriptorList.add(iterator.next());
         }
-        DownloadDescriptor that = (DownloadDescriptor) o;
-        return Objects.equals(uri, that.uri);
+
+        assertEquals("Should have 6 items.", expected, downloadDescriptorList);
     }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(uri);
-    }
-
-    @Override
-    public String toString() {
-        if (url != null) {
-            return this.getClass().getSimpleName() + "["
-                + status + "," + uri + "," + url + "," + destination + "]";
-        }
-        return this.getClass().getSimpleName() + "["
-            + status + "," + uri + "," + error + "," + destination + "]";
-    }
-
 }
