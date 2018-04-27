@@ -156,13 +156,17 @@ public class DownloadDescriptor {
             return false;
         }
         DownloadDescriptor that = (DownloadDescriptor) o;
-        return Objects.equals(uri, that.uri);
+        return Objects.equals(status, that.status)
+            && Objects.equals(uri, that.uri)
+            && Objects.equals(url, that.url)
+            && Objects.equals(destination, that.destination)
+            && Objects.equals(error, that.error);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(uri);
+        return Objects.hash(status, uri, url, destination, error);
     }
 
     @Override
