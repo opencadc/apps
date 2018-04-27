@@ -142,4 +142,26 @@ public class DownloadUtilTest {
 
         assertEquals("Should have 6 items.", expected, downloadDescriptorList);
     }
+
+    @Test
+    public void iterateSingle() throws Exception {
+        final List<String> uriList = new ArrayList<>();
+
+        uriList.add("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um");
+
+        final List<DownloadDescriptor> expected = new ArrayList<>();
+        expected.add(new DownloadDescriptor(uriList.get(0),
+                                            new URL("http://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um")));
+
+        // Dump test results into a list for easy validation.
+        final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
+        final Map<String, List<String>> params = Collections.emptyMap();
+
+        for (final Iterator<DownloadDescriptor> iterator =
+             DownloadUtil.iterateURLs(uriList, params, false); iterator.hasNext(); ) {
+            downloadDescriptorList.add(iterator.next());
+        }
+
+        assertEquals("Should have 1 item.", expected, downloadDescriptorList);
+    }
 }

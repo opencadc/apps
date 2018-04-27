@@ -195,17 +195,13 @@ public class DownloadUtil {
                     if (!inner.hasNext()) {
                         inner = null;
                     }
-                    if (dd.url != null) {
-                        if (removeDuplicates) {
-                            // Skip over if we want to remove duplicates and the URL has already been seen.
-                            if (!urls.contains(dd.url)) {
-                                urls.add(dd.url);
-                                return dd;
-                            }
-                        } else {
-                            return dd;
-                        }
+                    if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
+                        return next();
                     }
+                    if (dd.url != null) {
+                        urls.add(dd.url);
+                    }
+                    return dd;
                 }
 
                 ParsedURI cur = outer.next();
