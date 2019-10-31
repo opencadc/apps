@@ -222,7 +222,8 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        ServletLogInfo logInfo = new ServletLogInfo(request, this.getClass());
+        ServletLogInfo logInfo = new ServletLogInfo(request);
+        logInfo.setClass(this.getClass());
         log.info(logInfo.start());
 
         long start = System.currentTimeMillis();
