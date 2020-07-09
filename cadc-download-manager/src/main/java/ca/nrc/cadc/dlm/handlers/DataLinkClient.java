@@ -82,7 +82,7 @@ import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
 import ca.nrc.cadc.dlm.FailIterator;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -109,6 +109,11 @@ import org.apache.log4j.Logger;
 public class DataLinkClient implements DownloadGenerator {
     public static final String RESOURCE_ID_PROP = DataLinkClient.class.getName() + ".resourceID";
     public static final String CUTOUT = "#cutout";
+    
+    public static final String PKG = "http://www.opencadc.org/caom2#pkg";
+    public static final String PREVIEW = "#preview";
+    public static final String THUMB = "http://www.opencadc.org/caom2#thumbnail";
+    
     private static final Logger log = Logger.getLogger(DataLinkClient.class);
     private static final String DOWNLOAD_REQUEST = "downloads-only";
 
@@ -130,9 +135,9 @@ public class DataLinkClient implements DownloadGenerator {
     public DataLinkClient() {
         this.regClient = new RegistryClient();
         this.resolver = new DataLinkServiceResolver();
-        skipSemantics.add("#preview");
-        skipSemantics.add("http://www.openadc.org/caom2#thumbnail");
-        skipSemantics.add("http://www.openadc.org/caom2#pkg");
+        skipSemantics.add(PREVIEW);
+        skipSemantics.add(THUMB);
+        skipSemantics.add(PKG);
     }
 
     @Override
@@ -210,7 +215,7 @@ public class DataLinkClient implements DownloadGenerator {
             URL url = new URL(sb.toString());
             log.debug("datalink: " + url);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(url, bos);
+            HttpGet get = new HttpGet(url, bos);
             get.run();
             if (get.getThrowable() != null) {
                 return new FailIterator(uri, "failed to resolve URI: " + get.getThrowable().getMessage());
@@ -456,7 +461,7 @@ public class DataLinkClient implements DownloadGenerator {
                         curRow = null;
                         log.debug("skip: " + url + " semantics: " + sem + " cutout: " + cutout);
                     } else {
-                        log.debug("pass: " + url);
+                        log.debug("pass: " + url + " semantics: " + sem);
                     }
                 }
             }
