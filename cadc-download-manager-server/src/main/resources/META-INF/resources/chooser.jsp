@@ -80,6 +80,9 @@
     ApplicationConfiguration configuration = new ApplicationConfiguraton(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
     boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
     String uris = (String) request.getAttribute("uris");
+    String[] uriList = uris.split(" ");
+
+
     String params = (String) request.getAttribute("params");
 %>
 
@@ -113,8 +116,10 @@ String bodyFooter = skin + "bodyFooter";
     </h2>
     
     <form action="/downloadManager/download" method="POST">
-        
-        <input type="hidden" name="uris" value="<%= uris %>" />
+        <c:forEach var="uri" items="<%= uriList %>">
+            <input type="hidden" name="uri" value="${uri}" />
+        </c:forEach>
+
         <input type="hidden" name="params" value="<%= params %>" />
         <input type="hidden" name="skin" value="<%= skin %>" /> 
         
