@@ -78,6 +78,7 @@ import ca.nrc.cadc.log.ServletLogInfo;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,6 +121,10 @@ public class DispatcherServlet extends HttpServlet {
     private static int ONE_YEAR = 365 * 24 * 3600;
 
     public static String DEFAULT_CONFIG_FILE_PATH = System.getProperty("user.home") + "/config/org.opencadc.dlm-server.properties";
+
+    public void mkParamsCompatible(HttpServletRequest request) {
+        // Nothing to be in done in base class
+    }
 
     /**
      * Checks cookie and request param for download method preference; tries to set a cookie
@@ -228,43 +233,11 @@ public class DispatcherServlet extends HttpServlet {
         long start = System.currentTimeMillis();
 
         try {
+            // TODO: is this step necessary?
             Subject subject = AuthenticationUtil.getSubject(request);
             logInfo.setSubject(subject);
 
-            AuthMethod am = AuthenticationUtil.getAuthMethod(subject);
-            if (am != null && !AuthMethod.ANON.equals(am)) {
-                // if the ssodomains attribute is set, the sso cookie can be used
-                // with additional domains; not that the only way to do that is to
-                // intercept the post with a different servlet, set it, and forward
-                // or maybe to subclass this and override doPost -- intercept+forward
-                // is probably safer
-                log.debug("looking for ssodomains attribute...");
-                String ssodomains = (String) request.getAttribute("ssodomains");
-                if (ssodomains != null) {
-                    final String[] domains = ssodomains.split(",");
-
-                    Set<SSOCookieCredential> creds = subject.getPublicCredentials(SSOCookieCredential.class);
-
-                    if (!creds.isEmpty()) {
-                        SSOCookieCredential cred = creds.iterator().next();
-                        // these are only really needed by the webstart servlet/jsp since server-side
-                        // will use the credential from the subject directly
-                        String ck = cred.getSsoCookieValue();
-                        ck = ck.replace("&", "&amp;");
-                        request.setAttribute("ssocookie", ck);
-                        log.debug("ssocookie attribute: " + ck);
-                        request.setAttribute("ssocookiedomain", ssodomains);
-                        log.debug("ssocookie domain: " + ssodomains);
-                        for (String d : domains) {
-                            if (!cred.getDomain().equals(d)) {
-                                SSOCookieCredential alt = new SSOCookieCredential(cred.getSsoCookieValue(), d);
-                                log.debug("adding cookie for alternate domain: " + d);
-                                subject.getPublicCredentials().add(alt);
-                            }
-                        }
-                    }
-                }
-            }
+            handleDeprecatedAPI(request);
 
             DownloadAction action = new DownloadAction(request, response);
 
@@ -299,6 +272,7 @@ public class DispatcherServlet extends HttpServlet {
             log.info(logInfo.end());
         }
     }
+
 
     private class DownloadAction implements PrivilegedExceptionAction<Object> {
         HttpServletRequest request;
@@ -349,5 +323,152 @@ public class DispatcherServlet extends HttpServlet {
             return null;
         }
     }
+
+
+    private void handleDeprecatedAPI(HttpServletRequest request) {
+
+        String uris = (String) request.getAttribute("uris");
+        // If no 'uris' parameter is passed in, check for deprecated parameters and
+        // convert to 'uris' (URIs)
+        if (uris == null)
+        {
+            List<String> uriList = new ArrayList<String>();
+            String[] sa;
+
+            // fileClass -> dynamic params = AD scheme-specific part
+            String[] fileClasses = request.getParameterValues("fileClass");
+            if (fileClasses != null)
+            {
+                // fileClass is a list of parameters giving other URIs
+                log.debug("fileClass param(s): " + fileClasses.length);
+                for (String fileClass : fileClasses)
+                {
+                    log.debug("fileClass: " + fileClass);
+                    sa = request.getParameterValues(fileClass);
+                    if (sa != null)
+                    {
+                        for (String aSa : sa)
+                        {
+                            String u = processURI(aSa);
+                            if (u != null)
+                            {
+                                u = toAd(u);
+                                log.debug("\turi: " + u);
+                                uriList.add(u);
+                            }
+                        }
+                    }
+                }
+            }
+
+            sa = request.getParameterValues("fileId");
+            if (sa != null)
+            {
+                log.debug("fileId param(s): " + sa.length);
+                for (String aSa : sa)
+                {
+                    String u = processURI(aSa);
+                    if (u != null)
+                    {
+                        u = toAd(u);
+                        uriList.add(u);
+                    }
+                }
+            }
+
+            // Check to see if passed via parameter instead of attribute
+            List<String> stdUriList = ServerUtil.getURIs(request);
+            uriList.addAll(stdUriList);
+            if ( !uriList.isEmpty() )
+            {
+                uris = DownloadUtil.encodeListURI(uriList);
+                request.setAttribute("uris", uris);
+            }
+        }
+
+        String params = (String) request.getAttribute("params");
+        if (params == null) {
+            Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
+
+            List<String> frag = paramMap.get("fragment");
+            if (frag != null)
+            {
+                for (String f : frag)
+                {
+                    String[] parts = f.split("&");
+                    for (String p : parts)
+                    {
+                        String[] kv = p.split("=");
+                        if (kv.length == 2)
+                        {
+                            List<String> values = paramMap.get(kv[0]);
+                            if (values == null)
+                            {
+                                values = new ArrayList<String>();
+                                paramMap.put(kv[0], values);
+                            }
+                            values.add(kv[1]);
+                        }
+                    }
+                }
+                paramMap.remove("fragment");
+            }
+
+            // things to strip out
+            paramMap.remove("fileId");
+            List<String> fcs = paramMap.get("fileClass");
+            if (fcs != null)
+            {
+                for (String fc : fcs)
+                    paramMap.remove(fc);
+                paramMap.remove("fileClass");
+            }
+
+            if (!paramMap.isEmpty())
+            {
+                params = DownloadUtil.encodeParamMap(paramMap);
+                request.setAttribute("params", params);
+            }
+        }
+    }
+
+    /**
+     * Validate content by trimming and checking length.
+     *
+     * @param uri
+     * @return valid (trimmed non-zero-length) string or null
+     */
+    protected String processURI(String uri) {
+        String ret = null;
+        if (uri != null) {
+            ret = uri.trim();
+            if (ret.length() == 0)
+                ret = null;
+        }
+        return ret;
+    }
+
+    // CADC-specific backwards compat: prepend ad scheme if there is none
+    private String toAd(String s) {
+        String[] parts = s.split(","); // comma-sep list
+        if (parts.length == 1) {
+            if (s.indexOf(':') > 0) // already has a scheme
+                return s;
+            log.debug("adding ad scheme to " + s);
+            return "ad:"+s;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            s = toAd(part);
+            if (s != null)
+            {
+                sb.append(s).append(",");
+            }
+        }
+        if (sb.length() > 0)
+            return sb.substring(0, sb.length() - 1); // trailing comma
+        return null;
+    }
+
 
 }
