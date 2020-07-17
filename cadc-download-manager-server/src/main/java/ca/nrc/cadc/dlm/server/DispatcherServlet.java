@@ -122,10 +122,6 @@ public class DispatcherServlet extends HttpServlet {
 
     public static String DEFAULT_CONFIG_FILE_PATH = System.getProperty("user.home") + "/config/org.opencadc.dlm-server.properties";
 
-    public void mkParamsCompatible(HttpServletRequest request) {
-        // Nothing to be in done in base class
-    }
-
     /**
      * Checks cookie and request param for download method preference; tries to set a cookie
      * to save setting for future use.
