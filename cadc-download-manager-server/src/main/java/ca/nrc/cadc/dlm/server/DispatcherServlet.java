@@ -326,28 +326,22 @@ public class DispatcherServlet extends HttpServlet {
         String uris = (String) request.getAttribute("uris");
         // If no 'uris' parameter is passed in, check for deprecated parameters and
         // convert to 'uris' (URIs)
-        if (uris == null)
-        {
+        if (uris == null) {
             List<String> uriList = new ArrayList<String>();
             String[] sa;
 
             // fileClass -> dynamic params = AD scheme-specific part
             String[] fileClasses = request.getParameterValues("fileClass");
-            if (fileClasses != null)
-            {
+            if (fileClasses != null) {
                 // fileClass is a list of parameters giving other URIs
                 log.debug("fileClass param(s): " + fileClasses.length);
-                for (String fileClass : fileClasses)
-                {
+                for (String fileClass : fileClasses) {
                     log.debug("fileClass: " + fileClass);
                     sa = request.getParameterValues(fileClass);
-                    if (sa != null)
-                    {
-                        for (String aSa : sa)
-                        {
-                            String u = processURI(aSa);
-                            if (u != null)
-                            {
+                    if (sa != null) {
+                        for (String curSa : sa) {
+                            String u = processURI(curSa);
+                            if (u != null) {
                                 u = toAd(u);
                                 log.debug("\turi: " + u);
                                 uriList.add(u);
@@ -358,14 +352,11 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             sa = request.getParameterValues("fileId");
-            if (sa != null)
-            {
+            if (sa != null) {
                 log.debug("fileId param(s): " + sa.length);
-                for (String aSa : sa)
-                {
-                    String u = processURI(aSa);
-                    if (u != null)
-                    {
+                for (String curSa : sa) {
+                    String u = processURI(curSa);
+                    if (u != null) {
                         u = toAd(u);
                         uriList.add(u);
                     }
@@ -375,8 +366,8 @@ public class DispatcherServlet extends HttpServlet {
             // Check to see if passed via parameter instead of attribute
             List<String> stdUriList = ServerUtil.getURIs(request);
             uriList.addAll(stdUriList);
-            if ( !uriList.isEmpty() )
-            {
+
+            if (!uriList.isEmpty()) {
                 uris = DownloadUtil.encodeListURI(uriList);
                 request.setAttribute("uris", uris);
             }
@@ -387,19 +378,14 @@ public class DispatcherServlet extends HttpServlet {
             Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
 
             List<String> frag = paramMap.get("fragment");
-            if (frag != null)
-            {
-                for (String f : frag)
-                {
+            if (frag != null) {
+                for (String f : frag) {
                     String[] parts = f.split("&");
-                    for (String p : parts)
-                    {
+                    for (String p : parts) {
                         String[] kv = p.split("=");
-                        if (kv.length == 2)
-                        {
+                        if (kv.length == 2) {
                             List<String> values = paramMap.get(kv[0]);
-                            if (values == null)
-                            {
+                            if (values == null) {
                                 values = new ArrayList<String>();
                                 paramMap.put(kv[0], values);
                             }
@@ -413,15 +399,14 @@ public class DispatcherServlet extends HttpServlet {
             // things to strip out
             paramMap.remove("fileId");
             List<String> fcs = paramMap.get("fileClass");
-            if (fcs != null)
-            {
-                for (String fc : fcs)
+            if (fcs != null) {
+                for (String fc : fcs) {
                     paramMap.remove(fc);
+                }
                 paramMap.remove("fileClass");
             }
 
-            if (!paramMap.isEmpty())
-            {
+            if (!paramMap.isEmpty()) {
                 params = DownloadUtil.encodeParamMap(paramMap);
                 request.setAttribute("params", params);
             }
@@ -438,8 +423,9 @@ public class DispatcherServlet extends HttpServlet {
         String ret = null;
         if (uri != null) {
             ret = uri.trim();
-            if (ret.length() == 0)
+            if (ret.length() == 0) {
                 ret = null;
+            }
         }
         return ret;
     }
@@ -448,21 +434,22 @@ public class DispatcherServlet extends HttpServlet {
     private String toAd(String s) {
         String[] parts = s.split(","); // comma-sep list
         if (parts.length == 1) {
-            if (s.indexOf(':') > 0) // already has a scheme
+            if (s.indexOf(':') > 0) { // already has a scheme
                 return s;
+            }
             log.debug("adding ad scheme to " + s);
-            return "ad:"+s;
+            return "ad:" + s;
         }
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             s = toAd(part);
-            if (s != null)
-            {
+            if (s != null) {
                 sb.append(s).append(",");
             }
         }
-        if (sb.length() > 0)
+        if (sb.length() > 0) {
             return sb.substring(0, sb.length() - 1); // trailing comma
+        }
         return null;
     }
 
