@@ -72,11 +72,6 @@
         "http://www.w3.org/TR/html4/loose.dtd">
         
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
-<%
-    String uris = (String) request.getAttribute("uris");
-    String fragment = (String) request.getAttribute("fragment");
-%>
 
 <%
 String skin = (String) request.getParameter("skin");

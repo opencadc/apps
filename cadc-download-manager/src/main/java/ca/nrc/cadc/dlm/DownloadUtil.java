@@ -166,6 +166,7 @@ public class DownloadUtil {
         return paramSet;
     }
 
+
     public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params) {
         return iterateURLs(uris, params, false);
     }

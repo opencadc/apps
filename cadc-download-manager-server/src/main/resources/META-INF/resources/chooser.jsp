@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -67,153 +67,178 @@
 ************************************************************************
 -->
 
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
-
+<%@ page language="java" %>
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
+<%@ taglib uri="WEB-INF/fmt.tld" prefix="fmt" %>
+
 <%@ page import="ca.nrc.cadc.config.ApplicationConfiguration" %>
 <%@ page import="ca.nrc.cadc.dlm.server.ServerUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
 <%@ page import="ca.nrc.cadc.dlm.server.UrlListServlet" %>
-<%
-    ApplicationConfiguration configuration = new ApplicationConfiguraton(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
-    boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
-    String uris = (String) request.getAttribute("uris");
-    String[] uriList = uris.split(" ");
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
 
+
+<%--<c:import url="skin.jsp"/>--%>
+<%
+    ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
+    boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
+    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
 
     String params = (String) request.getAttribute("params");
+
+    String requestHeaderLang = request.getHeader("Content-Language");
+    if (requestHeaderLang == null) {
+        requestHeaderLang = "en";
+    }
+
+    String headerURL = SkinUtil.headerURL;
+    String footerURL = SkinUtil.footerURL;
+    String bodyHeaderURL = "";
+
+    // If calling program has provided
+    String skinURL = SkinUtil.skinURL;
+
+    if (!StringUtil.hasLength(headerURL)) {
+        String skin = (String) request.getParameter("skin");
+        if (!StringUtil.hasLength(skinURL)) {
+            skinURL = "https://localhost/cadc/skin/";
+        }
+
+        if (!skinURL.endsWith("/")) {
+            skinURL += "/";
+        }
+
+        if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+            if (!skinURL.startsWith("/")) {
+                skinURL = "/" + skinURL;
+            }
+            skinURL = "https://localhost" + skinURL;
+        }
+
+        headerURL = skin + "htmlHead";
+        bodyHeaderURL = skin + "bodyHeader";
+        footerURL = skin + "bodyFooter";
+    }
+
 %>
 
-<%
-String skin = (String) request.getParameter("skin");
-String skinParam = skin;
-if (skin == null || skin.trim().length() == 0)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-if (!skin.startsWith("http://"))
-{
-    if (!skin.startsWith("/"))
-        skin = "/" + skin;
-    skin = "http://localhost" + skin;
-}
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
-%>
 
-<html>
+<%-- Request scope variables so they can be seen in the imported JSPs --%>
+<fmt:setLocale value="<%= requestHeaderLang %>" scope="request"/>
+<fmt:setBundle basename="ca.nrc.cadc.downloadManager.downloadManagerBundle"
+var="langBundle" scope="request"/>
+
+
+<% if (StringUtil.hasLength(skinURL)) {
+%>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+<% }
+%>
+<c:catch><c:import url="<%= headerURL %>" /></c:catch>
+
+<% if (StringUtil.hasLength(skinURL)) {
+%>
 </head>
+<% }
+%>
 
 <body>
-    <c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
-    <h2>
-        Chose a download method:
-    </h2>
-    
-    <form action="/downloadManager/download" method="POST">
+<%= headerURL %>
+<%= footerURL %>
+
+<% if (StringUtil.hasLength(bodyHeaderURL)) {
+%>
+<c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>
+<% }
+%>
+
+    <h1 id="wb-cont" class="wb-invisible"><fmt:message key="TITLE" bundle="${langBundle}"/></h1>
+
+    <h2><fmt:message key="PAGE_HEADER" bundle="${langBundle}"/></h2>
+    <br/>
+
+    <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
+
         <c:forEach var="uri" items="<%= uriList %>">
             <input type="hidden" name="uri" value="${uri}" />
         </c:forEach>
 
         <input type="hidden" name="params" value="<%= params %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
-        
-        <div style="padding-left: 2em; padding-right: 2em">
-        <table width="66%">
-            <tbody>
-                <c:if test="<%=enableWebstart%>" >
-                    <tr>
-                        <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.WEBSTART %>" /></td>
-                        <td valign="top">
 
-                        <jsp:include page='javaWebStartDescription.html' flush='true' />
+        <div class="grid-12">
+            <c:if test="<%=enableWebstart%>" >
+                <div class="span-4">
+                    <button class="button font-medium" name="method" value="<%= DispatcherServlet.WEBSTART %>" type="submit"><%= DispatcherServlet.WEBSTART %></button>
+                </div>
+                <div class="span-6">
+                    <fmt:message key="JAVA_WEB_START_DESCRIPTION" bundle="${langBundle}"/>
+                </div>
+                <div class="span-2"></div>
+                <div class="clear"></div>
+                <br/>
+            </c:if>
+            <div class="span-4">
+                <button class="button font-medium" name="method" value="<%= DispatcherServlet.URLS %>" type="submit"><fmt:message key="URL_LIST_BUTTON" bundle="${langBundle}"/></button>
+            </div>
+            <div class="span-6">
+                <fmt:message key="URL_LIST_DESCRIPTION" bundle="${langBundle}"/>
+            </div>
+            <div class="span-2"></div>
+            <div class="clear"></div>
+            <br/>
+            <div class="span-4">
+                <button class="button font-medium" name="method" value="<%= DispatcherServlet.HTMLLIST %>" type="submit"><fmt:message key="HTML_LIST_BUTTON" bundle="${langBundle}"/></button>
+            </div>
+            <div class="span-6">
+                <fmt:message key="HTML_LIST_DESCRIPTION" bundle="${langBundle}"/>
+            </div>
+            <div class="span-2"></div>
+            <div class="clear"></div>
+            <br/>
 
-                        </td>
-                    </tr>
-                </c:if>
-                <tr><td><br/></td></tr>
-                <tr>
-                    <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.URLS %>" /></td>
-                    <td valigh="top">
-                    
-                    <jsp:include page='urlListDescription.html' flush='true' />
+            <label class="form-checkbox" for="remember">
+                <input type="checkbox" id="remember" name="remember" value="true"/>
+                <fmt:message key="REMEMBER_CHECKBOX_LABEL" bundle="${langBundle}"/>
+                <fmt:message key="REMEMBER_CHECKBOX_TEXT" bundle="${langBundle}"/>
+            </label>
 
-				    </td>
-                </tr>
-                <tr><td><br/></td></tr>
-                <tr>
-                    <td valign="top"><input type="submit" name="method" value="<%= DispatcherServlet.HTMLLIST %>" /></td>
-                    <td valigh="top"> View the list of files in a Web page and click on individual files to download.
-				</td>
-                </tr>
-            </tbody>
-        </table>
+            <div class="span-1"></div>
+            <div class="span-10">
+                <p class="color-attention">
+                    <fmt:message key="REMEMBER_TEXT" bundle="${langBundle}"/>
+                </p>
+            </div>
+            <div class="span-1"></div>
+            <div class="clear"></div>
+
         </div>
-
-        <div width="66%">
-            <p>
-                <input type="checkbox" name="remember" value="true">Remember my choice of download method</input>
-                (cookies required) 
-            </p>
-            <p style="color: #800; padding-left: 6em; padding-right: 6em">
-	        Individual download pages have "Chose one of the other download methods" buttons which, if pressed, remove the remembered download choice and return to the multiple choice page.
-            </p>
-        </div>
-        
+        <div class="clear"></div>
     </form>
-    
-    
-    <h2>Help</h2>
 
-    <c:if test="<%=enableWebstart%>" >
-        <h3>
-            I want to use the Java option but it didn't work. How can I fix it?
-        </h3>
-        <p>
-            For general help on getting applets or webstart working, we
-            have a <a href="/JavaTest">Java Test Page</a> with instructions.
-        </p>
-    </c:if>
+    <h2><fmt:message key="HELP_HEADER" bundle="${langBundle}"/></h2>
     <h3>
-        <i>wget</i> is not working
+    <i>wget </i><fmt:message key="HELP_WGET_NOT_WORKING_HEADER" bundle="${langBundle}"/>
     </h3>
-        <p>
-            The recommended usage above includes the <code>--content-disposition</code> option,
-            which is available in <i>wget</i> version 1.12 or later. This option improves the
-            likelhood that saved files will have the correct filenames when retrieved from services.
-        </p>
-        <p>
-            Please note that there are many versions of <i>wget</i> with a variety of
-            options and syntax.  Please consult your local help pages before contacting
-            us.&nbsp;   <code>wget --help</code> should reveal the arguments supported by
-            your version of <i>wget</i>.
-	</p>
-				
-	<p> 
-	    The <i>wget</i> command should be available on most systems. If not, <i>wget</i>
-            can be downloaded from <a href="http://www.gnu.org/software/wget/">gnu.org</a>.
-	    Alternately, you can try one of the several other web download utilities
-	    such as: curl, HTTrack, leech (mozilla add-on), pavuk, lftp, etc.
-	</p>    
+    <fmt:message key="HELP_WGET_NOT_WORKING_TEXT" bundle="${langBundle}"/>
     <h3>
-        common options used with <i>wget</i>
+    <fmt:message key="HELP_WGET_OPTIONS_HEADER" bundle="${langBundle}"/><i> wget</i>
     </h3>
-    <p>
-     For downloading large number of files with <i>wget</i>, the following options might come handy:
-	<ul>
-	   <li>-t,  --tries=NUMBER            set number of retries to NUMBER (5 recommended).</li>
-	   <li>--auth-no-challenge     send Basic HTTP authentication information
-                 without first waiting for the server's challenge thus saving a roundtrip.
-           <li>--waitretry=SECONDS       wait 1..SECONDS between retries of a retrieval. By default, Wget will assume a value of 10 seconds.</li>
-           <li>-N,  --timestamping  Turn on time-stamping and download only missing or updated files.</li>
-	</ul>
+    <p></p>
+    <fmt:message key="HELP_WGET_OPTIONS_TEXT" bundle="${langBundle}"/>
 
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
+    <dl id="gcwu-date-mod" role="contentinfo">
+        <dt><fmt:message key="DATE_MODIFIED_LABEL" bundle="${langBundle}"/>:</dt>
+        <dd>
+            <span>
+                <time>$LastChangedDate$</time>
+            </span>
+        </dd>
+    </dl>
+
+    <c:catch><c:import url="<%= footerURL %>" /></c:catch>
 </body>
 </html>
 

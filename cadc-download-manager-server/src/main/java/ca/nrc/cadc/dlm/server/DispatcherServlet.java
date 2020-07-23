@@ -70,18 +70,15 @@
 
 package ca.nrc.cadc.dlm.server;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
 import java.io.IOException;
+import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -110,7 +107,7 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DispatcherServlet extends HttpServlet {
-    private static final long serialVersionUID = 201712011100L;
+    private static final long serialVersionUID = 202007201400L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
 
@@ -229,11 +226,8 @@ public class DispatcherServlet extends HttpServlet {
         long start = System.currentTimeMillis();
 
         try {
-            // TODO: is this step necessary?
             Subject subject = AuthenticationUtil.getSubject(request);
             logInfo.setSubject(subject);
-
-            handleDeprecatedAPI(request);
 
             DownloadAction action = new DownloadAction(request, response);
 
@@ -282,18 +276,17 @@ public class DispatcherServlet extends HttpServlet {
         public Object run()
             throws Exception {
             // forward
-            String uris = (String) request.getAttribute("uris");
+            List<URI> uriList = (List<URI>) request.getAttribute("uriList");
             String params = (String) request.getAttribute("params");
 
-            if (uris == null) {
+            if (uriList == null) {
                 // external post
-                List<String> uriList = ServerUtil.getURIs(request);
+                uriList = ServerUtil.getURIs(request);
                 if (uriList == null || uriList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
-                uris = DownloadUtil.encodeListURI(uriList);
-                request.setAttribute("uris", uris);
+                request.setAttribute("uriList", uriList);
             }
 
             if (params == null) {
@@ -304,7 +297,7 @@ public class DispatcherServlet extends HttpServlet {
                 }
             }
 
-            log.debug("uris: " + uris);
+            log.debug("uriList: " + uriList);
             log.debug("params: " + params);
 
             // check for preferred/selected download method
@@ -319,139 +312,4 @@ public class DispatcherServlet extends HttpServlet {
             return null;
         }
     }
-
-
-    private void handleDeprecatedAPI(HttpServletRequest request) {
-
-        String uris = (String) request.getAttribute("uris");
-        // If no 'uris' parameter is passed in, check for deprecated parameters and
-        // convert to 'uris' (URIs)
-        if (uris == null) {
-            List<String> uriList = new ArrayList<String>();
-            String[] sa;
-
-            // fileClass -> dynamic params = AD scheme-specific part
-            String[] fileClasses = request.getParameterValues("fileClass");
-            if (fileClasses != null) {
-                // fileClass is a list of parameters giving other URIs
-                log.debug("fileClass param(s): " + fileClasses.length);
-                for (String fileClass : fileClasses) {
-                    log.debug("fileClass: " + fileClass);
-                    sa = request.getParameterValues(fileClass);
-                    if (sa != null) {
-                        for (String curSa : sa) {
-                            String u = processURI(curSa);
-                            if (u != null) {
-                                u = toAd(u);
-                                log.debug("\turi: " + u);
-                                uriList.add(u);
-                            }
-                        }
-                    }
-                }
-            }
-
-            sa = request.getParameterValues("fileId");
-            if (sa != null) {
-                log.debug("fileId param(s): " + sa.length);
-                for (String curSa : sa) {
-                    String u = processURI(curSa);
-                    if (u != null) {
-                        u = toAd(u);
-                        uriList.add(u);
-                    }
-                }
-            }
-
-            // Check to see if passed via parameter instead of attribute
-            List<String> stdUriList = ServerUtil.getURIs(request);
-            uriList.addAll(stdUriList);
-
-            if (!uriList.isEmpty()) {
-                uris = DownloadUtil.encodeListURI(uriList);
-                request.setAttribute("uris", uris);
-            }
-        }
-
-        String params = (String) request.getAttribute("params");
-        if (params == null) {
-            Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
-
-            List<String> frag = paramMap.get("fragment");
-            if (frag != null) {
-                for (String f : frag) {
-                    String[] parts = f.split("&");
-                    for (String p : parts) {
-                        String[] kv = p.split("=");
-                        if (kv.length == 2) {
-                            List<String> values = paramMap.get(kv[0]);
-                            if (values == null) {
-                                values = new ArrayList<String>();
-                                paramMap.put(kv[0], values);
-                            }
-                            values.add(kv[1]);
-                        }
-                    }
-                }
-                paramMap.remove("fragment");
-            }
-
-            // things to strip out
-            paramMap.remove("fileId");
-            List<String> fcs = paramMap.get("fileClass");
-            if (fcs != null) {
-                for (String fc : fcs) {
-                    paramMap.remove(fc);
-                }
-                paramMap.remove("fileClass");
-            }
-
-            if (!paramMap.isEmpty()) {
-                params = DownloadUtil.encodeParamMap(paramMap);
-                request.setAttribute("params", params);
-            }
-        }
-    }
-
-    /**
-     * Validate content by trimming and checking length.
-     *
-     * @param uri
-     * @return valid (trimmed non-zero-length) string or null
-     */
-    protected String processURI(String uri) {
-        String ret = null;
-        if (uri != null) {
-            ret = uri.trim();
-            if (ret.length() == 0) {
-                ret = null;
-            }
-        }
-        return ret;
-    }
-
-    // CADC-specific backwards compat: prepend ad scheme if there is none
-    private String toAd(String s) {
-        String[] parts = s.split(","); // comma-sep list
-        if (parts.length == 1) {
-            if (s.indexOf(':') > 0) { // already has a scheme
-                return s;
-            }
-            log.debug("adding ad scheme to " + s);
-            return "ad:" + s;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (String part : parts) {
-            s = toAd(part);
-            if (s != null) {
-                sb.append(s).append(",");
-            }
-        }
-        if (sb.length() > 0) {
-            return sb.substring(0, sb.length() - 1); // trailing comma
-        }
-        return null;
-    }
-
-
 }

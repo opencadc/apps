@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,8 +70,10 @@
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 <%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.List" %>
 <%
-    String uris = (String) request.getAttribute("uris");
+    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
     String fragment = (String) request.getAttribute("fragment");
 %>
 
@@ -118,14 +120,18 @@ String bodyFooter = skin + "bodyFooter";
 <br>
 <div style="padding-left: 2em; padding-right: 2em">
     <form name="dmsubmitform" action="/downloadManager/download" method="POST">
-        <input type="hidden" name="uris" value="<%= uris %>" />
+        <c:forEach var="uri" items="<%= uriList %>">
+            <input type="hidden" name="uri" value="${uri}" />
+        </c:forEach>
         <input type="hidden" name="fragment" value="<%= fragment %>" />
         <input type="hidden" name="execute" value="Submit" />
         <input type="hidden" name="skin" value="<%= skin %>" />
     </form>
     
     <form name="clear" action="/downloadManager/download" method="POST">
-        <input type="hidden" name="uris" value="<%= uris %>" />
+        <c:forEach var="uri" items="<%= uriList %>">
+            <input type="hidden" name="uri" value="${uri}" />
+        </c:forEach>
         <input type="hidden" name="fragment" value="<%= fragment %>" />
         <input type="hidden" name="skin" value="<%= skin %>" /> 
         <input type="submit" name="clearCookie" value="Chose one of the other download methods" />

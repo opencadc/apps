@@ -72,6 +72,8 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.util.StringUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -153,28 +155,176 @@ public class ServerUtil {
      * @param request
      * @return
      */
-    public static List<String> getURIs(HttpServletRequest request) {
+    public static List<URI> getURIs(HttpServletRequest request) throws URISyntaxException {
+
+        List<URI> ret = new ArrayList<>();
+
         // internal repost
         String uris = request.getParameter("uris");
-
+        String[] uriParams;
         if (uris != null) {
-            return DownloadUtil.decodeListURI(uris);
+            uriParams = uris.split(" ");
+        } else {
+            // original post
+            uriParams = request.getParameterValues(PARAM_URI);
         }
 
-        // original post
-        String[] uriParams = request.getParameterValues(PARAM_URI);
-
-        List<String> ret = new ArrayList<>();
-
+        // process into a List<URI>
         if (uriParams != null) {
             for (String u : uriParams) {
                 if (StringUtil.hasText(u)) {
-                    ret.add(u);
+                    ret.add(new URI(u));
                 }
             }
         }
 
+        // In case nothing is passed in as 'uri' or 'uris,' check for
+        // deprecated parameters
+        if (ret.isEmpty()) {
+            handleDeprecatedParams(request);
+            // Could be populated if parameters are passed in at all.
+            ret = (List<URI>)request.getAttribute("uriList");
+        }
+
         return ret;
+    }
+
+    /**
+     * Check for deprecated parameters in the request. Convert to the most current for Download Manager's API.
+     * Kept for backward compatibility.
+     * (last rev: July 21, 2020, s2739, HJ)
+     * @param request
+     */
+    public static void handleDeprecatedParams(HttpServletRequest request) {
+        // Check to see if URIs have already been parsed from the request parameters.
+        // If so, this is an internal dispatch/forward being processed
+        List<URI> uriList = (List<URI>)request.getAttribute("uriList");
+
+        if (uriList == null) {
+            try {
+                //            List<URI> uriList = new ArrayList<>();
+                String[] sa;
+
+                // fileClass -> dynamic params = AD scheme-specific part
+                String[] fileClasses = request.getParameterValues("fileClass");
+                if (fileClasses != null) {
+                    // fileClass is a list of parameters giving other URIs
+                    log.debug("fileClass param(s): " + fileClasses.length);
+                    for (String fileClass : fileClasses) {
+                        log.debug("fileClass: " + fileClass);
+                        sa = request.getParameterValues(fileClass);
+                        if (sa != null) {
+                            for (String curSa : sa) {
+                                String u = processURI(curSa);
+                                if (u != null) {
+                                    u = toAd(u);
+                                    log.debug("\turi: " + u);
+                                    uriList.add(new URI(u));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                sa = request.getParameterValues("fileId");
+                if (sa != null) {
+                    log.debug("fileId param(s): " + sa.length);
+                    for (String curSa : sa) {
+                        String u = processURI(curSa);
+                        if (u != null) {
+                            u = toAd(u);
+                            uriList.add(new URI(u));
+                        }
+                    }
+                }
+
+                if (!uriList.isEmpty()) {
+                    request.setAttribute("uriList", uriList);
+                }
+            } catch (URISyntaxException ure) {
+                log.error("error parsing URI from deprecated input parameter");
+            }
+        }
+
+        String params = (String) request.getAttribute("params");
+        if (params == null) {
+            Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
+
+            List<String> frag = paramMap.get("fragment");
+            if (frag != null) {
+                for (String f : frag) {
+                    String[] parts = f.split("&");
+                    for (String p : parts) {
+                        String[] kv = p.split("=");
+                        if (kv.length == 2) {
+                            List<String> values = paramMap.get(kv[0]);
+                            if (values == null) {
+                                values = new ArrayList<String>();
+                                paramMap.put(kv[0], values);
+                            }
+                            values.add(kv[1]);
+                        }
+                    }
+                }
+                paramMap.remove("fragment");
+            }
+
+            // things to strip out
+            paramMap.remove("fileId");
+            List<String> fcs = paramMap.get("fileClass");
+            if (fcs != null) {
+                for (String fc : fcs) {
+                    paramMap.remove(fc);
+                }
+                paramMap.remove("fileClass");
+            }
+
+            if (!paramMap.isEmpty()) {
+                params = DownloadUtil.encodeParamMap(paramMap);
+                request.setAttribute("params", params);
+            }
+        }
+    }
+
+
+    /**
+     * Validate content by trimming and checking length.
+     *
+     * @param uri
+     * @return valid (trimmed non-zero-length) string or null
+     */
+    private static String processURI(String uri) {
+        String ret = null;
+        if (uri != null) {
+            ret = uri.trim();
+            if (ret.length() == 0) {
+                ret = null;
+            }
+        }
+        return ret;
+    }
+
+    // CADC-specific backwards compat: prepend ad scheme if there is none
+    private static String toAd(String s) {
+        String[] parts = s.split(","); // comma-sep list
+        if (parts.length == 1) {
+            if (s.indexOf(':') > 0) { // already has a scheme
+                return s;
+            }
+            log.debug("adding ad scheme to " + s);
+            return "ad:" + s;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            s = toAd(part);
+            if (s != null) {
+                sb.append(s).append(",");
+            }
+        }
+        if (sb.length() > 0) {
+            return sb.substring(0, sb.length() - 1); // trailing comma
+        }
+        return null;
     }
 
 }

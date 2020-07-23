@@ -93,7 +93,7 @@ import org.apache.log4j.Logger;
  * @author adriand
  */
 public class JavaWebStartServlet extends HttpServlet {
-    private static final long serialVersionUID = 201208071730L;
+    private static final long serialVersionUID = 202007201400L;
 
     private static final Logger log = Logger.getLogger(JavaWebStartServlet.class);
 
