@@ -199,10 +199,9 @@ public class ServerUtil {
         // Check to see if URIs have already been parsed from the request parameters.
         // If so, this is an internal dispatch/forward being processed
         List<URI> uriList = (List<URI>)request.getAttribute("uriList");
-
         if (uriList == null) {
             try {
-                //            List<URI> uriList = new ArrayList<>();
+                String referer = request. getHeader("referer");
                 String[] sa;
 
                 // fileClass -> dynamic params = AD scheme-specific part
@@ -210,6 +209,7 @@ public class ServerUtil {
                 if (fileClasses != null) {
                     // fileClass is a list of parameters giving other URIs
                     log.debug("fileClass param(s): " + fileClasses.length);
+                    log.warn("deprecated param 'fileClass' used by " + referer);
                     for (String fileClass : fileClasses) {
                         log.debug("fileClass: " + fileClass);
                         sa = request.getParameterValues(fileClass);
@@ -229,6 +229,7 @@ public class ServerUtil {
                 sa = request.getParameterValues("fileId");
                 if (sa != null) {
                     log.debug("fileId param(s): " + sa.length);
+                    log.warn("deprecated param 'fileId' used by " + referer);
                     for (String curSa : sa) {
                         String u = processURI(curSa);
                         if (u != null) {
@@ -250,6 +251,16 @@ public class ServerUtil {
         if (params == null) {
             Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
 
+            // things to strip out
+            paramMap.remove("fileId");
+            List<String> fcs = paramMap.get("fileClass");
+            if (fcs != null) {
+                for (String fc : fcs) {
+                    paramMap.remove(fc);
+                }
+                paramMap.remove("fileClass");
+            }
+
             List<String> frag = paramMap.get("fragment");
             if (frag != null) {
                 for (String f : frag) {
@@ -267,16 +278,6 @@ public class ServerUtil {
                     }
                 }
                 paramMap.remove("fragment");
-            }
-
-            // things to strip out
-            paramMap.remove("fileId");
-            List<String> fcs = paramMap.get("fileClass");
-            if (fcs != null) {
-                for (String fc : fcs) {
-                    paramMap.remove(fc);
-                }
-                paramMap.remove("fileClass");
             }
 
             if (!paramMap.isEmpty()) {
