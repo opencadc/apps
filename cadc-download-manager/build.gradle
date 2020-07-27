@@ -21,8 +21,8 @@ mainClassName = 'ca.nrc.cadc.dlm.client.Main'
 dependencies {
     compile 'log4j:log4j:1.2.+'
 
-    compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:cadc-log:1.+'
+    compile 'org.opencadc:cadc-util:[1.2.25,)'
+    compile 'org.opencadc:cadc-log:[1.0.9,)'
     compile 'org.opencadc:cadc-registry:[1.1.1,)'
     compile 'org.opencadc:cadc-app-kit:1.+'
     compile 'org.opencadc:cadc-vos:[1.0,)'

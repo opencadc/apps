@@ -16,7 +16,7 @@ repositories {
     }
 }
 
-version = '1.2'
+version = '1.2.1'
 group = 'org.opencadc'
 sourceCompatibility = 1.7
 
@@ -25,7 +25,7 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.+'
 
     compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:cadc-log:1.+'
+    compile 'org.opencadc:cadc-log:[1.1.0,)'
     compile 'org.opencadc:cadc-registry:1.+'
     compile 'org.opencadc:cadc-app-kit:1.+'
     compile 'org.opencadc:cadc-download-manager:[1.1,)'
