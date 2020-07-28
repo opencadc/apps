@@ -71,6 +71,7 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
 import java.net.URI;
@@ -120,21 +121,27 @@ public class UrlListServlet extends HttpServlet {
             .decodeParamMap(params);
         paramMap.put("auth", forceAuth);
 
-        List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+//        List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+        List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
 
         // Temporary conversion to list of strings that is expected by DownloadUtil.iterateURLs,
         // to encapsulate retrofitting changes in cadc-download-manager-server.
         // The next step of supporting tuples as the internal data format (rather than URIs
         // alone) will mean changing the signature & code in DownloadUtil.iterateURLs.
         // July 2020, HJ - part of story 2739
-        List<String> uriStrList = new ArrayList<String>();
-        for (URI uri: uriList) {
-            uriStrList.add(uri.toString());
-        }
+//        List<String> uriStrList = new ArrayList<String>();
+//        for (URI uri: uriList) {
+//            uriStrList.add(uri.toString());
+//        }
 
-        for (Iterator<DownloadDescriptor> iter =
-             DownloadUtil.iterateURLs(uriStrList, paramMap, true); iter
-                 .hasNext(); ) {
+//        for (Iterator<DownloadDescriptor> iter =
+//             DownloadUtil.iterateURLs(uriStrList, paramMap, true); iter
+//                 .hasNext(); ) {
+
+
+            for (Iterator<DownloadDescriptor> iter =
+                 DownloadUtil.iterateURLs(tupleList, paramMap, true); iter
+                     .hasNext(); ) {
             final DownloadDescriptor dd = iter.next();
 
             if (dd.url != null) {

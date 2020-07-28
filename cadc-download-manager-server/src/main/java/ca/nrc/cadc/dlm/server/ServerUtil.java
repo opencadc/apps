@@ -70,6 +70,7 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
@@ -155,9 +156,10 @@ public class ServerUtil {
      * @param request
      * @return
      */
-    public static List<URI> getURIs(HttpServletRequest request) throws URISyntaxException {
+//    public static List<URI> getURIs(HttpServletRequest request) throws URISyntaxException {
+    public static List<DownloadTuple> getTuples(HttpServletRequest request) throws URISyntaxException {
 
-        List<URI> ret = new ArrayList<>();
+        List<DownloadTuple> ret = new ArrayList<>();
 
         // internal repost
         String uris = request.getParameter("uris");
@@ -169,21 +171,31 @@ public class ServerUtil {
             uriParams = request.getParameterValues(PARAM_URI);
         }
 
-        // process into a List<URI>
-        if (uriParams != null) {
-            for (String u : uriParams) {
-                if (StringUtil.hasText(u)) {
-                    ret.add(new URI(u));
+//        // process into a List<URI>
+//        if (uriParams != null) {
+//            for (String u : uriParams) {
+//                if (StringUtil.hasText(u)) {
+//                    ret.add(new URI(u));
+//                }
+//            }
+//        }
+
+        // process into a List<DownloadTuple>
+                if (uriParams != null) {
+                    for (String u : uriParams) {
+                        if (StringUtil.hasText(u)) {
+                            ret.add(new DownloadTuple(u));
+                        }
+                    }
                 }
-            }
-        }
 
         // In case nothing is passed in as 'uri' or 'uris,' check for
         // deprecated parameters
         if (ret.isEmpty()) {
             handleDeprecatedParams(request);
             // Could be populated if parameters are passed in at all.
-            ret = (List<URI>)request.getAttribute("uriList");
+//            ret = (List<URI>)request.getAttribute("uriList");
+            ret = (List<DownloadTuple>)request.getAttribute("tupleList");
         }
 
         return ret;
@@ -198,9 +210,10 @@ public class ServerUtil {
     public static void handleDeprecatedParams(HttpServletRequest request) {
         // Check to see if URIs have already been parsed from the request parameters.
         // If so, this is an internal dispatch/forward being processed
-        List<URI> uriList = (List<URI>)request.getAttribute("uriList");
-        if (uriList == null) {
-            try {
+//        List<URI> uriList = (List<URI>)request.getAttribute("uriList");
+        List<DownloadTuple> tupleList = (List<DownloadTuple>)request.getAttribute("tupleList");
+        if (tupleList == null) {
+//            try {
                 String referer = request. getHeader("referer");
                 String[] sa;
 
@@ -219,7 +232,8 @@ public class ServerUtil {
                                 if (u != null) {
                                     u = toAd(u);
                                     log.debug("\turi: " + u);
-                                    uriList.add(new URI(u));
+//                                    uriList.add(new URI(u));
+                                    tupleList.add(new DownloadTuple(u));
                                 }
                             }
                         }
@@ -234,17 +248,22 @@ public class ServerUtil {
                         String u = processURI(curSa);
                         if (u != null) {
                             u = toAd(u);
-                            uriList.add(new URI(u));
+//                          uriList.add(new URI(u));
+                            tupleList.add(new DownloadTuple(u));
                         }
                     }
                 }
 
-                if (!uriList.isEmpty()) {
-                    request.setAttribute("uriList", uriList);
+//                if (!uriList.isEmpty()) {
+//                    request.setAttribute("uriList", uriList);
+//                }
+                if (!tupleList.isEmpty()) {
+                    request.setAttribute("tupleList", tupleList);
                 }
-            } catch (URISyntaxException ure) {
-                log.error("error parsing URI from deprecated input parameter");
-            }
+
+//            } catch (URISyntaxException ure) {
+//                log.error("error parsing URI from deprecated input parameter");
+//            }
         }
 
         String params = (String) request.getAttribute("params");

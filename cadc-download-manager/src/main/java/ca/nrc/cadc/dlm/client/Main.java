@@ -155,17 +155,47 @@ public class Main {
                     //List<String> uris = DownloadUtil.decodeListURI(uriStr);
                     Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
+//                    List<String> uris = new ArrayList<>();
+//                    for (String arg : args) {
+//                        if (!arg.startsWith("-")) {
+//                            // take care in case environment keeps all space seperated args
+//                            // as a single arg, eg single <argument> element in JNLP
+//                            String[] sas = arg.split(" ");
+//                            for (String a : sas) {
+//                                uris.add(a);
+//                            }
+//                        }
+//                    }
+// TODO: change to ingest tuples, including whatever parsing thing needs to happen
+                    // tuple format: ID{shape with whitespace}{label - is this always there for tuples?}
+                    // {shape} and {label} may be null - what will that look like as input?
+                    // if <just uris> is also supposed to go into a tuple, how will that be read in?
+                    // check for count of '{'.
+                    // if 0 = uri list only
+                    // if 1 = uri +
                     List<String> uris = new ArrayList<>();
                     for (String arg : args) {
                         if (!arg.startsWith("-")) {
                             // take care in case environment keeps all space seperated args
                             // as a single arg, eg single <argument> element in JNLP
+                            // probably need to handle this split on whitespace thing as well.
+
+                            // if string contains '{', then we're in tuple processing
+                            // if string contains '}{', it's also in tuple processing
+                            // if string contains '}$' (end of word) then is last value
+                            // in tuple processing, next is next tuple.
+
+                            // concatenate this into one string for passing in to
+                            // the DownloadTuple ctor
+
+                            // Q: does 'split' return the entire string if no match found?
                             String[] sas = arg.split(" ");
                             for (String a : sas) {
                                 uris.add(a);
                             }
                         }
                     }
+
                     if (forceAuthMethod != null) {
                         List<String> am = new ArrayList<>();
                         am.add(forceAuthMethod);
@@ -193,8 +223,8 @@ public class Main {
                         frame.getContentPane().add((Component) ui);
                         frame.setVisible(true);
                     }
-
-                    ui.add(uris, params);
+// TODO: get this using tuples instead of uris.
+//                    ui.add(uris, params);
                     ui.start();
                     return true;
                 }

@@ -76,20 +76,23 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
 
 <%
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+//    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
 
     // Temporary conversion to list of strings that is expected by DownloadUtil.iterateURLs,
     // to encapsulate retrofitting changes in cadc-download-manager-server.
     // The next step of supporting tuples as the internal data format (rather than URIs
     // alone) will mean changing the signature & code in DownloadUtil.iterateURLs.
     // July 2020, HJ - part of story 2739
-    Iterator<URI> uriListIterator = uriList.iterator();
-    List<String> uriStrList = new ArrayList<String>();
-    while (uriListIterator.hasNext()) {
-        uriStrList.add(uriListIterator.next().toString());
-    }
+//    Iterator<URI> uriListIterator = uriList.iterator();
+//    List<String> uriStrList = new ArrayList<String>();
+//    while (uriListIterator.hasNext()) {
+//        uriStrList.add(uriListIterator.next().toString());
+//    }
+
 
     String params = (String) request.getAttribute("params");
     Map<String,List<String>> paramMap = DownloadUtil.decodeParamMap(params);
@@ -123,7 +126,8 @@ String bodyFooter = skin + "bodyFooter";
 
 <p>
 <%
-    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriStrList, paramMap, true);
+//    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriStrList, paramMap, true);
+    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(tupleList, paramMap, true);
     while ( iter.hasNext() )
     {
         DownloadDescriptor dd = iter.next();

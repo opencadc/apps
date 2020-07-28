@@ -73,6 +73,7 @@ import ca.nrc.cadc.appkit.ui.AbstractApplication;
 import ca.nrc.cadc.appkit.ui.ApplicationConfig;
 import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.thread.Queue;
@@ -124,8 +125,9 @@ public class GraphicUI extends AbstractApplication implements ChangeListener, Us
         engineInitCond.set(false);
     }
 
-    public void add(List<String> uris, Map<String, List<String>> params) {
-        Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uris, params);
+//    public void add(List<String> uris, Map<String, List<String>> params) {
+    public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params) {
+        Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(tupleList, params);
         this.inputQueue.push(iter);
     }
 

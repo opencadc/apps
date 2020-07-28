@@ -70,6 +70,7 @@
 package ca.nrc.cadc.dlm.client;
 
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpTransfer;
@@ -153,8 +154,9 @@ public class ConsoleUI implements UserInterface, TransferListener {
 
     }
 
-    public void add(List<String> uris, Map<String, List<String>> params) {
-        Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(uris, params);
+//    public void add(List<String> uris, Map<String, List<String>> params) {
+    public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params) {
+        Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(tupleList, params);
         while (i.hasNext()) {
             DownloadDescriptor dd = i.next();
             if (dd.error == null) {

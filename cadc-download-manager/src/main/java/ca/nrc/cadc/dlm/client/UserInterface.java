@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.dlm.client;
 
+import ca.nrc.cadc.dlm.DownloadTuple;
 import java.util.List;
 import java.util.Map;
 
@@ -85,7 +86,9 @@ public interface UserInterface {
     String downloadDirConfigKey = "downloadManager.downloadDir";
     String debugKey = "downloadManager.debug";
 
-    public void add(List<String> uris, Map<String, List<String>> params);
+//    public void add(List<String> uris, Map<String, List<String>> params);
+    // TODO: remove old signature when proven tupleList works
+    public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params);
 
     void start();
 

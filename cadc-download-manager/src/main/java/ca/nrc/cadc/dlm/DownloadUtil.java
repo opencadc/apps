@@ -166,20 +166,31 @@ public class DownloadUtil {
         return paramSet;
     }
 
+    // TODO: original signatures for iterateURLs
+//    public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params) {
+//        return iterateURLs(uris, params, false);
+//    }
+//
+//    public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params,
+//                                                           final boolean removeDuplicates) {
 
-    public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params) {
-        return iterateURLs(uris, params, false);
+
+
+    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params) {
+        return iterateURLs(tuples, params, false);
     }
 
-    public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params,
+    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params,
                                                            final boolean removeDuplicates) {
-        final List<ParsedURI> parsed = parseURIs(uris);
+//        final List<ParsedURI> parsed = parseURIs(uris);
         final Set<URL> urls = new HashSet<>();
         final MultiDownloadGenerator gen = new MultiDownloadGenerator();
+        final List<DownloadTuple> dt = tuples;
         gen.setParameters(params);
 
         return new Iterator<DownloadDescriptor>() {
-            Iterator<ParsedURI> outer = parsed.iterator();
+//            Iterator<ParsedURI> outer = parsed.iterator();
+            Iterator<DownloadTuple> outer = dt.iterator();
             Iterator<DownloadDescriptor> inner = null;
 
             public boolean hasNext() {
@@ -205,21 +216,24 @@ public class DownloadUtil {
                     return dd;
                 }
 
-                ParsedURI cur = outer.next();
+//                ParsedURI cur = outer.next();
 
-                if (cur.error != null) { // string -> URI fail
-                    return new DownloadDescriptor(cur.str, cur.error.toString());
+                DownloadTuple cur = outer.next();
+
+                ParsedURI tupleURI = cur.getTupleID();
+                if (tupleURI.error != null) { // string -> URI fail
+                    return new DownloadDescriptor(tupleURI.str, tupleURI.error.toString());
                 }
                 try {
-                    inner = gen.downloadIterator(cur.uri);
+                    inner = gen.downloadIterator(tupleURI.uri);
                     if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
                     // inner was empty
                     inner = null;
-                    return new DownloadDescriptor(cur.uri.toString(), "no matching files");
+                    return new DownloadDescriptor(tupleURI.uri.toString(), "no matching files");
                 } catch (Throwable t) {
-                    return new DownloadDescriptor(cur.uri.toString(), t.toString());
+                    return new DownloadDescriptor(tupleURI.uri.toString(), t.toString());
                 }
             }
 
@@ -230,24 +244,24 @@ public class DownloadUtil {
 
     }
 
-    private static List<ParsedURI> parseURIs(List<String> uris) {
-        List<ParsedURI> ret = new ArrayList<>();
-        for (final String s : uris) {
-            final ParsedURI pu = new ParsedURI();
-            pu.str = s;
-            try {
-                pu.uri = new URI(s);
-            } catch (Throwable t) {
-                pu.error = t;
-            }
-            ret.add(pu);
-        }
-        return ret;
-    }
+//    private static List<ParsedURI> parseURIs(List<String> uris) {
+//        List<ParsedURI> ret = new ArrayList<>();
+//        for (final String s : uris) {
+//            final ParsedURI pu = new ParsedURI();
+//            pu.str = s;
+//            try {
+//                pu.uri = new URI(s);
+//            } catch (Throwable t) {
+//                pu.error = t;
+//            }
+//            ret.add(pu);
+//        }
+//        return ret;
+//    }
 
-    public static class ParsedURI {
-        public String str;
-        public URI uri;
-        public Throwable error;
-    }
+//    public static class ParsedURI {
+//        public String str;
+//        public URI uri;
+//        public Throwable error;
+//    }
 }

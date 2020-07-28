@@ -77,10 +77,12 @@
 <%@ page import="ca.nrc.cadc.reg.client.RegistryClient" %>
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
 
 <%
 
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+//    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
     String params = (String) request.getAttribute("params");
     String codebase = (String) request.getAttribute("codebase");
     String ssocookieArg = "";
@@ -140,10 +142,10 @@
 
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
-<%      for (URI uri: uriList) {
-          String uriStr = uri.toString();
+<%      for (DownloadTuple tuple: tupleList) {
+          String tupleStr = tuple.toOutputFormat();
 %>
-          <argument><%= uriStr %></argument>
+          <argument><%= tupleStr %></argument>
 <%
         }
 %>

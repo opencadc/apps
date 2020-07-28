@@ -96,15 +96,16 @@ public class AppletWrapper extends JApplet {
             // temporary hack to set a system property in applet mode
             //String serverName = fixNull(getParameter(SERVER_NAME));
             //System.setProperty(SERVER_NAME, serverName);
-
-            String uriStr = fixNull(getParameter("uris"));
+// TODO: this method of bringing in parameters won't work with the multiple tuples as parameters
+            // not sure applet is used anymore?
+//            String uriStr = fixNull(getParameter("uris"));
             String paramStr = fixNull(getParameter("params"));
 
-            List<String> uris = DownloadUtil.decodeListURI(uriStr);
+//            List<String> uris = DownloadUtil.decodeListURI(uriStr);
             Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
             this.ui = new GraphicUI(Level.INFO);
-            ui.add(uris, params);
+//            ui.add(uris, params);
 
             BrowserApplet f = new BrowserApplet(Constants.name, ui, this);
             this.validate();

@@ -76,9 +76,11 @@
 <%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
 <%
     // we need these to offer the option to go back to the method choice page
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+//    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
     String fragment = (String) request.getAttribute("fragment");
 %>
 
@@ -129,10 +131,10 @@ String bodyFooter = skin + "bodyFooter";
     
 <div style="padding-left: 2em; padding-right: 2em">
     <form action="/downloadManager/download" method="POST">
-        <%      for (URI uri: uriList) {
-            String uriStr = uri.toString();
+        <%      for (DownloadTuple tuple: tupleList) {
+            String tupleStr = tuple.toOutputFormat();
         %>
-        <input type="hidden" name="uri" value="${uriStr}" />
+        <input type="hidden" name="tuple" value="${tupleStr}" />
         <%
             }
         %>

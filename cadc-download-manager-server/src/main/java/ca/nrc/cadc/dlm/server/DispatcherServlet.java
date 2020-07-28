@@ -71,6 +71,7 @@
 package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
 import java.io.IOException;
@@ -107,7 +108,7 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DispatcherServlet extends HttpServlet {
-    private static final long serialVersionUID = 202007201400L;
+    private static final long serialVersionUID = 202007271400L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
 
@@ -277,16 +278,23 @@ public class DispatcherServlet extends HttpServlet {
             throws Exception {
             // forward
             List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+
             String params = (String) request.getAttribute("params");
 
             if (uriList == null) {
                 // external post
-                uriList = ServerUtil.getURIs(request);
+                // TODO: remove getURI ref when tuples are shown to work
+//                uriList = ServerUtil.getURIs(request);
+                List<DownloadTuple> tupleList = ServerUtil.getTuples(request);
                 if (uriList == null || uriList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
-                request.setAttribute("uriList", uriList);
+                request.setAttribute("tupleList", tupleList);
+//                request.setAttribute("uriList", uriList);
+
+                //            log.debug("uriList: " + uriList);
+                log.debug("tupleList: " + tupleList.toString());
             }
 
             if (params == null) {
@@ -297,7 +305,6 @@ public class DispatcherServlet extends HttpServlet {
                 }
             }
 
-            log.debug("uriList: " + uriList);
             log.debug("params: " + params);
 
             // check for preferred/selected download method
