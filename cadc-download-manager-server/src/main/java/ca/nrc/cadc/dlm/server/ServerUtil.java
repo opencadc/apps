@@ -162,42 +162,53 @@ public class ServerUtil {
         List<DownloadTuple> ret = new ArrayList<>();
 
         // internal repost
-        String uris = request.getParameter("uris");
-        String[] uriParams;
-        if (uris != null) {
-            uriParams = uris.split(" ");
-        } else {
-            // original post
-            uriParams = request.getParameterValues(PARAM_URI);
+        String[] tupleStrList = request.getParameterValues("tuple");
+        if ((tupleStrList != null) && (tupleStrList.length > 0)) {
+            for (int i=0; i< tupleStrList.length; i++) {
+                ret.add(new DownloadTuple(tupleStrList[i]));
+            }
         }
 
-//        // process into a List<URI>
-//        if (uriParams != null) {
-//            for (String u : uriParams) {
-//                if (StringUtil.hasText(u)) {
-//                    ret.add(new URI(u));
-//                }
-//            }
-//        }
+        if (ret.isEmpty()) {
+            // old version of internal repost - consider moving to 'handle deprecated
+            // values' when all this is done
+            String uris = request.getParameter("uris");
+            String[] uriParams;
+            if (uris != null) {
+                uriParams = uris.split(" ");
+            } else {
+                // original post
+                uriParams = request.getParameterValues(PARAM_URI);
+            }
 
-        // process into a List<DownloadTuple>
-                if (uriParams != null) {
-                    for (String u : uriParams) {
-                        if (StringUtil.hasText(u)) {
-                            ret.add(new DownloadTuple(u));
-                        }
+            //        // process into a List<URI>
+            //        if (uriParams != null) {
+            //            for (String u : uriParams) {
+            //                if (StringUtil.hasText(u)) {
+            //                    ret.add(new URI(u));
+            //                }
+            //            }
+            //        }
+
+            // process into a List<DownloadTuple>
+            if (uriParams != null) {
+                for (String u : uriParams) {
+                    if (StringUtil.hasText(u)) {
+                        ret.add(new DownloadTuple(u));
                     }
                 }
+            }
 
-        // In case nothing is passed in as 'uri' or 'uris,' check for
-        // deprecated parameters
-        if (ret.isEmpty()) {
-            handleDeprecatedParams(request);
-            // Could be populated if parameters are passed in at all.
-//            ret = (List<URI>)request.getAttribute("uriList");
-            ret = (List<DownloadTuple>)request.getAttribute("tupleList");
+            // In case nothing is passed in as 'uri' or 'uris,' check for
+            // deprecated parameters
+            if (ret.isEmpty()) {
+                handleDeprecatedParams(request);
+                // Could be populated if parameters are passed in at all.
+                //            ret = (List<URI>)request.getAttribute("uriList");
+                ret = (List<DownloadTuple>) request.getAttribute("tupleList");
+            }
+
         }
-
         return ret;
     }
 
@@ -257,7 +268,8 @@ public class ServerUtil {
 //                if (!uriList.isEmpty()) {
 //                    request.setAttribute("uriList", uriList);
 //                }
-                if (!tupleList.isEmpty()) {
+            // TODO: this conditional doesn't make sense
+                if (tupleList != null && !tupleList.isEmpty()) {
                     request.setAttribute("tupleList", tupleList);
                 }
 

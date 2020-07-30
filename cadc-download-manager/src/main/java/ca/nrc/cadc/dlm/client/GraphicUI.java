@@ -125,7 +125,6 @@ public class GraphicUI extends AbstractApplication implements ChangeListener, Us
         engineInitCond.set(false);
     }
 
-//    public void add(List<String> uris, Map<String, List<String>> params) {
     public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params) {
         Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(tupleList, params);
         this.inputQueue.push(iter);

@@ -27,14 +27,10 @@ public class IteratorTest {
     @Test
     public void testIterateOK() {
         log.debug("testIterateOK");
-//        String sb = "http://www.google.com" +
-//            DownloadUtil.URI_SEPARATOR +
-//            "test://www.example.com/test";
-//        List<String> uris = DownloadUtil.decodeListURI(sb);
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple(new URI("http://www.google.com")));
-            dts.add(new DownloadTuple(new URI("test://www.example.com/test")));
+            dts.add(new DownloadTuple("http://www.google.com"));
+            dts.add(new DownloadTuple("test://www.example.com/test"));
 
             Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
             long num = 0;
@@ -54,15 +50,11 @@ public class IteratorTest {
     @Test
     public void testIterateDuplicates() {
         log.debug("testIterateDuplicates");
-//        String sb = "http://www.google.com" +
-//            DownloadUtil.URI_SEPARATOR +
-//            "http://www.google.com";
-//        List<String> uris = DownloadUtil.decodeListURI(sb);
 
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple(new URI("http://www.google.com")));
-            dts.add(new DownloadTuple(new URI("test://www.example.com/test")));
+            dts.add(new DownloadTuple("http://www.google.com"));
+            dts.add(new DownloadTuple("http://www.google.com"));
 
             Assert.assertEquals("tuple setup", 2, dts.size());
 
@@ -101,12 +93,9 @@ public class IteratorTest {
     public void testIterateError() {
         log.debug("testIterateError");
 
-//        String s = "foo:bar/baz";
-//        List<String> uris = DownloadUtil.decodeListURI(s);
-
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple(new URI("fake:fake/baz")));
+            dts.add(new DownloadTuple("fake:fake/baz"));
 
             Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
             long num = 0;
@@ -125,15 +114,9 @@ public class IteratorTest {
 
     @Test
     public void testIterateParams() {
-//        String s = "test://www.example.com/test";
-//        List<String> uris = DownloadUtil.decodeListURI(s);
-//
-//        String s2 = "runid=123&cutout=[1]&cutout=[2]";
-//        Map<String, List<String>> params = DownloadUtil.decodeParamMap(s2);
-
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple(new URI("test://www.example.com/test")));
+            dts.add(new DownloadTuple("test://www.example.com/test"));
 
             String s2 = "runid=123&cutout=[1]&cutout=[2]";
             Map<String, List<String>> params = DownloadUtil.decodeParamMap(s2);

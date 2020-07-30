@@ -277,16 +277,15 @@ public class DispatcherServlet extends HttpServlet {
         public Object run()
             throws Exception {
             // forward
-            List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-
+            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
             String params = (String) request.getAttribute("params");
 
-            if (uriList == null) {
+            if (tupleList == null) {
                 // external post
                 // TODO: remove getURI ref when tuples are shown to work
 //                uriList = ServerUtil.getURIs(request);
-                List<DownloadTuple> tupleList = ServerUtil.getTuples(request);
-                if (uriList == null || uriList.isEmpty()) {
+                  tupleList = ServerUtil.getTuples(request);
+                if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }

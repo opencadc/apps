@@ -73,6 +73,7 @@ import ca.nrc.cadc.appkit.ui.Application;
 import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
@@ -83,6 +84,7 @@ import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * TODO
@@ -91,7 +93,7 @@ import org.apache.log4j.Level;
  * @version $Version$
  */
 public class Main {
-    //private static Logger log = Logger.getLogger(Main.class);
+    private static Logger log = Logger.getLogger(Main.class);
     private static UserInterface ui;
 
     public static void main(final String[] args) {
@@ -150,48 +152,54 @@ public class Main {
 
             boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>() {
                 public Boolean run() {
+                    // TODO: Q: support 'uris' as input to this, when DownloadManager.jsp
+                    // hasn't been using it for a while?
                     //String uriStr = fixNull(am.getValue("uris"));
                     String paramStr = fixNull(am.getValue("params"));
-                    //List<String> uris = DownloadUtil.decodeListURI(uriStr);
                     Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
-//                    List<String> uris = new ArrayList<>();
-//                    for (String arg : args) {
-//                        if (!arg.startsWith("-")) {
-//                            // take care in case environment keeps all space seperated args
-//                            // as a single arg, eg single <argument> element in JNLP
-//                            String[] sas = arg.split(" ");
-//                            for (String a : sas) {
-//                                uris.add(a);
-//                            }
-//                        }
-//                    }
-// TODO: change to ingest tuples, including whatever parsing thing needs to happen
                     // tuple format: ID{shape with whitespace}{label - is this always there for tuples?}
                     // {shape} and {label} may be null - what will that look like as input?
-                    // if <just uris> is also supposed to go into a tuple, how will that be read in?
-                    // check for count of '{'.
-                    // if 0 = uri list only
-                    // if 1 = uri +
                     List<String> uris = new ArrayList<>();
+                    List<DownloadTuple> tupleList = new ArrayList<>();
+                    String curTuple = "";
                     for (String arg : args) {
                         if (!arg.startsWith("-")) {
                             // take care in case environment keeps all space seperated args
                             // as a single arg, eg single <argument> element in JNLP
                             // probably need to handle this split on whitespace thing as well.
+                            // TODO - how to handle this in the scope of processing args
+                            // as potentially a set of values of a single tuple?
+
+                            // if arg doens't have { or } and we're not ingesting a tuple,
+                            // then
 
                             // if string contains '{', then we're in tuple processing
-                            // if string contains '}{', it's also in tuple processing
-                            // if string contains '}$' (end of word) then is last value
-                            // in tuple processing, next is next tuple.
+                            if (arg.contains("\\}\\{")) {
+                                // is a tuple of at least 2 parts
+                                // capture this tuple - add to string of concatenated args
+                                // cases: may be a single arg (tuple with no space - although this
+                                // is unlikely as the shape tuple will probably always have whitespace
+                                // unless it's been parsed to have a separator in it.
 
-                            // concatenate this into one string for passing in to
-                            // the DownloadTuple ctor
+                            }
+                            else if (arg.contains("\\{")) {
+                                // may be the start of a tuple with whitespace in the shape descriptor
+                                // start concatenating args together into a string
+                            }
+                            else if (arg.contains("\\}")) {
+                                // will be the close of a tuple
+                                // add to concatenated string args
+                                // flag that it can be processed
+                            }
 
                             // Q: does 'split' return the entire string if no match found?
                             String[] sas = arg.split(" ");
                             for (String a : sas) {
-                                uris.add(a);
+                                DownloadTuple dt = new DownloadTuple(a);
+                                tupleList.add(dt);
+                                log.info("adding tuple: " + a);
+
                             }
                         }
                     }
@@ -223,8 +231,8 @@ public class Main {
                         frame.getContentPane().add((Component) ui);
                         frame.setVisible(true);
                     }
-// TODO: get this using tuples instead of uris.
-//                    ui.add(uris, params);
+
+                    ui.add(tupleList, params);
                     ui.start();
                     return true;
                 }

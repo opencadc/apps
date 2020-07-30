@@ -79,13 +79,13 @@
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
 
-
-<%--<c:import url="skin.jsp"/>--%>
 <%
     ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
     boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+//    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
 
     String params = (String) request.getAttribute("params");
 
@@ -162,9 +162,14 @@ var="langBundle" scope="request"/>
 
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
 
-        <c:forEach var="uri" items="<%= uriList %>">
-            <input type="hidden" name="uri" value="${uri}" />
-        </c:forEach>
+<%      for (DownloadTuple tuple: tupleList) {
+            String tupleStr = tuple.toOutputFormat();
+%>
+        <span><%= tupleStr %></span>
+        <input type="hidden" name="tuple" value="<%= tupleStr %>" />
+<%
+        }
+%>
 
         <input type="hidden" name="params" value="<%= params %>" />
 
