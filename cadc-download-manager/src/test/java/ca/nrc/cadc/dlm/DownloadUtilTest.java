@@ -69,6 +69,9 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -81,6 +84,11 @@ import java.util.List;
 import java.util.Map;
 
 public class DownloadUtilTest {
+    private static Logger log = Logger.getLogger(DownloadUtilTest.class);
+
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+    }
 
     @Test
     public void iterateURLsRemoveDuplicates() throws Exception {
@@ -167,4 +175,60 @@ public class DownloadUtilTest {
 
         assertEquals("Should have 1 item.", expected, downloadDescriptorList);
     }
+
+    @Test
+    public void testArgParsing() throws Exception {
+        String[] args =  {"-verbose", "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um{shape_descriptor}{label}"};
+
+        try {
+            List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
+
+            for (DownloadTuple dt: tupleList) {
+                assertEquals("tupleID didn't parse correctly", "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um", dt.tupleID);
+                assertEquals("shapeDescriptor didn't parse correctly", "shape_descriptor", dt.shapeDescriptor);
+                assertEquals("tupleID didn't parse correctly", "label", dt.label);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Unexpected exception");
+        }
+    }
+
+
+    @Test
+    public void testArgParsingSpaces() throws Exception {
+        String[] args =  {"-verbose", "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um{shape", "descriptor}{label}"};
+
+        try {
+            List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
+
+            for (DownloadTuple dt: tupleList) {
+                assertEquals("tupleID didn't parse correctly", "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um", dt.tupleID);
+                assertEquals("shapeDescriptor didn't parse correctly", "shape descriptor", dt.shapeDescriptor);
+                assertEquals("tupleID didn't parse correctly", "label", dt.label);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Unexpected exception");
+        }
+    }
+
+    @Test
+    public void testArgParsingSingleString() throws Exception {
+        String[] args =  {"test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um{shape descriptor}{label}"};
+
+        try {
+            List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
+
+            for (DownloadTuple dt: tupleList) {
+                assertEquals("tupleID didn't parse correctly", "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um", dt.tupleID);
+                assertEquals("shapeDescriptor didn't parse correctly", "shape descriptor", dt.shapeDescriptor);
+                assertEquals("tupleID didn't parse correctly", "label", dt.label);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Unexpected exception");
+        }
+    }
+
 }

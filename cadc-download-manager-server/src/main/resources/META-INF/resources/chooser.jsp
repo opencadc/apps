@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,9 +72,7 @@
 <%@ taglib uri="WEB-INF/fmt.tld" prefix="fmt" %>
 
 <%@ page import="ca.nrc.cadc.config.ApplicationConfiguration" %>
-<%@ page import="ca.nrc.cadc.dlm.server.ServerUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
-<%@ page import="ca.nrc.cadc.dlm.server.UrlListServlet" %>
 <%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
@@ -84,7 +82,6 @@
 <%
     ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
     boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
-//    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
     List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
 
     String params = (String) request.getAttribute("params");
@@ -94,15 +91,13 @@
         requestHeaderLang = "en";
     }
 
+    // If calling program has provided values they should be here
     String headerURL = SkinUtil.headerURL;
     String footerURL = SkinUtil.footerURL;
     String bodyHeaderURL = "";
-
-    // If calling program has provided
     String skinURL = SkinUtil.skinURL;
 
     if (!StringUtil.hasLength(headerURL)) {
-        String skin = (String) request.getParameter("skin");
         if (!StringUtil.hasLength(skinURL)) {
             skinURL = "https://localhost/cadc/skin/";
         }
@@ -118,11 +113,10 @@
             skinURL = "https://localhost" + skinURL;
         }
 
-        headerURL = skin + "htmlHead";
-        bodyHeaderURL = skin + "bodyHeader";
-        footerURL = skin + "bodyFooter";
+        headerURL = skinURL + "htmlHead";
+        bodyHeaderURL = skinURL + "bodyHeader";
+        footerURL = skinURL + "bodyFooter";
     }
-
 %>
 
 

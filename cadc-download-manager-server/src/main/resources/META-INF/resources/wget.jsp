@@ -74,44 +74,49 @@
 <%@ page import="java.util.Iterator" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="java.net.URI" %>
-<%@ page import="java.util.ArrayList" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
 
 <%
-//    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
     List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
-
-    // Temporary conversion to list of strings that is expected by DownloadUtil.iterateURLs,
-    // to encapsulate retrofitting changes in cadc-download-manager-server.
-    // The next step of supporting tuples as the internal data format (rather than URIs
-    // alone) will mean changing the signature & code in DownloadUtil.iterateURLs.
-    // July 2020, HJ - part of story 2739
-//    Iterator<URI> uriListIterator = uriList.iterator();
-//    List<String> uriStrList = new ArrayList<String>();
-//    while (uriListIterator.hasNext()) {
-//        uriStrList.add(uriListIterator.next().toString());
-//    }
-
-
     String params = (String) request.getAttribute("params");
     Map<String,List<String>> paramMap = DownloadUtil.decodeParamMap(params);
 %>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+    // If calling program has provided values they should be here
+    String headerURL = SkinUtil.headerURL;
+    String footerURL = SkinUtil.footerURL;
+    String bodyHeaderURL = "";
+    String skinURL = SkinUtil.skinURL;
+
+    if (!StringUtil.hasLength(headerURL)) {
+        String skin = (String) request.getParameter("skin");
+        if (!StringUtil.hasLength(skinURL)) {
+            skinURL = "https://localhost/cadc/skin/";
+        }
+
+        if (!skinURL.endsWith("/")) {
+            skinURL += "/";
+        }
+
+        if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+            if (!skinURL.startsWith("/")) {
+                skinURL = "/" + skinURL;
+            }
+            skinURL = "https://localhost" + skinURL;
+        }
+
+        headerURL = skin + "htmlHead";
+        bodyHeaderURL = skin + "bodyHeader";
+        footerURL = skin + "bodyFooter";
+    }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
     <script type="text/javascript">
 	function closemyself()
 	{
@@ -122,11 +127,10 @@ String bodyFooter = skin + "bodyFooter";
 </head>
 
 <body>
-<c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
+<c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>
 
 <p>
 <%
-//    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriStrList, paramMap, true);
     Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(tupleList, paramMap, true);
     while ( iter.hasNext() )
     {
@@ -149,6 +153,6 @@ String bodyFooter = skin + "bodyFooter";
 %>
 </p>
 
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
+<c:catch><c:import url="<%= footerURL%>" /></c:catch>
 </body>
 </html>

@@ -154,7 +154,6 @@ public class ConsoleUI implements UserInterface, TransferListener {
 
     }
 
-//    public void add(List<String> uris, Map<String, List<String>> params) {
     public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params) {
         Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(tupleList, params);
         while (i.hasNext()) {

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009.                            (c) 2009.
+ *  (c) 2009, 2020                       (c) 2009, 2020
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,7 +74,6 @@ import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -92,8 +91,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class UrlListServlet extends HttpServlet {
     public static final String FILE_LIST_TARGET = "/urlList";
-    private static final long serialVersionUID = 202007201400L;
-
+    private static final long serialVersionUID = 202008040800L;
 
     /**
      * Handle POSTed download request from an external page.
@@ -108,24 +106,24 @@ public class UrlListServlet extends HttpServlet {
                           HttpServletResponse response) throws ServletException,
         IOException {
 
-            response.setContentType("text/plain");
-            response.setHeader("Content-Disposition",
-                "attachement;filename=\"cadcUrlList.txt\"");
+        response.setContentType("text/plain");
+        response.setHeader("Content-Disposition",
+            "attachement;filename=\"cadcUrlList.txt\"");
 
-            // force auth method
-            List<String> forceAuth = new ArrayList<>(1);
-            forceAuth.add(AuthMethod.PASSWORD.getValue());
+        // force auth method
+        List<String> forceAuth = new ArrayList<>(1);
+        forceAuth.add(AuthMethod.PASSWORD.getValue());
 
-            String params = (String) request.getAttribute("params");
-            Map<String, List<String>> paramMap = DownloadUtil
-                .decodeParamMap(params);
-            paramMap.put("auth", forceAuth);
+        String params = (String) request.getAttribute("params");
+        Map<String, List<String>> paramMap = DownloadUtil
+            .decodeParamMap(params);
+        paramMap.put("auth", forceAuth);
 
-            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
+        List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
 
-            for (Iterator<DownloadDescriptor> iter =
-                 DownloadUtil.iterateURLs(tupleList, paramMap, true); iter
-                     .hasNext(); ) {
+        for (Iterator<DownloadDescriptor> iter =
+             DownloadUtil.iterateURLs(tupleList, paramMap, true); iter
+                 .hasNext(); ) {
             final DownloadDescriptor dd = iter.next();
 
             if (dd.url != null) {

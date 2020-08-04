@@ -1,9 +1,11 @@
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
 <!--
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020                       (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,19 +76,33 @@
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+  // If calling program has provided values they should be here
+  String headerURL = SkinUtil.headerURL;
+  String skinURL = SkinUtil.skinURL;
+
+  if (!StringUtil.hasLength(headerURL)) {
+    if (!StringUtil.hasLength(skinURL)) {
+      skinURL = "https://localhost/cadc/skin/";
+    }
+
+    if (!skinURL.endsWith("/")) {
+      skinURL += "/";
+    }
+
+    if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+      if (!skinURL.startsWith("/")) {
+        skinURL = "/" + skinURL;
+      }
+      skinURL = "https://localhost" + skinURL;
+    }
+
+    headerURL = skinURL + "htmlHead";
+  }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
 </head>
 
 <body>

@@ -78,19 +78,37 @@
 %>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+    // If calling program has provided values they should be here
+    String headerURL = SkinUtil.headerURL;
+    String footerURL = SkinUtil.footerURL;
+    String bodyHeaderURL = "";
+    String skinURL = SkinUtil.skinURL;
+
+    if (!StringUtil.hasLength(headerURL)) {
+        if (!StringUtil.hasLength(skinURL)) {
+            skinURL = "https://localhost/cadc/skin/";
+        }
+
+        if (!skinURL.endsWith("/")) {
+            skinURL += "/";
+        }
+
+        if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+            if (!skinURL.startsWith("/")) {
+                skinURL = "/" + skinURL;
+            }
+            skinURL = "https://localhost" + skinURL;
+        }
+
+        headerURL = skinURL + "htmlHead";
+        bodyHeaderURL = skinURL + "bodyHeader";
+        footerURL = skinURL + "bodyFooter";
+    }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
 <script type="text/javascript">
 	function closemyself()
 	{
@@ -101,7 +119,7 @@ String bodyFooter = skin + "bodyFooter";
 </head>
 
 <body onLoad="setTimeout('closemyself()', 10000);self.focus()" >
-<c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
+<c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>
 
 <br>
 <br>
@@ -141,7 +159,7 @@ String bodyFooter = skin + "bodyFooter";
 </td>
 </tr>    
 </table>
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
+<c:catch><c:import url="<%= footerURL%>" /></c:catch>
 <script type="text/javascript">
 	document.dmsubmitform.submit();
 </script>

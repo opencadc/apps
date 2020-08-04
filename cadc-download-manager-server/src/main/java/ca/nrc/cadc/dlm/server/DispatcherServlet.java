@@ -108,7 +108,7 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DispatcherServlet extends HttpServlet {
-    private static final long serialVersionUID = 202007271400L;
+    private static final long serialVersionUID = 202008040800L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
 
@@ -118,6 +118,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private static int ONE_YEAR = 365 * 24 * 3600;
 
+    /// Used during JSP compilation
     public static String DEFAULT_CONFIG_FILE_PATH = System.getProperty("user.home") + "/config/org.opencadc.dlm-server.properties";
 
     /**
@@ -280,19 +281,14 @@ public class DispatcherServlet extends HttpServlet {
             List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
             String params = (String) request.getAttribute("params");
 
+            // external post
             if (tupleList == null) {
-                // external post
-                // TODO: remove getURI ref when tuples are shown to work
-//                uriList = ServerUtil.getURIs(request);
-                  tupleList = ServerUtil.getTuples(request);
+                tupleList = ServerUtil.getTuples(request);
                 if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
                 request.setAttribute("tupleList", tupleList);
-//                request.setAttribute("uriList", uriList);
-
-                //            log.debug("uriList: " + uriList);
                 log.debug("tupleList: " + tupleList.toString());
             }
 

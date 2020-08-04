@@ -72,6 +72,7 @@
 package ca.nrc.cadc.dlm.client;
 
 import ca.nrc.cadc.appkit.ui.BrowserApplet;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
 import java.util.List;
@@ -96,16 +97,16 @@ public class AppletWrapper extends JApplet {
             // temporary hack to set a system property in applet mode
             //String serverName = fixNull(getParameter(SERVER_NAME));
             //System.setProperty(SERVER_NAME, serverName);
-// TODO: this method of bringing in parameters won't work with the multiple tuples as parameters
+            // TODO: this method of bringing in parameters won't work with the multiple tuples as parameters
             // not sure applet is used anymore?
-//            String uriStr = fixNull(getParameter("uris"));
+            String uriStr = fixNull(getParameter("uris"));
+            String[] args = {uriStr};
+            List<DownloadTuple> tuples = DownloadUtil.parseTuplesFromArgs(args);
             String paramStr = fixNull(getParameter("params"));
-
-//            List<String> uris = DownloadUtil.decodeListURI(uriStr);
             Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
             this.ui = new GraphicUI(Level.INFO);
-//            ui.add(uris, params);
+            ui.add(tuples, params);
 
             BrowserApplet f = new BrowserApplet(Constants.name, ui, this);
             this.validate();

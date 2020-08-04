@@ -228,4 +228,62 @@ public class DownloadUtil {
         };
 
     }
+
+    /**
+     * Parse tuples from a set of args (String[]). They are assumed to be a
+     * space-delimited set of values of format:
+     * ID{shape descriptor}{label}
+     * Where:
+     * - ID = URI
+     * - shape descriptor (optional): space delimited set of values: string name + coordinates (used for cutouts)
+     * - label (optional): filename-compatible target name
+     *
+     * @param args
+     * @return list of download tuples
+     */
+    public static List<DownloadTuple> parseTuplesFromArgs(String[] args) {
+        List<DownloadTuple> tupleList = new ArrayList<>();
+        String curTupleStr = "";
+        for (String arg : args) {
+            // Skip any values that start with '-', as these aren't part of a tuple
+            if (!arg.startsWith("-")) {
+                // take care in case environment keeps all space seperated args
+                // as a single arg, eg single <argument> element in JNLP
+                // probably need to handle this split on whitespace thing as well.
+
+                String[] sas = arg.split(" ");
+                boolean endOfTuple = false;
+                for (String a : sas) {
+                    // for the segment being processed, might be part of
+                    // a building string, or a single entity
+                    String nextSegment;
+                    if (a.endsWith("}")) {
+                        endOfTuple = true;
+                    } else if (a.contains("}{") || a.contains("{")) {
+                        // pass
+                        endOfTuple = false;
+                    } else {
+                        if (StringUtil.hasLength(curTupleStr)) {
+                            endOfTuple = false;
+                        } else {
+                            endOfTuple = true;
+                        }
+                    }
+
+                    // concatenate a into curTupleStr & continue
+                    if (StringUtil.hasLength(curTupleStr)) {
+                        curTupleStr += " ";
+                    }
+                    curTupleStr += a;
+                    if (endOfTuple == true) {
+                        DownloadTuple dt = new DownloadTuple(curTupleStr);
+                        tupleList.add(dt);
+                        curTupleStr = "";
+                        endOfTuple = false;
+                    }
+                }
+            }
+        }
+        return tupleList;
+    }
 }

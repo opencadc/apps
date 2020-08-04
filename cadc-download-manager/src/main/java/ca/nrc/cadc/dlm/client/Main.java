@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -158,51 +158,7 @@ public class Main {
                     String paramStr = fixNull(am.getValue("params"));
                     Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
-                    // tuple format: ID{shape with whitespace}{label - is this always there for tuples?}
-                    // {shape} and {label} may be null - what will that look like as input?
-                    List<String> uris = new ArrayList<>();
-                    List<DownloadTuple> tupleList = new ArrayList<>();
-                    String curTuple = "";
-                    for (String arg : args) {
-                        if (!arg.startsWith("-")) {
-                            // take care in case environment keeps all space seperated args
-                            // as a single arg, eg single <argument> element in JNLP
-                            // probably need to handle this split on whitespace thing as well.
-                            // TODO - how to handle this in the scope of processing args
-                            // as potentially a set of values of a single tuple?
-
-                            // if arg doens't have { or } and we're not ingesting a tuple,
-                            // then
-
-                            // if string contains '{', then we're in tuple processing
-                            if (arg.contains("\\}\\{")) {
-                                // is a tuple of at least 2 parts
-                                // capture this tuple - add to string of concatenated args
-                                // cases: may be a single arg (tuple with no space - although this
-                                // is unlikely as the shape tuple will probably always have whitespace
-                                // unless it's been parsed to have a separator in it.
-
-                            }
-                            else if (arg.contains("\\{")) {
-                                // may be the start of a tuple with whitespace in the shape descriptor
-                                // start concatenating args together into a string
-                            }
-                            else if (arg.contains("\\}")) {
-                                // will be the close of a tuple
-                                // add to concatenated string args
-                                // flag that it can be processed
-                            }
-
-                            // Q: does 'split' return the entire string if no match found?
-                            String[] sas = arg.split(" ");
-                            for (String a : sas) {
-                                DownloadTuple dt = new DownloadTuple(a);
-                                tupleList.add(dt);
-                                log.info("adding tuple: " + a);
-
-                            }
-                        }
-                    }
+                    List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
 
                     if (forceAuthMethod != null) {
                         List<String> am = new ArrayList<>();
