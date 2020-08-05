@@ -158,7 +158,7 @@ public class DownloadUtilTest {
     public void iterateSingle() throws Exception {
         final List<DownloadTuple> tupleList = new ArrayList<>();
 
-        tupleList.add(new DownloadTuple("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um"));
+        tupleList.add(DownloadUtil.parseInternalFormatTuple("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um"));
 
         final List<DownloadDescriptor> expected = new ArrayList<>();
         expected.add(new DownloadDescriptor(tupleList.get(0).tupleID,
@@ -193,7 +193,6 @@ public class DownloadUtilTest {
             System.out.println("Unexpected exception");
         }
     }
-
 
     @Test
     public void testArgParsingSpaces() throws Exception {
@@ -230,5 +229,16 @@ public class DownloadUtilTest {
             System.out.println("Unexpected exception");
         }
     }
+
+    @Test
+    public void testParseInternalFormat() throws Exception {
+        String internalFormatTuple =  "test://mysite.ca/file{polygon 0 0 0 0}{label}";
+
+        DownloadTuple dt = DownloadUtil.parseInternalFormatTuple(internalFormatTuple);
+        assertEquals("tupleID didn't parse correctly", "test://mysite.ca/file", dt.tupleID);
+        assertEquals("shapeDescriptor didn't parse correctly", "polygon 0 0 0 0", dt.shapeDescriptor);
+        assertEquals("tupleID didn't parse correctly", "label", dt.label);
+    }
+
 
 }

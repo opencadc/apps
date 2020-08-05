@@ -157,7 +157,7 @@ var="langBundle" scope="request"/>
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
 
 <%      for (DownloadTuple tuple: tupleList) {
-            String tupleStr = tuple.toOutputFormat();
+            String tupleStr = tuple.toInternalFormat();
 %>
         <span><%= tupleStr %></span>
         <input type="hidden" name="tuple" value="<%= tupleStr %>" />

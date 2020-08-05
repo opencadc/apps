@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,6 +73,9 @@ package ca.nrc.cadc.dlm.server;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.util.StringUtil;
+import ca.nrc.cadc.xml.JsonInputter;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -82,7 +85,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
 
 /**
  * TODO.
@@ -159,7 +166,7 @@ public class ServerUtil {
 
         List<DownloadTuple> ret = new ArrayList<>();
 
-        // internal repost
+        // internal repost ('tuple' used as form field name in JSPs in this library)
         String[] tupleStrList = request.getParameterValues("tuple");
         if ((tupleStrList != null) && (tupleStrList.length > 0)) {
             for (int i = 0; i < tupleStrList.length; i++) {
@@ -168,35 +175,40 @@ public class ServerUtil {
         }
 
         if (ret.isEmpty()) {
-            // old version of internal repost - consider moving to 'handle deprecated
-            // values' when all this is done
-            String uris = request.getParameter("uris");
-            String[] uriParams;
-            if (uris != null) {
-                uriParams = uris.split(" ");
+            // Check to see if JSON content sent
+            if (request.getContentType().toLowerCase().contains("application/json")) {
+                ret = getJSONTuples(request);
             } else {
-                // original post
-                uriParams = request.getParameterValues(PARAM_URI);
-            }
+                // Go through supported (albeit deprecated) methods of
+                // passing data to download manager
+                // These options are here to support any community web pages
+                // that still use old parameters that have not yet been converted
+                // to the current API
+                String uris = request.getParameter("uris");
+                String[] uriParams;
+                if (uris != null) {
+                    uriParams = uris.split(" ");
+                } else {
+                    // original post
+                    uriParams = request.getParameterValues(PARAM_URI);
+                }
 
-            // process into a List<DownloadTuple>
-            if (uriParams != null) {
-                for (String u : uriParams) {
-                    if (StringUtil.hasText(u)) {
-                        ret.add(new DownloadTuple(u));
+                // process into a List<DownloadTuple>
+                if (uriParams != null) {
+                    for (String u : uriParams) {
+                        if (StringUtil.hasText(u)) {
+                            ret.add(new DownloadTuple(u));
+                        }
                     }
                 }
-            }
 
-            // In case nothing is passed in as 'uri' or 'uris,' check for
-            // deprecated parameters
-            if (ret.isEmpty()) {
-                handleDeprecatedParams(request);
-                // Could be populated if parameters are passed in at all.
-                //            ret = (List<URI>)request.getAttribute("uriList");
-                ret = (List<DownloadTuple>) request.getAttribute("tupleList");
+                // In case nothing is passed in as 'uri' or 'uris,' check for
+                // deprecated parameters
+                if (ret.isEmpty()) {
+                    handleDeprecatedParams(request);
+                    ret = (List<DownloadTuple>) request.getAttribute("tupleList");
+                }
             }
-
         }
         return ret;
     }
@@ -334,6 +346,63 @@ public class ServerUtil {
             return sb.substring(0, sb.length() - 1); // trailing comma
         }
         return null;
+    }
+
+    /**
+     * Parse tuples from JSON input in request payload.
+     * @param request
+     * @return
+     */
+    public static List<DownloadTuple> getJSONTuples(HttpServletRequest request) {
+        try {
+            BufferedReader reader = request.getReader();
+            String json = IOUtils.toString(reader);
+
+            if (json == null) {
+                throw new IllegalArgumentException("JSON input string must not be null");
+            }
+            try {
+                JsonInputter inputter = new JsonInputter();
+                return buildTupleArray(inputter.input(json));
+            } catch (Exception ex) {
+                String error = "error reading JSON string: " + ex.getMessage();
+                throw new IllegalArgumentException(error, ex);
+            }
+        } catch (IOException ioe) {
+            throw new IllegalArgumentException("could not get JSON input from request.");
+        }
+    }
+
+    /**
+     * Parse tuples out of jdom2 XML document.
+     * @param doc
+     * @return
+     */
+    protected static List<DownloadTuple> buildTupleArray(Document doc) {
+        Element root = doc.getRootElement();
+        Namespace ns = root.getNamespace();
+        List<DownloadTuple> dtList = new ArrayList<>();
+
+        // Must be at least one
+        if (root.getChild("tuple", ns) != null) {
+            // ... but may be more than one
+            List<Element> tupleElements = root.getChildren("tuple", ns);
+
+            for (Element tupleElement : tupleElements) {
+                Element idEl = tupleElement.getChild("tupleID", root.getNamespace());
+                String tupleID = idEl.getText();
+
+                Element shapeEl = tupleElement.getChild("shape", root.getNamespace());
+                String shape = shapeEl.getText();
+
+                Element labelEl = tupleElement.getChild("label", root.getNamespace());
+                String label = labelEl.getText();
+
+                DownloadTuple dt = new DownloadTuple(tupleID, shape, label);
+                dtList.add(dt);
+            }
+        }
+        return dtList;
     }
 
 }

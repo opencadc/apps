@@ -277,6 +277,7 @@ public class DispatcherServlet extends HttpServlet {
 
         public Object run()
             throws Exception {
+
             // forward
             List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
             String params = (String) request.getAttribute("params");

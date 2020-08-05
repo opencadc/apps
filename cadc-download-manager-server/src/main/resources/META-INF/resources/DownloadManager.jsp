@@ -141,7 +141,7 @@
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
 <%      for (DownloadTuple tuple: tupleList) {
-          String tupleStr = tuple.toOutputFormat();
+          String tupleStr = tuple.toInternalFormat();
 %>
           <argument><%= tupleStr %></argument>
 <%

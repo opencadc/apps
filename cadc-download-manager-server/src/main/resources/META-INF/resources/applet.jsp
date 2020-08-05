@@ -149,7 +149,7 @@
 <div style="padding-left: 2em; padding-right: 2em">
     <form action="/downloadManager/download" method="POST">
         <%      for (DownloadTuple tuple: tupleList) {
-            String tupleStr = tuple.toOutputFormat();
+            String tupleStr = tuple.toInternalFormat();
         %>
         <input type="hidden" name="tuple" value="${tupleStr}" />
         <%

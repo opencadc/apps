@@ -73,6 +73,7 @@ import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URL;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -276,7 +277,7 @@ public class DownloadUtil {
                     }
                     curTupleStr += a;
                     if (endOfTuple == true) {
-                        DownloadTuple dt = new DownloadTuple(curTupleStr);
+                        DownloadTuple dt = parseInternalFormatTuple(curTupleStr);
                         tupleList.add(dt);
                         curTupleStr = "";
                         endOfTuple = false;
@@ -285,5 +286,56 @@ public class DownloadUtil {
             }
         }
         return tupleList;
+    }
+
+
+    public static DownloadTuple parseInternalFormatTuple(String tupleStr) {
+        log.info("tuple string input: " + tupleStr);
+
+        String [] tupleParts = tupleStr.split("\\{");
+        String tupleID;
+        String shapeDescriptor;
+        String label;
+
+        if (tupleParts.length > 3) {
+            throw new InvalidParameterException("tuple has too many parts '{..}': " + tupleStr);
+        }
+
+        if (tupleParts.length == 3) {
+            // grab optional third [2] parameter as label
+            String l = tupleParts[2];
+            if (l.length() > 1) {
+                // trim off trailing "}"
+                label = l.substring(0, l.length() - 1);
+            } else {
+                // invalid format
+                throw new InvalidParameterException("Iinvalid label format: " + tupleStr);
+            }
+        } else {
+            label = null;
+        }
+
+        if (tupleParts.length > 1) {
+            String sd = tupleParts[1];
+            if (sd.length() > 1) {
+                // trim off trailing "}"
+                shapeDescriptor = sd.substring(0, sd.length() - 1);
+            } else {
+                // invalid format
+                throw new InvalidParameterException("invalid shape descriptor: " + tupleStr);
+            }
+        } else {
+            shapeDescriptor = null;
+        }
+
+        String uriStr = tupleParts[0];
+        if (StringUtil.hasLength(uriStr)) {
+            tupleID = uriStr;
+        } else {
+            // invalid format - has to at least be a single URI passed in
+            throw new InvalidParameterException("missing tupleID: " + tupleStr);
+        }
+
+        return new DownloadTuple(tupleID, shapeDescriptor, label);
     }
 }
