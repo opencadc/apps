@@ -81,7 +81,6 @@
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
 
 
-<%--<c:import url="skin.jsp"/>--%>
 <%
     ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
     boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
@@ -118,9 +117,9 @@
             skinURL = "https://localhost" + skinURL;
         }
 
-        headerURL = skin + "htmlHead";
-        bodyHeaderURL = skin + "bodyHeader";
-        footerURL = skin + "bodyFooter";
+        headerURL = skinURL + "htmlHead";
+        bodyHeaderURL = skinURL + "bodyHeader";
+        footerURL = skinURL + "bodyFooter";
     }
 
 %>

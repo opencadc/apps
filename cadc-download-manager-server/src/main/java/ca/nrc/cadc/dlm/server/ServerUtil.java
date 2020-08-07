@@ -92,7 +92,6 @@ import org.apache.log4j.Logger;
 public class ServerUtil {
     // public API for DownloadManager is to accept and interpret these two params
     static final String PARAM_URI = "uri";
-    static final String PARAM_URILIST = "uris";
     static final String PARAM_PARAMLIST = "params";
     static final String PARAM_METHOD = "method";
     static final List<String> INTERNAL_PARAMS = new ArrayList<String>();
@@ -100,7 +99,6 @@ public class ServerUtil {
 
     static {
         INTERNAL_PARAMS.add(PARAM_URI);
-        INTERNAL_PARAMS.add(PARAM_URILIST);
         INTERNAL_PARAMS.add(PARAM_PARAMLIST);
         INTERNAL_PARAMS.add(PARAM_METHOD);
     }
@@ -126,8 +124,7 @@ public class ServerUtil {
      * @param request
      * @return
      */
-    public static Map<String, List<String>> getParameters(
-        HttpServletRequest request) {
+    public static Map<String, List<String>> getParameters(HttpServletRequest request) {
         // internal repost
         String params = request.getParameter("params");
         if (params != null) {
@@ -146,6 +143,41 @@ public class ServerUtil {
                 }
             }
         }
+
+        // not considered deprecated yet. parameters in 'fragment' will be
+        // parsed into the paramMap
+        List<String> frag = paramMap.get("fragment");
+        if (frag != null) {
+            for (String f : frag) {
+                String[] parts = f.split("&");
+                for (String p : parts) {
+                    String[] kv = p.split("=");
+                    if (kv.length == 2) {
+                        List<String> values = paramMap.get(kv[0]);
+                        if (values == null) {
+                            values = new ArrayList<String>();
+                            paramMap.put(kv[0], values);
+                        }
+                        values.add(kv[1]);
+                    }
+                }
+            }
+            paramMap.remove("fragment");
+        }
+
+        // Deprecated values need to be stripped out
+        // Should only be 1 entry
+        paramMap.remove("fileId");
+
+        // can be more than one
+        List<String> fcs = paramMap.get("fileClass");
+        if (fcs != null) {
+            for (String fc : fcs) {
+                paramMap.remove(fc);
+            }
+            paramMap.remove("fileClass");
+        }
+
         return paramMap;
     }
 
@@ -158,20 +190,12 @@ public class ServerUtil {
     public static List<URI> getURIs(HttpServletRequest request) throws URISyntaxException {
 
         List<URI> ret = new ArrayList<>();
-
-        // internal repost
-        String uris = request.getParameter("uris");
-        String[] uriParams;
-        if (uris != null) {
-            uriParams = uris.split(" ");
-        } else {
-            // original post
-            uriParams = request.getParameterValues(PARAM_URI);
-        }
+        String[] uriList;
+        uriList = request.getParameterValues(PARAM_URI);
 
         // process into a List<URI>
-        if (uriParams != null) {
-            for (String u : uriParams) {
+        if (uriList != null) {
+            for (String u : uriList) {
                 if (StringUtil.hasText(u)) {
                     ret.add(new URI(u));
                 }
@@ -181,9 +205,7 @@ public class ServerUtil {
         // In case nothing is passed in as 'uri' or 'uris,' check for
         // deprecated parameters
         if (ret.isEmpty()) {
-            handleDeprecatedParams(request);
-            // Could be populated if parameters are passed in at all.
-            ret = (List<URI>)request.getAttribute("uriList");
+            ret = handleDeprecatedAPI(request);
         }
 
         return ret;
@@ -192,14 +214,14 @@ public class ServerUtil {
     /**
      * Check for deprecated parameters in the request. Convert to the most current for Download Manager's API.
      * Kept for backward compatibility.
-     * (last rev: July 21, 2020, s2739, HJ)
+     * (last rev: Aug 7, 2020, s2739, HJ)
      * @param request
      */
-    public static void handleDeprecatedParams(HttpServletRequest request) {
+    public static List<URI> handleDeprecatedAPI(HttpServletRequest request) {
         // Check to see if URIs have already been parsed from the request parameters.
         // If so, this is an internal dispatch/forward being processed
-        List<URI> uriList = (List<URI>)request.getAttribute("uriList");
-        if (uriList == null) {
+        List<URI> uriList = new ArrayList<>();
+//        if (uriList == null) {
             try {
                 String referer = request. getHeader("referer");
                 String[] sa;
@@ -239,52 +261,12 @@ public class ServerUtil {
                     }
                 }
 
-                if (!uriList.isEmpty()) {
-                    request.setAttribute("uriList", uriList);
-                }
             } catch (URISyntaxException ure) {
                 log.error("error parsing URI from deprecated input parameter");
             }
-        }
 
-        String params = (String) request.getAttribute("params");
-        if (params == null) {
-            Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
+            return uriList;
 
-            // things to strip out
-            paramMap.remove("fileId");
-            List<String> fcs = paramMap.get("fileClass");
-            if (fcs != null) {
-                for (String fc : fcs) {
-                    paramMap.remove(fc);
-                }
-                paramMap.remove("fileClass");
-            }
-
-            List<String> frag = paramMap.get("fragment");
-            if (frag != null) {
-                for (String f : frag) {
-                    String[] parts = f.split("&");
-                    for (String p : parts) {
-                        String[] kv = p.split("=");
-                        if (kv.length == 2) {
-                            List<String> values = paramMap.get(kv[0]);
-                            if (values == null) {
-                                values = new ArrayList<String>();
-                                paramMap.put(kv[0], values);
-                            }
-                            values.add(kv[1]);
-                        }
-                    }
-                }
-                paramMap.remove("fragment");
-            }
-
-            if (!paramMap.isEmpty()) {
-                params = DownloadUtil.encodeParamMap(paramMap);
-                request.setAttribute("params", params);
-            }
-        }
     }
 
 

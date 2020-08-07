@@ -277,8 +277,6 @@ public class DispatcherServlet extends HttpServlet {
             throws Exception {
             // forward
             List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-            String params = (String) request.getAttribute("params");
-
             if (uriList == null) {
                 // external post
                 uriList = ServerUtil.getURIs(request);
@@ -289,9 +287,11 @@ public class DispatcherServlet extends HttpServlet {
                 request.setAttribute("uriList", uriList);
             }
 
+            String params = (String) request.getAttribute("params");
             if (params == null) {
                 Map<String, List<String>> paramMap = ServerUtil.getParameters(request);
                 if (paramMap != null && !paramMap.isEmpty()) {
+                    // TODO:
                     params = DownloadUtil.encodeParamMap(paramMap);
                     request.setAttribute("params", params);
                 }
