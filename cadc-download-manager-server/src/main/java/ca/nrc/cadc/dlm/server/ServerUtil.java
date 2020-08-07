@@ -204,8 +204,14 @@ public class ServerUtil {
 
         // In case nothing is passed in as 'uri' or 'uris,' check for
         // deprecated parameters
-        if (ret.isEmpty()) {
-            ret = handleDeprecatedAPI(request);
+        List<URI> moreURIs = handleDeprecatedAPI(request);
+        if (!moreURIs.isEmpty()) {
+            // merge the two lists
+            for (URI u: moreURIs) {
+                if (!ret.contains(u)) {
+                    ret.add(u);
+                }
+            }
         }
 
         return ret;

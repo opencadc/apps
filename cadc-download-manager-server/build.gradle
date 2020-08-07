@@ -30,7 +30,7 @@ dependencies {
     compile 'org.opencadc:cadc-app-kit:1.+'
     compile 'org.opencadc:cadc-download-manager:[1.1,)'
     compile 'org.opencadc:cadc-web-util:[1.2.7, )'
-    
+
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'
 }

@@ -72,11 +72,11 @@ package ca.nrc.cadc.dlm.server;
 /**
  * Use variables in this class to set headers & footers for the
  * Download Manager JSP pages.
- * If skinURL is provided, it must have the following API:
- * - baseurl/htmlHead
- * - baseurl/bodyHeader
- * - baseurl/bodyFooter
- * headerURL and footerURL take precedence over skinURL.
+ * If skinURL is provided, it must utilize the following structure:
+ * - skinURL/htmlHead
+ * - skinURL/bodyHeader
+ * - skinURL/bodyFooter
+ * If not empty, headerURL and footerURL take precedence over skinURL.
  */
 public class SkinUtil {
     public static String skinURL = "";
