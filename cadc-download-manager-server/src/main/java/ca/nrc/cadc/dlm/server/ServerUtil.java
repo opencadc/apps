@@ -227,51 +227,50 @@ public class ServerUtil {
         // Check to see if URIs have already been parsed from the request parameters.
         // If so, this is an internal dispatch/forward being processed
         List<URI> uriList = new ArrayList<>();
-//        if (uriList == null) {
-            try {
-                String referer = request. getHeader("referer");
-                String[] sa;
+        try {
+            String referer = request. getHeader("referer");
+            String[] sa;
 
-                // fileClass -> dynamic params = AD scheme-specific part
-                String[] fileClasses = request.getParameterValues("fileClass");
-                if (fileClasses != null) {
-                    // fileClass is a list of parameters giving other URIs
-                    log.debug("fileClass param(s): " + fileClasses.length);
-                    log.warn("deprecated param 'fileClass' used by " + referer);
-                    for (String fileClass : fileClasses) {
-                        log.debug("fileClass: " + fileClass);
-                        sa = request.getParameterValues(fileClass);
-                        if (sa != null) {
-                            for (String curSa : sa) {
-                                String u = processURI(curSa);
-                                if (u != null) {
-                                    u = toAd(u);
-                                    log.debug("\turi: " + u);
-                                    uriList.add(new URI(u));
-                                }
+            // fileClass -> dynamic params = AD scheme-specific part
+            String[] fileClasses = request.getParameterValues("fileClass");
+            if (fileClasses != null) {
+                // fileClass is a list of parameters giving other URIs
+                log.debug("fileClass param(s): " + fileClasses.length);
+                log.warn("deprecated param 'fileClass' used by " + referer);
+                for (String fileClass : fileClasses) {
+                    log.debug("fileClass: " + fileClass);
+                    sa = request.getParameterValues(fileClass);
+                    if (sa != null) {
+                        for (String curSa : sa) {
+                            String u = processURI(curSa);
+                            if (u != null) {
+                                u = toAd(u);
+                                log.debug("\turi: " + u);
+                                uriList.add(new URI(u));
                             }
                         }
                     }
                 }
-
-                sa = request.getParameterValues("fileId");
-                if (sa != null) {
-                    log.debug("fileId param(s): " + sa.length);
-                    log.warn("deprecated param 'fileId' used by " + referer);
-                    for (String curSa : sa) {
-                        String u = processURI(curSa);
-                        if (u != null) {
-                            u = toAd(u);
-                            uriList.add(new URI(u));
-                        }
-                    }
-                }
-
-            } catch (URISyntaxException ure) {
-                log.error("error parsing URI from deprecated input parameter");
             }
 
-            return uriList;
+            sa = request.getParameterValues("fileId");
+            if (sa != null) {
+                log.debug("fileId param(s): " + sa.length);
+                log.warn("deprecated param 'fileId' used by " + referer);
+                for (String curSa : sa) {
+                    String u = processURI(curSa);
+                    if (u != null) {
+                        u = toAd(u);
+                        uriList.add(new URI(u));
+                    }
+                }
+            }
+
+        } catch (URISyntaxException ure) {
+            log.error("error parsing URI from deprecated input parameter");
+        }
+
+        return uriList;
 
     }
 
