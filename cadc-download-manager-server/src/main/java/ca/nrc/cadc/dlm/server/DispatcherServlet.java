@@ -291,7 +291,6 @@ public class DispatcherServlet extends HttpServlet {
             if (params == null) {
                 Map<String, List<String>> paramMap = ServerUtil.getParameters(request);
                 if (paramMap != null && !paramMap.isEmpty()) {
-                    // TODO:
                     params = DownloadUtil.encodeParamMap(paramMap);
                     request.setAttribute("params", params);
                 }
