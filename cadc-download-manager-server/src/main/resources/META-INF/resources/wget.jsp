@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,12 +74,24 @@
 <%@ page import="java.util.Iterator" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.ArrayList" %>
 
 <%
-    String uris = (String) request.getAttribute("uris");
-    String params = (String) request.getAttribute("params");
+    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
 
-    List<String> uriList = DownloadUtil.decodeListURI(uris);
+    // Temporary conversion to list of strings that is expected by DownloadUtil.iterateURLs,
+    // to encapsulate retrofitting changes in cadc-download-manager-server.
+    // The next step of supporting tuples as the internal data format (rather than URIs
+    // alone) will mean changing the signature & code in DownloadUtil.iterateURLs.
+    // July 2020, HJ - part of story 2739
+    Iterator<URI> uriListIterator = uriList.iterator();
+    List<String> uriStrList = new ArrayList<String>();
+    while (uriListIterator.hasNext()) {
+        uriStrList.add(uriListIterator.next().toString());
+    }
+
+    String params = (String) request.getAttribute("params");
     Map<String,List<String>> paramMap = DownloadUtil.decodeParamMap(params);
 %>
 
@@ -111,7 +123,7 @@ String bodyFooter = skin + "bodyFooter";
 
 <p>
 <%
-    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriList, paramMap, true);
+    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriStrList, paramMap, true);
     while ( iter.hasNext() )
     {
         DownloadDescriptor dd = iter.next();

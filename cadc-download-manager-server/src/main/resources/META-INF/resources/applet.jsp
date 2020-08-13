@@ -74,9 +74,11 @@
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
 <%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.List" %>
 <%
     // we need these to offer the option to go back to the method choice page
-    String uris = (String) request.getAttribute("uris");
+    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
     String fragment = (String) request.getAttribute("fragment");
 %>
 
@@ -127,7 +129,13 @@ String bodyFooter = skin + "bodyFooter";
     
 <div style="padding-left: 2em; padding-right: 2em">
     <form action="/downloadManager/download" method="POST">
-        <input type="hidden" name="uris" value="<%= uris %>" />
+        <%      for (URI uri: uriList) {
+            String uriStr = uri.toString();
+        %>
+        <input type="hidden" name="uri" value="${uriStr}" />
+        <%
+            }
+        %>
         <input type="hidden" name="fragment" value="<%= fragment %>" />
         <input type="hidden" name="skin" value="<%= skin %>" /> 
         <input type="submit" name="method" value="Chose one of the other download methods" />

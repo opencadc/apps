@@ -70,9 +70,14 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Set;
+import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -88,7 +93,7 @@ import org.apache.log4j.Logger;
  * @author adriand
  */
 public class JavaWebStartServlet extends HttpServlet {
-    private static final long serialVersionUID = 201208071730L;
+    private static final long serialVersionUID = 202007201400L;
 
     private static final Logger log = Logger.getLogger(JavaWebStartServlet.class);
 
@@ -106,10 +111,10 @@ public class JavaWebStartServlet extends HttpServlet {
     /**
      * Handle POSTed download request directed to the Java WebStart download method.
      *
-     * @param request
-     * @param response
-     * @throws javax.servlet.ServletException
-     * @throws java.io.IOException
+     * @param request  The HTTP Request.
+     * @param response The HTTP Response.
+     * @throws javax.servlet.ServletException For general Servlet exceptions
+     * @throws java.io.IOException            For any I/O related errors.
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
@@ -120,15 +125,40 @@ public class JavaWebStartServlet extends HttpServlet {
             request.setAttribute("params", params);
         }
 
+        Subject subject = AuthenticationUtil.getCurrentSubject();
+        // Nothing added in if user is anon
+        if (subject != null) {
+            Set<SSOCookieCredential> creds = subject.getPublicCredentials(SSOCookieCredential.class);
+            if (!creds.isEmpty()) {
+                // if it is empty, there's possibly a different issue?
+
+                Iterator<SSOCookieCredential> credIter = creds.iterator();
+
+                SSOCookieCredential cred = credIter.next();
+                // these are only really needed by the webstart servlet/jsp since server-side
+                // will use the credential from the subject directly
+                String ck = cred.getSsoCookieValue();
+                ck = ck.replace("&", "&amp;");
+                request.setAttribute("ssocookie", ck);
+                log.debug("ssocookie attribute: " + ck);
+
+                String ssodomains = cred.getDomain();
+                // build comma-delimited ssocookie domain list
+                while (credIter.hasNext()) {
+                    cred = credIter.next();
+                    ssodomains = ssodomains + "," + cred.getDomain();
+                }
+
+                request.setAttribute("ssocookiedomain", ssodomains);
+                log.debug("ssocookiedomain attribute: " + ssodomains);
+            }
+
+        }
+
         // codebase for applet and webstart deployments
         String codebase = ServerUtil.getCodebase(request);
         request.setAttribute("codebase", codebase);
         log.debug("codebase attribute: " + codebase);
-
-        // origin serverName for applet and jnlp deployment
-        //String  serverName = NetUtil.getServerName(JavaWebStartServlet.class);
-        //request.setAttribute("serverName", serverName);
-        //log.debug("serverName attribute: " + serverName);
 
         setRegistryClientProps(request);
 

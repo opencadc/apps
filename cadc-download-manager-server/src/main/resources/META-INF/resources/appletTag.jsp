@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,8 +71,10 @@
     Simple JSP page to write out the applet tag that launches the DownloadManager applet.
 --%>
 <%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.List" %>
 <%
-    String uris = (String) request.getAttribute("uris");
+    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
     String fragment = (String) request.getAttribute("fragment");
 %>
 
@@ -81,8 +83,10 @@
         codebase="/downloadManager" 
         archive="cadcDownloadManagerClient.jar,cadcUtil.jar,log4j.jar"
         width="600" height="600">
-    
-    <param name="uris" value="<%= uris %>" />
+
+    <c:forEach var="uri" items="<%= uriList %>">
+        <input type="hidden" name="uri" value="${uri}" />
+    </c:forEach>
     <param name="fragment" value="<%= fragment %>" />
 </applet>
 

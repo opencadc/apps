@@ -11,7 +11,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,10 +75,12 @@
 ************************************************************************
 -->
 <%@ page import="ca.nrc.cadc.reg.client.RegistryClient" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.List" %>
 
 <%
 
-    String uris = (String) request.getAttribute("uris");
+    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
     String params = (String) request.getAttribute("params");
     String codebase = (String) request.getAttribute("codebase");
     String ssocookieArg = "";
@@ -138,7 +140,13 @@
 
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
-        <argument><%= uris %></argument>
+<%      for (URI uri: uriList) {
+          String uriStr = uri.toString();
+%>
+          <argument><%= uriStr %></argument>
+<%
+        }
+%>
         <argument>--params=<%= params %></argument>
 <%
     if (!ssocookieArg.isEmpty())

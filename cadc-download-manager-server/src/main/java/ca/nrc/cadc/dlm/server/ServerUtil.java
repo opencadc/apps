@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,6 +72,8 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.util.StringUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,14 +85,14 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 /**
- * TODO.
+ * <p>Functions for parsing input parameters for Download Manager
+ * </p>
  *
  * @author pdowler
  */
 public class ServerUtil {
     // public API for DownloadManager is to accept and interpret these two params
     static final String PARAM_URI = "uri";
-    static final String PARAM_URILIST = "uris";
     static final String PARAM_PARAMLIST = "params";
     static final String PARAM_METHOD = "method";
     static final List<String> INTERNAL_PARAMS = new ArrayList<String>();
@@ -98,7 +100,6 @@ public class ServerUtil {
 
     static {
         INTERNAL_PARAMS.add(PARAM_URI);
-        INTERNAL_PARAMS.add(PARAM_URILIST);
         INTERNAL_PARAMS.add(PARAM_PARAMLIST);
         INTERNAL_PARAMS.add(PARAM_METHOD);
     }
@@ -106,6 +107,12 @@ public class ServerUtil {
     private ServerUtil() {
     }
 
+    /**
+     * Get name of codebase from request object.
+     *
+     * @param request  The HTTP Request.
+     * @return String   lLocation of codebase.
+     */
     public static String getCodebase(HttpServletRequest request) {
         try {
             URL req = new URL(request.getRequestURL().toString());
@@ -122,10 +129,9 @@ public class ServerUtil {
      * Extract all download content related parameters from the request.
      *
      * @param request
-     * @return
+     * @return map of parameters included in request.
      */
-    public static Map<String, List<String>> getParameters(
-        HttpServletRequest request) {
+    public static Map<String, List<String>> getParameters(HttpServletRequest request) {
         // internal repost
         String params = request.getParameter("params");
         if (params != null) {
@@ -144,37 +150,178 @@ public class ServerUtil {
                 }
             }
         }
+
+        // not considered deprecated yet. parameters in 'fragment' will be
+        // parsed into the paramMap
+        List<String> frag = paramMap.get("fragment");
+        if (frag != null) {
+            for (String f : frag) {
+                String[] parts = f.split("&");
+                for (String p : parts) {
+                    String[] kv = p.split("=");
+                    if (kv.length == 2) {
+                        List<String> values = paramMap.get(kv[0]);
+                        if (values == null) {
+                            values = new ArrayList<String>();
+                            paramMap.put(kv[0], values);
+                        }
+                        values.add(kv[1]);
+                    }
+                }
+            }
+            paramMap.remove("fragment");
+        }
+
+        // Deprecated values need to be stripped out
+        // Should only be 1 entry
+        paramMap.remove("fileId");
+
+        // can be more than one
+        List<String> fcs = paramMap.get("fileClass");
+        if (fcs != null) {
+            for (String fc : fcs) {
+                paramMap.remove(fc);
+            }
+            paramMap.remove("fileClass");
+        }
+
         return paramMap;
     }
 
     /**
      * Extract all download content related parameters from the request.
      *
-     * @param request
-     * @return
+     * @param request The HTTP Request.
+     * @return List of URIs.
+     * @throws URISyntaxException URI parameter found with incorrect format.
      */
-    public static List<String> getURIs(HttpServletRequest request) {
-        // internal repost
-        String uris = request.getParameter("uris");
+    public static List<URI> getURIs(HttpServletRequest request) throws URISyntaxException {
 
-        if (uris != null) {
-            return DownloadUtil.decodeListURI(uris);
+        List<URI> ret = new ArrayList<>();
+        String[] uriList;
+        uriList = request.getParameterValues(PARAM_URI);
+
+        // process into a List<URI>
+        if (uriList != null) {
+            for (String u : uriList) {
+                if (StringUtil.hasText(u)) {
+                    ret.add(new URI(u));
+                }
+            }
         }
 
-        // original post
-        String[] uriParams = request.getParameterValues(PARAM_URI);
-
-        List<String> ret = new ArrayList<>();
-
-        if (uriParams != null) {
-            for (String u : uriParams) {
-                if (StringUtil.hasText(u)) {
+        // In case nothing is passed in as 'uri' or 'uris,' check for
+        // deprecated parameters
+        List<URI> moreURIs = handleDeprecatedAPI(request);
+        if (!moreURIs.isEmpty()) {
+            // merge the two lists
+            for (URI u: moreURIs) {
+                if (!ret.contains(u)) {
                     ret.add(u);
                 }
             }
         }
 
         return ret;
+    }
+
+    /**
+     * Check for deprecated parameters in the request. Convert to the most current for Download Manager's API.
+     * Kept for backward compatibility.
+     * (last rev: Aug 7, 2020, s2739, HJ)
+     * @param request  The HTTP Request.
+     * @return list of URIs.
+     */
+    public static List<URI> handleDeprecatedAPI(HttpServletRequest request) {
+        // Check to see if URIs have already been parsed from the request parameters.
+        // If so, this is an internal dispatch/forward being processed
+        List<URI> uriList = new ArrayList<>();
+        try {
+            String referer = request. getHeader("referer");
+            String[] sa;
+
+            // fileClass -> dynamic params = AD scheme-specific part
+            String[] fileClasses = request.getParameterValues("fileClass");
+            if (fileClasses != null) {
+                // fileClass is a list of parameters giving other URIs
+                log.debug("fileClass param(s): " + fileClasses.length);
+                log.warn("deprecated param 'fileClass' used by " + referer);
+                for (String fileClass : fileClasses) {
+                    log.debug("fileClass: " + fileClass);
+                    sa = request.getParameterValues(fileClass);
+                    if (sa != null) {
+                        for (String curSa : sa) {
+                            String u = processURI(curSa);
+                            if (u != null) {
+                                u = toAd(u);
+                                log.debug("\turi: " + u);
+                                uriList.add(new URI(u));
+                            }
+                        }
+                    }
+                }
+            }
+
+            sa = request.getParameterValues("fileId");
+            if (sa != null) {
+                log.debug("fileId param(s): " + sa.length);
+                log.warn("deprecated param 'fileId' used by " + referer);
+                for (String curSa : sa) {
+                    String u = processURI(curSa);
+                    if (u != null) {
+                        u = toAd(u);
+                        uriList.add(new URI(u));
+                    }
+                }
+            }
+
+        } catch (URISyntaxException ure) {
+            log.error("error parsing URI from deprecated input parameter");
+        }
+
+        return uriList;
+
+    }
+
+
+    /**
+     * Validate content by trimming and checking length.
+     *
+     * @param uri
+     * @return valid (trimmed non-zero-length) string or null
+     */
+    private static String processURI(String uri) {
+        String ret = null;
+        if (uri != null) {
+            ret = uri.trim();
+            if (ret.length() == 0) {
+                ret = null;
+            }
+        }
+        return ret;
+    }
+
+    // CADC-specific backwards compat: prepend ad scheme if there is none
+    private static String toAd(String s) {
+        String[] parts = s.split(","); // comma-sep list
+        if (parts.length == 1) {
+            if (s.indexOf(':') > 0) { // already has a scheme
+                return s;
+            }
+            log.debug("adding ad scheme to " + s);
+            return "ad:" + s;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            s = toAd(part);
+            if (s != null) {
+                sb.append(s).append(",");
+            }
+        }
+        if (sb.length() > 0) {
+            return sb.substring(0, sb.length() - 1); // trailing comma
+        }
+        return null;
     }
 
 }

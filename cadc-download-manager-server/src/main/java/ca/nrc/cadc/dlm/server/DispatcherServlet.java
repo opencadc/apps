@@ -70,17 +70,15 @@
 
 package ca.nrc.cadc.dlm.server;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
 import java.io.IOException;
+import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -109,7 +107,7 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DispatcherServlet extends HttpServlet {
-    private static final long serialVersionUID = 201712011100L;
+    private static final long serialVersionUID = 202007201400L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
 
@@ -125,10 +123,11 @@ public class DispatcherServlet extends HttpServlet {
      * Checks cookie and request param for download method preference; tries to set a cookie
      * to save setting for future use.
      *
+     * @param request  The HTTP Request.
+     * @param response The HTTP Response.
      * @return name of page to forward to, null if caller should offer choices to user
      */
-    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException {
+    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response) {
         String method = request.getParameter(ServerUtil.PARAM_METHOD);
         Cookie ck = null;
 
@@ -216,12 +215,11 @@ public class DispatcherServlet extends HttpServlet {
      *
      * @param request  The HTTP Request.
      * @param response The HTTP Response.
-     * @throws javax.servlet.ServletException For general Servlet exceptions
      * @throws java.io.IOException            For any I/O related errors.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws IOException {
         ServletLogInfo logInfo = new ServletLogInfo(request);
         log.info(logInfo.start());
 
@@ -230,41 +228,6 @@ public class DispatcherServlet extends HttpServlet {
         try {
             Subject subject = AuthenticationUtil.getSubject(request);
             logInfo.setSubject(subject);
-
-            AuthMethod am = AuthenticationUtil.getAuthMethod(subject);
-            if (am != null && !AuthMethod.ANON.equals(am)) {
-                // if the ssodomains attribute is set, the sso cookie can be used
-                // with additional domains; not that the only way to do that is to
-                // intercept the post with a different servlet, set it, and forward
-                // or maybe to subclass this and override doPost -- intercept+forward
-                // is probably safer
-                log.debug("looking for ssodomains attribute...");
-                String ssodomains = (String) request.getAttribute("ssodomains");
-                if (ssodomains != null) {
-                    final String[] domains = ssodomains.split(",");
-
-                    Set<SSOCookieCredential> creds = subject.getPublicCredentials(SSOCookieCredential.class);
-
-                    if (!creds.isEmpty()) {
-                        SSOCookieCredential cred = creds.iterator().next();
-                        // these are only really needed by the webstart servlet/jsp since server-side
-                        // will use the credential from the subject directly
-                        String ck = cred.getSsoCookieValue();
-                        ck = ck.replace("&", "&amp;");
-                        request.setAttribute("ssocookie", ck);
-                        log.debug("ssocookie attribute: " + ck);
-                        request.setAttribute("ssocookiedomain", ssodomains);
-                        log.debug("ssocookie domain: " + ssodomains);
-                        for (String d : domains) {
-                            if (!cred.getDomain().equals(d)) {
-                                SSOCookieCredential alt = new SSOCookieCredential(cred.getSsoCookieValue(), d);
-                                log.debug("adding cookie for alternate domain: " + d);
-                                subject.getPublicCredentials().add(alt);
-                            }
-                        }
-                    }
-                }
-            }
 
             DownloadAction action = new DownloadAction(request, response);
 
@@ -300,6 +263,7 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
+
     private class DownloadAction implements PrivilegedExceptionAction<Object> {
         HttpServletRequest request;
         HttpServletResponse response;
@@ -312,20 +276,18 @@ public class DispatcherServlet extends HttpServlet {
         public Object run()
             throws Exception {
             // forward
-            String uris = (String) request.getAttribute("uris");
-            String params = (String) request.getAttribute("params");
-
-            if (uris == null) {
+            List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+            if (uriList == null) {
                 // external post
-                List<String> uriList = ServerUtil.getURIs(request);
+                uriList = ServerUtil.getURIs(request);
                 if (uriList == null || uriList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
-                uris = DownloadUtil.encodeListURI(uriList);
-                request.setAttribute("uris", uris);
+                request.setAttribute("uriList", uriList);
             }
 
+            String params = (String) request.getAttribute("params");
             if (params == null) {
                 Map<String, List<String>> paramMap = ServerUtil.getParameters(request);
                 if (paramMap != null && !paramMap.isEmpty()) {
@@ -334,7 +296,7 @@ public class DispatcherServlet extends HttpServlet {
                 }
             }
 
-            log.debug("uris: " + uris);
+            log.debug("uriList: " + uriList);
             log.debug("params: " + params);
 
             // check for preferred/selected download method
@@ -349,5 +311,4 @@ public class DispatcherServlet extends HttpServlet {
             return null;
         }
     }
-
 }
