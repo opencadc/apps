@@ -123,10 +123,11 @@ public class DispatcherServlet extends HttpServlet {
      * Checks cookie and request param for download method preference; tries to set a cookie
      * to save setting for future use.
      *
+     * @param request  The HTTP Request.
+     * @param response The HTTP Response.
      * @return name of page to forward to, null if caller should offer choices to user
      */
-    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException {
+    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response) {
         String method = request.getParameter(ServerUtil.PARAM_METHOD);
         Cookie ck = null;
 
@@ -214,12 +215,11 @@ public class DispatcherServlet extends HttpServlet {
      *
      * @param request  The HTTP Request.
      * @param response The HTTP Response.
-     * @throws javax.servlet.ServletException For general Servlet exceptions
      * @throws java.io.IOException            For any I/O related errors.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws IOException {
         ServletLogInfo logInfo = new ServletLogInfo(request);
         log.info(logInfo.start());
 

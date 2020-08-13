@@ -70,7 +70,7 @@
 package ca.nrc.cadc.dlm.server;
 
 /**
- * Use variables in this class to set headers & footers for the
+ * Use variables in this class to set headers and footers for the
  * Download Manager JSP pages.
  * If skinURL is provided, it must utilize the following structure:
  * - skinURL/htmlHead

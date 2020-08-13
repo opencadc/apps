@@ -85,7 +85,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 /**
- * TODO.
+ * <p>Functions for parsing input parameters for Download Manager
+ * </p>
  *
  * @author pdowler
  */
@@ -106,6 +107,12 @@ public class ServerUtil {
     private ServerUtil() {
     }
 
+    /**
+     * Get name of codebase from request object.
+     *
+     * @param request  The HTTP Request.
+     * @return String   lLocation of codebase.
+     */
     public static String getCodebase(HttpServletRequest request) {
         try {
             URL req = new URL(request.getRequestURL().toString());
@@ -122,7 +129,7 @@ public class ServerUtil {
      * Extract all download content related parameters from the request.
      *
      * @param request
-     * @return
+     * @return map of parameters included in request.
      */
     public static Map<String, List<String>> getParameters(HttpServletRequest request) {
         // internal repost
@@ -184,8 +191,9 @@ public class ServerUtil {
     /**
      * Extract all download content related parameters from the request.
      *
-     * @param request
-     * @return
+     * @param request The HTTP Request.
+     * @return List of URIs.
+     * @throws URISyntaxException URI parameter found with incorrect format.
      */
     public static List<URI> getURIs(HttpServletRequest request) throws URISyntaxException {
 
@@ -221,7 +229,8 @@ public class ServerUtil {
      * Check for deprecated parameters in the request. Convert to the most current for Download Manager's API.
      * Kept for backward compatibility.
      * (last rev: Aug 7, 2020, s2739, HJ)
-     * @param request
+     * @param request  The HTTP Request.
+     * @return list of URIs.
      */
     public static List<URI> handleDeprecatedAPI(HttpServletRequest request) {
         // Check to see if URIs have already been parsed from the request parameters.

@@ -93,7 +93,6 @@ public class UrlListServlet extends HttpServlet {
     public static final String FILE_LIST_TARGET = "/urlList";
     private static final long serialVersionUID = 202007201400L;
 
-
     /**
      * Handle POSTed download request from an external page.
      *
