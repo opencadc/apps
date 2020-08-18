@@ -227,7 +227,6 @@ public class DownloadUtil {
                 throw new UnsupportedOperationException();
             }
         };
-
     }
 
     /**

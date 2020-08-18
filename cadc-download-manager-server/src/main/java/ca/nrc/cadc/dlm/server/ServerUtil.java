@@ -67,7 +67,6 @@
 ************************************************************************
 */
 
-
 package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.dlm.DownloadTuple;
@@ -92,14 +91,15 @@ import org.jdom2.Element;
 import org.jdom2.Namespace;
 
 /**
- * TODO.
+ * <p>Functions for parsing input parameters for Download Manager
+ * </p>
  *
  * @author pdowler
  */
 public class ServerUtil {
     // public API for DownloadManager is to accept and interpret these two params
     static final String PARAM_URI = "uri";
-    static final String PARAM_URILIST = "uris";
+    static final String PARAM_TUPLE = "tuple";
     static final String PARAM_PARAMLIST = "params";
     static final String PARAM_METHOD = "method";
     static final List<String> INTERNAL_PARAMS = new ArrayList<String>();
@@ -107,7 +107,7 @@ public class ServerUtil {
 
     static {
         INTERNAL_PARAMS.add(PARAM_URI);
-        INTERNAL_PARAMS.add(PARAM_URILIST);
+        INTERNAL_PARAMS.add(PARAM_TUPLE);
         INTERNAL_PARAMS.add(PARAM_PARAMLIST);
         INTERNAL_PARAMS.add(PARAM_METHOD);
     }
@@ -115,6 +115,12 @@ public class ServerUtil {
     private ServerUtil() {
     }
 
+    /**
+     * Get name of codebase from request object.
+     *
+     * @param request  The HTTP Request.
+     * @return String   Location of codebase.
+     */
     public static String getCodebase(HttpServletRequest request) {
         try {
             URL req = new URL(request.getRequestURL().toString());
@@ -131,10 +137,9 @@ public class ServerUtil {
      * Extract all download content related parameters from the request.
      *
      * @param request
-     * @return
+     * @return map of parameters included in request.
      */
-    public static Map<String, List<String>> getParameters(
-        HttpServletRequest request) {
+    public static Map<String, List<String>> getParameters(HttpServletRequest request) {
         // internal repost
         String params = request.getParameter("params");
         if (params != null) {
@@ -153,158 +158,173 @@ public class ServerUtil {
                 }
             }
         }
+
+        // not considered deprecated yet. parameters in 'fragment' will be
+        // parsed into the paramMap
+        List<String> frag = paramMap.get("fragment");
+        if (frag != null) {
+            for (String f : frag) {
+                String[] parts = f.split("&");
+                for (String p : parts) {
+                    String[] kv = p.split("=");
+                    if (kv.length == 2) {
+                        List<String> values = paramMap.get(kv[0]);
+                        if (values == null) {
+                            values = new ArrayList<String>();
+                            paramMap.put(kv[0], values);
+                        }
+                        values.add(kv[1]);
+                    }
+                }
+            }
+            paramMap.remove("fragment");
+        }
+
+        // Deprecated values need to be stripped out
+        // Should only be 1 entry
+        paramMap.remove("fileId");
+
+        // can be more than one
+        List<String> fcs = paramMap.get("fileClass");
+        if (fcs != null) {
+            for (String fc : fcs) {
+                paramMap.remove(fc);
+            }
+            paramMap.remove("fileClass");
+        }
+
         return paramMap;
     }
 
     /**
      * Extract all download content related parameters from the request.
      *
-     * @param request
-     * @return
+     * @param request The HTTP Request.
+     * @return List of URIs.
+     * @throws URISyntaxException URI parameter found with incorrect format.
      */
     public static List<DownloadTuple> getTuples(HttpServletRequest request) throws URISyntaxException {
 
-        List<DownloadTuple> ret = new ArrayList<>();
+        // Parse input from the following sources:
+        //  - PARAM_TUPLE
+        //  - PARAM_URI
+        //  - JSON payload information (assumed to be tuple only, as it is new)
+        // Merge resulting tuple lists from all sources
 
         // internal repost ('tuple' used as form field name in JSPs in this library)
-        String[] tupleStrList = request.getParameterValues("tuple");
+        List<DownloadTuple> tuples = new ArrayList<>();
+        String[] tupleStrList = request.getParameterValues(PARAM_TUPLE);
         if ((tupleStrList != null) && (tupleStrList.length > 0)) {
             for (int i = 0; i < tupleStrList.length; i++) {
-                ret.add(new DownloadTuple(tupleStrList[i]));
+                tuples.add(new DownloadTuple(tupleStrList[i]));
             }
         }
 
-        if (ret.isEmpty()) {
-            // Check to see if JSON content sent
-            if (request.getContentType().toLowerCase().contains("application/json")) {
-                ret = getJSONTuples(request);
-            } else {
-                // Go through supported (albeit deprecated) methods of
-                // passing data to download manager
-                // These options are here to support any community web pages
-                // that still use old parameters that have not yet been converted
-                // to the current API
-                String uris = request.getParameter("uris");
-                String[] uriParams;
-                if (uris != null) {
-                    uriParams = uris.split(" ");
-                } else {
-                    // original post
-                    uriParams = request.getParameterValues(PARAM_URI);
-                }
+        // Check to see if JSON content sent
+        List<DownloadTuple> jsonTuples = new ArrayList<>();
+        if (request.getContentType().toLowerCase().contains("application/json")) {
+            jsonTuples = getJSONTuples(request);
+        }
 
-                // process into a List<DownloadTuple>
-                if (uriParams != null) {
-                    for (String u : uriParams) {
-                        if (StringUtil.hasText(u)) {
-                            ret.add(new DownloadTuple(u));
-                        }
-                    }
-                }
-
-                // In case nothing is passed in as 'uri' or 'uris,' check for
-                // deprecated parameters
-                if (ret.isEmpty()) {
-                    handleDeprecatedParams(request);
-                    ret = (List<DownloadTuple>) request.getAttribute("tupleList");
+        // Merge any tuples found into return list
+        if (!jsonTuples.isEmpty()) {
+            // merge the two lists
+            for (DownloadTuple u: jsonTuples) {
+                if (!tuples.contains(u)) {
+                    tuples.add(u);
                 }
             }
         }
-        return ret;
+
+        // Check to see if any PARAM_URI entries are provided
+        String[] uriList = request.getParameterValues(PARAM_URI);
+
+        // process into a List<DownloadTuple>
+        List<DownloadTuple> uriOnlyTuples = new ArrayList<>();
+        if (uriList != null) {
+            for (String u : uriList) {
+                if (StringUtil.hasText(u)) {
+                    uriOnlyTuples.add(new DownloadTuple(u));
+                }
+            }
+        }
+
+        // Merge in any URI-only tuples into return list
+        if (!uriOnlyTuples.isEmpty()) {
+            // merge the two lists
+            for (DownloadTuple u: uriOnlyTuples) {
+                if (!tuples.contains(u)) {
+                    tuples.add(u);
+                }
+            }
+        }
+
+        // In case nothing is passed in as 'uri' or 'uris,' check for
+        // deprecated parameters
+        // TODO: this needs to be reworked into the tuple format.
+        List<DownloadTuple> moreTuples = handleDeprecatedAPI(request);
+        if (!moreTuples.isEmpty()) {
+            // merge the two lists
+            for (DownloadTuple tup: moreTuples) {
+                if (!tuples.contains(tup)) {
+                    tuples.add(tup);
+                }
+            }
+        }
+
+        return tuples;
     }
 
     /**
      * Check for deprecated parameters in the request. Convert to the most current for Download Manager's API.
      * Kept for backward compatibility.
-     * (last rev: July 21, 2020, s2739, HJ)
-     * @param request
+     * (last rev: Aug 18, 2020, s2739, HJ)
+     * @param request  The HTTP Request.
+     * @return list of URIs.
      */
-    public static void handleDeprecatedParams(HttpServletRequest request) {
-        // Check to see if tuples have already been parsed from the request parameters.
-        // If so, this is an internal dispatch/forward being processed
-        List<DownloadTuple> tupleList = (List<DownloadTuple>)request.getAttribute("tupleList");
-        if (tupleList == null) {
-            String referer = request. getHeader("referer");
-            String[] sa;
+    public static List<DownloadTuple> handleDeprecatedAPI(HttpServletRequest request) {
+        List<DownloadTuple> tupleList = new ArrayList<>();
 
-            // fileClass -> dynamic params = AD scheme-specific part
-            String[] fileClasses = request.getParameterValues("fileClass");
-            if (fileClasses != null) {
-                // fileClass is a list of parameters giving other URIs
-                log.debug("fileClass param(s): " + fileClasses.length);
-                log.warn("deprecated param 'fileClass' used by " + referer);
-                for (String fileClass : fileClasses) {
-                    log.debug("fileClass: " + fileClass);
-                    sa = request.getParameterValues(fileClass);
-                    if (sa != null) {
-                        for (String curSa : sa) {
-                            String u = processURI(curSa);
-                            if (u != null) {
-                                u = toAd(u);
-                                log.debug("\turi: " + u);
-                                tupleList.add(new DownloadTuple(u));
-                            }
+        String referer = request. getHeader("referer");
+        String[] sa;
+
+        // fileClass -> dynamic params = AD scheme-specific part
+        String[] fileClasses = request.getParameterValues("fileClass");
+        if (fileClasses != null) {
+            // fileClass is a list of parameters giving other URIs
+            log.debug("fileClass param(s): " + fileClasses.length);
+            log.warn("deprecated param 'fileClass' used by " + referer);
+            for (String fileClass : fileClasses) {
+                log.debug("fileClass: " + fileClass);
+                sa = request.getParameterValues(fileClass);
+                if (sa != null) {
+                    for (String curSa : sa) {
+                        String u = processURI(curSa);
+                        if (u != null) {
+                            u = toAd(u);
+                            log.debug("\turi: " + u);
+                            tupleList.add(new DownloadTuple(u));
+
                         }
                     }
                 }
             }
+        }
 
-            sa = request.getParameterValues("fileId");
-            if (sa != null) {
-                log.debug("fileId param(s): " + sa.length);
-                log.warn("deprecated param 'fileId' used by " + referer);
-                for (String curSa : sa) {
-                    String u = processURI(curSa);
-                    if (u != null) {
-                        u = toAd(u);
-                        tupleList.add(new DownloadTuple(u));
-                    }
+        sa = request.getParameterValues("fileId");
+        if (sa != null) {
+            log.debug("fileId param(s): " + sa.length);
+            log.warn("deprecated param 'fileId' used by " + referer);
+            for (String curSa : sa) {
+                String u = processURI(curSa);
+                if (u != null) {
+                    u = toAd(u);
+                    tupleList.add(new DownloadTuple(u));
                 }
-            }
-
-            if (tupleList != null && !tupleList.isEmpty()) {
-                request.setAttribute("tupleList", tupleList);
             }
         }
 
-        String params = (String) request.getAttribute("params");
-        if (params == null) {
-            Map<String,List<String>> paramMap = ServerUtil.getParameters(request);
-
-            // things to strip out
-            paramMap.remove("fileId");
-            List<String> fcs = paramMap.get("fileClass");
-            if (fcs != null) {
-                for (String fc : fcs) {
-                    paramMap.remove(fc);
-                }
-                paramMap.remove("fileClass");
-            }
-
-            List<String> frag = paramMap.get("fragment");
-            if (frag != null) {
-                for (String f : frag) {
-                    String[] parts = f.split("&");
-                    for (String p : parts) {
-                        String[] kv = p.split("=");
-                        if (kv.length == 2) {
-                            List<String> values = paramMap.get(kv[0]);
-                            if (values == null) {
-                                values = new ArrayList<String>();
-                                paramMap.put(kv[0], values);
-                            }
-                            values.add(kv[1]);
-                        }
-                    }
-                }
-                paramMap.remove("fragment");
-            }
-
-            if (!paramMap.isEmpty()) {
-                params = DownloadUtil.encodeParamMap(paramMap);
-                request.setAttribute("params", params);
-            }
-        }
+        return tupleList;
     }
 
 

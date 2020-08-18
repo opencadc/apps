@@ -125,7 +125,6 @@
 <fmt:setBundle basename="ca.nrc.cadc.downloadManager.downloadManagerBundle"
 var="langBundle" scope="request"/>
 
-
 <% if (StringUtil.hasLength(skinURL)) {
 %>
 <head>
@@ -140,9 +139,6 @@ var="langBundle" scope="request"/>
 %>
 
 <body>
-<%= headerURL %>
-<%= footerURL %>
-
 <% if (StringUtil.hasLength(bodyHeaderURL)) {
 %>
 <c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>

@@ -111,10 +111,10 @@ public class JavaWebStartServlet extends HttpServlet {
     /**
      * Handle POSTed download request directed to the Java WebStart download method.
      *
-     * @param request
-     * @param response
-     * @throws javax.servlet.ServletException
-     * @throws java.io.IOException
+     * @param request  The HTTP Request.
+     * @param response The HTTP Response.
+     * @throws javax.servlet.ServletException For general Servlet exceptions
+     * @throws java.io.IOException            For any I/O related errors.
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {

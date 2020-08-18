@@ -78,7 +78,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -91,20 +90,18 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class UrlListServlet extends HttpServlet {
     public static final String FILE_LIST_TARGET = "/urlList";
-    private static final long serialVersionUID = 202008040800L;
+    private static final long serialVersionUID = 202008181200L;
 
     /**
      * Handle POSTed download request from an external page.
      *
      * @param request  The HTTP Request
      * @param response The HTTP Response
-     * @throws javax.servlet.ServletException
      * @throws java.io.IOException
      */
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response) throws ServletException,
-        IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+        throws  IOException {
 
         response.setContentType("text/plain");
         response.setHeader("Content-Disposition",
@@ -115,8 +112,7 @@ public class UrlListServlet extends HttpServlet {
         forceAuth.add(AuthMethod.PASSWORD.getValue());
 
         String params = (String) request.getAttribute("params");
-        Map<String, List<String>> paramMap = DownloadUtil
-            .decodeParamMap(params);
+        Map<String, List<String>> paramMap = DownloadUtil.decodeParamMap(params);
         paramMap.put("auth", forceAuth);
 
         List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");

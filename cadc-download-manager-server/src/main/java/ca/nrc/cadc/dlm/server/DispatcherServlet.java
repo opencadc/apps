@@ -111,12 +111,13 @@ public class DispatcherServlet extends HttpServlet {
     private static final long serialVersionUID = 202008040800L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
+    private static String INTERNAL_FORWARD_PARAMETER = "tupleList";
+    private static int ONE_YEAR = 365 * 24 * 3600;
 
     public static String URLS = "URL List";
     public static String HTMLLIST = "HTML List";
     public static String WEBSTART = "Java Webstart";
 
-    private static int ONE_YEAR = 365 * 24 * 3600;
 
     /// Used during JSP compilation
     public static String DEFAULT_CONFIG_FILE_PATH = System.getProperty("user.home") + "/config/org.opencadc.dlm-server.properties";
@@ -125,10 +126,11 @@ public class DispatcherServlet extends HttpServlet {
      * Checks cookie and request param for download method preference; tries to set a cookie
      * to save setting for future use.
      *
+     * @param request  The HTTP Request.
+     * @param response The HTTP Response.
      * @return name of page to forward to, null if caller should offer choices to user
      */
-    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException {
+    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response) {
         String method = request.getParameter(ServerUtil.PARAM_METHOD);
         Cookie ck = null;
 
@@ -184,7 +186,6 @@ public class DispatcherServlet extends HttpServlet {
         }
         log.debug("Determined method: " + method);
 
-
         if (request.getParameter("remember") != null) {
             // set/edit cookie
             if (ck == null) { // new
@@ -216,12 +217,11 @@ public class DispatcherServlet extends HttpServlet {
      *
      * @param request  The HTTP Request.
      * @param response The HTTP Response.
-     * @throws javax.servlet.ServletException For general Servlet exceptions
      * @throws java.io.IOException            For any I/O related errors.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws IOException {
         ServletLogInfo logInfo = new ServletLogInfo(request);
         log.info(logInfo.start());
 
@@ -275,24 +275,22 @@ public class DispatcherServlet extends HttpServlet {
             this.response = response;
         }
 
-        public Object run()
-            throws Exception {
-
+        public Object run() throws Exception {
             // forward
-            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
-            String params = (String) request.getAttribute("params");
+            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
 
-            // external post
             if (tupleList == null) {
+                // external post
                 tupleList = ServerUtil.getTuples(request);
                 if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
-                request.setAttribute("tupleList", tupleList);
+                request.setAttribute(INTERNAL_FORWARD_PARAMETER, tupleList);
                 log.debug("tupleList: " + tupleList.toString());
             }
 
+            String params = (String) request.getAttribute("params");
             if (params == null) {
                 Map<String, List<String>> paramMap = ServerUtil.getParameters(request);
                 if (paramMap != null && !paramMap.isEmpty()) {
