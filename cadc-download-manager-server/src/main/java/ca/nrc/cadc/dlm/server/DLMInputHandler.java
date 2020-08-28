@@ -150,11 +150,11 @@ public class DLMInputHandler {
         // original post
         Map<String, List<String>> paramMap = new TreeMap<>();
         Set<String> paramNames = si.getParameterNames();
-        Iterator<String> pNameIter = paramNames.iterator();
+        Iterator<String> paramNameIter = paramNames.iterator();
 
         // Build param map from full set provided
-        while (pNameIter.hasNext()) {
-            String key = (String) pNameIter.next();
+        while (paramNameIter.hasNext()) {
+            String key = (String) paramNameIter.next();
             if (!INTERNAL_PARAMS.contains(key)) {
                 List<String> values = si.getParameters(key);
                 if (values != null && values.size() > 0) {

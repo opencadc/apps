@@ -69,28 +69,9 @@
 
 package ca.nrc.cadc.dlm.server;
 
-import ca.nrc.cadc.dlm.DownloadTuple;
-import ca.nrc.cadc.dlm.DownloadUtil;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.SyncInput;
-import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.xml.JsonInputter;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
 
 /**
  * <p>Functions for parsing input parameters for Download Manager
@@ -99,9 +80,7 @@ import org.jdom2.Namespace;
  * @author pdowler
  */
 public class ServerUtil {
-//    static final String PARAM_METHOD = "method";
     private static final Logger log = Logger.getLogger(ServerUtil.class);
-
 
     private ServerUtil() {
     }
