@@ -210,7 +210,6 @@ public class DLMInputHandler {
      * Extract all download content related parameters from the request.
      *
      * @return List of URIs.
-     * @throws URISyntaxException URI parameter found with incorrect format.
      */
     public static List<DownloadTuple> getTuples()  {
 
@@ -240,7 +239,6 @@ public class DLMInputHandler {
                 }
             }
         }
-
 
         // Check to see if JSON content sent
         List<DownloadTuple> jsonTuples = (List<DownloadTuple>)si.getContent(DLMInlineContentHandler.CONTENT_KEY);
@@ -321,7 +319,6 @@ public class DLMInputHandler {
                             u = toAd(u);
                             log.debug("\turi: " + u);
                             tupleList.add(new DownloadTuple(u));
-
                         }
                     }
                 }
@@ -348,7 +345,7 @@ public class DLMInputHandler {
     /**
      * Validate content by trimming and checking length.
      *
-     * @param uri
+     * @param uri - uri to be handled
      * @return valid (trimmed non-zero-length) string or null
      */
     private static String processURI(String uri) {
@@ -386,34 +383,9 @@ public class DLMInputHandler {
     }
 
     /**
-     * Parse tuples from JSON input in request payload.
-     * @param request
-     * @return
-     */
-    public static List<DownloadTuple> getJSONTuples(HttpServletRequest request) {
-        try {
-            BufferedReader reader = request.getReader();
-            String json = IOUtils.toString(reader);
-
-            if (json == null) {
-                throw new IllegalArgumentException("JSON input string must not be null");
-            }
-            try {
-                JsonInputter inputter = new JsonInputter();
-                return buildTupleArray(inputter.input(json));
-            } catch (Exception ex) {
-                String error = "error reading JSON string: " + ex.getMessage();
-                throw new IllegalArgumentException(error, ex);
-            }
-        } catch (IOException ioe) {
-            throw new IllegalArgumentException("could not get JSON input from request.");
-        }
-    }
-
-    /**
      * Parse tuples out of jdom2 XML document.
-     * @param doc
-     * @return
+     * @param doc - Document containing tuple information
+     * @return List of DownloadTuple
      */
     protected static List<DownloadTuple> buildTupleArray(Document doc) {
         Element root = doc.getRootElement();

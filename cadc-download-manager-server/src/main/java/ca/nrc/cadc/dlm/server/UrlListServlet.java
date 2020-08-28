@@ -97,7 +97,7 @@ public class UrlListServlet extends HttpServlet {
      *
      * @param request  The HTTP Request
      * @param response The HTTP Response
-     * @throws java.io.IOException
+     * @throws java.io.IOException if stream processing fails
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

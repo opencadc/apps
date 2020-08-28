@@ -99,8 +99,8 @@ public class JavaWebStartServlet extends HttpServlet {
 
 
     /**
-     * @param config
-     * @throws javax.servlet.ServletException
+     * @param config - webstart configuration
+     * @throws javax.servlet.ServletException - if parent init fails
      */
     public void init(ServletConfig config)
         throws ServletException {

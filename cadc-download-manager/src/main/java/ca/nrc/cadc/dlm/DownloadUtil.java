@@ -238,7 +238,7 @@ public class DownloadUtil {
      * - shape descriptor (optional): space delimited set of values: string name + coordinates (used for cutouts)
      * - label (optional): filename-compatible target name
      *
-     * @param args
+     * @param args Array of Strings, should be arguments from a command line call
      * @return list of download tuples
      */
     public static List<DownloadTuple> parseTuplesFromArgs(String[] args) {
