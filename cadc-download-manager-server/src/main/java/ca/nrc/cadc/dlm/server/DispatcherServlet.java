@@ -74,6 +74,7 @@ import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
+import ca.nrc.cadc.rest.SyncInput;
 import java.io.IOException;
 import java.net.URI;
 import java.security.PrivilegedActionException;
@@ -131,7 +132,7 @@ public class DispatcherServlet extends HttpServlet {
      * @return name of page to forward to, null if caller should offer choices to user
      */
     public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response) {
-        String method = request.getParameter(ServerUtil.PARAM_METHOD);
+        String method = request.getParameter(DLMInputHandler.PARAM_METHOD);
         Cookie ck = null;
 
         // get cookie
@@ -225,6 +226,7 @@ public class DispatcherServlet extends HttpServlet {
         ServletLogInfo logInfo = new ServletLogInfo(request);
         log.info(logInfo.start());
 
+
         long start = System.currentTimeMillis();
 
         try {
@@ -279,9 +281,15 @@ public class DispatcherServlet extends HttpServlet {
             // forward
             List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
 
+            // Set up input handling
+            DLMInputHandler inputHandler = new DLMInputHandler(request);
+
             if (tupleList == null) {
                 // external post
-                tupleList = ServerUtil.getTuples(request);
+                inputHandler.parseInput();
+
+                tupleList = inputHandler.getTuples();
+
                 if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
@@ -292,7 +300,7 @@ public class DispatcherServlet extends HttpServlet {
 
             String params = (String) request.getAttribute("params");
             if (params == null) {
-                Map<String, List<String>> paramMap = ServerUtil.getParameters(request);
+                Map<String, List<String>> paramMap = inputHandler.getParameters();
                 if (paramMap != null && !paramMap.isEmpty()) {
                     params = DownloadUtil.encodeParamMap(paramMap);
                     request.setAttribute("params", params);

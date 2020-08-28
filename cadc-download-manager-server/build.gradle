@@ -27,6 +27,7 @@ dependencies {
     compile 'org.opencadc:cadc-util:1.+'
     compile 'org.opencadc:cadc-log:1.+'
     compile 'org.opencadc:cadc-registry:1.+'
+    compile 'org.opencadc:cadc-rest:[1.2.15,)'
     compile 'org.opencadc:cadc-app-kit:1.+'
     compile 'org.opencadc:cadc-download-manager:[1.4.1,)'
     compile 'org.opencadc:cadc-web-util:[1.2.7,)'

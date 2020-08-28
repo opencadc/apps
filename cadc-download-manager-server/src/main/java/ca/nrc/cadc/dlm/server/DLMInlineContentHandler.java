@@ -1,10 +1,9 @@
-
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2018.                            (c) 2018.
+ *  (c) 2016.                            (c) 2016.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -63,6 +62,7 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 5 $
  *
  ************************************************************************
  */
@@ -70,55 +70,60 @@
 package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.dlm.DownloadTuple;
-import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.rest.InlineContentException;
+import ca.nrc.cadc.rest.InlineContentHandler;
+
 import ca.nrc.cadc.xml.JsonInputter;
+import java.io.IOException;
+import java.io.InputStream;
 
+import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Level;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
-public class ServerUtilTest {
-    private static Logger log = Logger.getLogger(ServerUtilTest.class);
+public class DLMInlineContentHandler implements InlineContentHandler {
+    private static Logger log = Logger.getLogger(DLMInlineContentHandler.class);
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
-    }
+    public static final String CONTENT_KEY = "DLMJsonTuples";
 
-    private static String URI_STR = "test://mysite.ca/path/1";
-    private static String SHAPE_STR = "polygon 0 0 0 0";
-    private static String LABEL_STR = "label";
+    public DLMInlineContentHandler() {}
 
-    // Using Badgerfish json so that JsonInputter can read it correctly
-    private static String TUPLE_JSON_URI = "{\"tupleID\":\"{\"$\":\"" + URI_STR + "\"}}";
-    private static String TUPLE_JSON_SHAPE = "{\"tupleID\":\"{\"$\":\"" + URI_STR + "\"},\"shape\":\"{\"$\":\"" + SHAPE_STR + "\"}}";
-
-    private static String TUPLE_JSON = "{\"tuple\":{\"tupleID\":{\"$\":\"" + URI_STR + "\"}," +
-        "\"shape\":{\"$\":\"" + SHAPE_STR + "\"}," +
-        "\"label\":{\"$\":\"" + LABEL_STR + "\"}}}";
-
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
-    }
-
-    @Test
-    public void testJSONTupleInput() throws Exception {
-        log.debug("testJSONTupleInput");
-        // Build an array of one
-        String jsonTuples = "{\"tupleList\":{\"$\":[" + TUPLE_JSON + "]}}";
-        log.debug("jsonTuples string:" + jsonTuples);
-
-        JsonInputter inputter = new JsonInputter();
-        List<DownloadTuple> dtList =  ServerUtil.buildTupleArray(inputter.input(jsonTuples));
-
-        for (DownloadTuple dt: dtList) {
-            // each should have the same values
-            log.debug(dt.tupleID + dt.shapeDescriptor + dt.label + "...");
-            Assert.assertEquals("tupleID does not match", URI_STR, dt.tupleID);
-            Assert.assertEquals("shape does not match", SHAPE_STR, dt.shapeDescriptor);
-            Assert.assertEquals("label does not match", LABEL_STR, dt.label);
+    /**
+     * Receive data.
+     */
+    public Content accept(String name, String contentType, InputStream inputStream)
+            throws InlineContentException, IOException {
+        if (inputStream == null) {
+            throw new IOException("The InputStream is closed");
         }
-    }
 
+        Content content = new Content();
+        List<DownloadTuple> dtList = new ArrayList<>();
+
+        if (contentType.toLowerCase().contains("application/json")) {
+
+            try {
+                String json = IOUtils.toString(inputStream, "UTF-8");
+
+                if (json == null) {
+                    throw new IllegalArgumentException("JSON input string must not be null");
+                }
+
+                JsonInputter inputter = new JsonInputter();
+                // Q: where can the json string come from in this context?
+                dtList = DLMInputHandler.buildTupleArray(inputter.input(json));
+
+            } catch (IOException ioe) {
+                throw new IllegalArgumentException("could not get JSON input from request.");
+            }
+            // TODO: need to figure out if this level of excpetion is needed?
+            // InlineContentException not handled - where is it thrown that it could
+            // be sanely caught here? Is it thrown at all?
+        }
+
+        content.name = CONTENT_KEY;
+        content.value = dtList;
+        return content;
+    }
 }

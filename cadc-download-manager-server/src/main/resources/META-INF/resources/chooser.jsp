@@ -155,7 +155,6 @@ var="langBundle" scope="request"/>
 <%      for (DownloadTuple tuple: tupleList) {
             String tupleStr = tuple.toInternalFormat();
 %>
-        <span><%= tupleStr %></span>
         <input type="hidden" name="tuple" value="<%= tupleStr %>" />
 <%
         }
