@@ -73,6 +73,7 @@ import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.xml.JsonInputter;
 
+import java.net.URI;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -105,6 +106,7 @@ public class DLMInputHandlerTest {
     @Test
     public void testJSONTupleInput() throws Exception {
         log.debug("testJSONTupleInput");
+        URI testURI = new URI(URI_STR);
         // Build an array of one
         String jsonTuples = "{\"tupleList\":{\"$\":[" + TUPLE_JSON + "]}}";
         log.debug("jsonTuples string:" + jsonTuples);
@@ -115,7 +117,7 @@ public class DLMInputHandlerTest {
         for (DownloadTuple dt: dtList) {
             // each should have the same values
             log.debug(dt.tupleID + dt.shapeDescriptor + dt.label + "...");
-            Assert.assertEquals("tupleID does not match", URI_STR, dt.tupleID);
+            Assert.assertEquals("tupleID does not match", testURI, dt.tupleID);
             Assert.assertEquals("shape does not match", SHAPE_STR, dt.shapeDescriptor);
             Assert.assertEquals("label does not match", LABEL_STR, dt.label);
         }
