@@ -205,21 +205,20 @@ public class DownloadUtil {
                 }
 
                 DownloadTuple cur = outer.next();
-                ParsedURI tupleURI = new ParsedURI(cur.tupleID);
-
-                if (tupleURI.error != null) { // string -> URI fail
-                    return new DownloadDescriptor(tupleURI.str, tupleURI.error.toString());
+                
+                if (cur.parsingError != null) { // string -> URI fail
+                    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
                 }
                 try {
-                    inner = gen.downloadIterator(tupleURI.uri);
+                    inner = gen.downloadIterator(cur.tupleID);
                     if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
                     // inner was empty
                     inner = null;
-                    return new DownloadDescriptor(tupleURI.uri.toString(), "no matching files");
+                    return new DownloadDescriptor(cur.tupleIDstr, "no matching files");
                 } catch (Throwable t) {
-                    return new DownloadDescriptor(tupleURI.uri.toString(), t.toString());
+                    return new DownloadDescriptor(cur.tupleIDstr, t.toString());
                 }
             }
 

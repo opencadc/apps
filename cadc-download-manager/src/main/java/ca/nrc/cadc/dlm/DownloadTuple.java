@@ -65,6 +65,7 @@
  *
  ************************************************************************
  */
+
 package ca.nrc.cadc.dlm;
 
 import ca.nrc.cadc.dali.Shape;
@@ -77,9 +78,12 @@ import org.apache.log4j.Logger;
 public class DownloadTuple {
     private static Logger log = Logger.getLogger(DownloadTuple.class);
 
+    public final String tupleIDstr;
     public final URI tupleID;
-    public final String shapeDescriptor;
-    public final String label;
+    public String shapeDescriptor;
+    public String label;
+
+    public Throwable parsingError;
 
     // unsure we need Shape or not - only interesting
     // in cadc-download-manager when DataLinkClient is putting
@@ -95,19 +99,28 @@ public class DownloadTuple {
     }
 
     public DownloadTuple(String tupleIDstr, String shape, String label) {
-        try {
-            this.tupleID = new URI(tupleIDstr);
-        } catch (URISyntaxException u) {
-            throw new InvalidParameterException("Invalid tupleID. " + tupleIDstr + ": " + u.getReason());
-        } catch (NullPointerException npe) {
-            throw new InvalidParameterException("tupleID can not be null.");
+        String tempTupleStr = null;
+        URI tempURI = null;
+
+        if (!StringUtil.hasLength(tupleIDstr)) {
+            parsingError = new InvalidParameterException("tupleID can not be null or empty.");
+        } else {
+            tempTupleStr = tupleIDstr;
+            try {
+                tempURI = new URI(tupleIDstr);
+            } catch (URISyntaxException u) {
+                parsingError = u;
+            }
+            this.shapeDescriptor = shape;
+            this.label = label;
         }
-        this.shapeDescriptor = shape;
-        this.label = label;
+        this.tupleIDstr = tempTupleStr;
+        this.tupleID = tempURI;
     }
 
     public DownloadTuple(URI tupleID, String shape, String label) {
         this.tupleID = tupleID;
+        this.tupleIDstr = tupleID.toString();
         this.shapeDescriptor = shape;
         this.label = label;
     }

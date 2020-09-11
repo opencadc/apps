@@ -70,7 +70,6 @@
 package ca.nrc.cadc.dlm;
 
 import ca.nrc.cadc.util.Log4jInit;
-import java.security.InvalidParameterException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -82,11 +81,14 @@ public class DownloadTupleTest {
     private static String SHAPE_STR = "polygon 0 0 0 0";
     private static String LABEL_STR = "label";
 
+    // test://mysite.ca/path/1{polygon 0 0 0 0}
     private static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}";
+
+    // test://mysite.ca/path/1{polygon 0 0 0 0}{label}
     private static String TUPLE_INTERNAL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
     @Test
@@ -94,6 +96,7 @@ public class DownloadTupleTest {
         DownloadTuple dt = new DownloadTuple(URI_STR);
         log.debug("internal format, uri only: " + dt.toInternalFormat());
         Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), URI_STR);
+        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
     }
 
     @Test
@@ -101,6 +104,7 @@ public class DownloadTupleTest {
         DownloadTuple dt = new DownloadTuple(URI_STR, SHAPE_STR, LABEL_STR);
         log.debug("internal format, full: " + dt.toInternalFormat());
         Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), TUPLE_INTERNAL);
+        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
     }
 
     @Test
@@ -108,26 +112,20 @@ public class DownloadTupleTest {
         DownloadTuple dt = new DownloadTuple(URI_STR, SHAPE_STR, null);
         log.debug("internal format, no label: " + dt.toInternalFormat());
         Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), TUPLE_INTERNAL_SHAPE);
+        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
     }
 
     @Test
     public void testInvalidNullURI() throws Exception {
-        try {
-            DownloadTuple dt = new DownloadTuple(null);
-            Assert.fail("DownloadTuple ctor should have failed for null parameter");
-        } catch (InvalidParameterException expected) {
-            log.debug("null tupleID failed as expected in DownloadTuple ctor.");
-        }
+        DownloadTuple dt = new DownloadTuple(null);
+        log.debug("parsing error: " + dt.parsingError);
+        Assert.assertTrue("DownloadTuple ctor should have failed for null parameter", (dt.parsingError != null) );
     }
 
     @Test
     public void testInvalidURI() throws Exception {
-        try {
-            DownloadTuple dt = new DownloadTuple("bad_URI_format has spaces");
-            Assert.fail("DownloadTuple ctor should have failed for bad format");
-        } catch (InvalidParameterException expected) {
-            log.debug("null tupleID failed as expected in DownloadTuple ctor.");
-        }
+        DownloadTuple dt = new DownloadTuple("bad_URI_format has spaces");
+        log.debug("parsing error: " + dt.parsingError);
+        Assert.assertTrue("DownloadTuple ctor should have failed for null parameter", (dt.parsingError != null));
     }
-
 }
