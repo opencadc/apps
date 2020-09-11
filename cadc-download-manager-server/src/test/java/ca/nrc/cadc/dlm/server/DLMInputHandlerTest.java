@@ -1,4 +1,3 @@
-
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -84,7 +83,7 @@ public class DLMInputHandlerTest {
     private static Logger log = Logger.getLogger(DLMInputHandlerTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     private static String URI_STR = "test://mysite.ca/path/1";
@@ -92,9 +91,11 @@ public class DLMInputHandlerTest {
     private static String LABEL_STR = "label";
 
     // Using Badgerfish json so that JsonInputter can read it correctly
-    private static String TUPLE_JSON_URI = "{\"tupleID\":\"{\"$\":\"" + URI_STR + "\"}}";
-    private static String TUPLE_JSON_SHAPE = "{\"tupleID\":\"{\"$\":\"" + URI_STR + "\"},\"shape\":\"{\"$\":\"" + SHAPE_STR + "\"}}";
-
+    // {
+    //      "tupleID" : {"$": "test://mysite.ca/path/1"},
+    //      "shape" : {"$" : "polygon 0 0 0 0"},
+    //      "label" : {"$" : "label"}
+    //  }
     private static String TUPLE_JSON = "{\"tuple\":{\"tupleID\":{\"$\":\"" + URI_STR + "\"}," +
         "\"shape\":{\"$\":\"" + SHAPE_STR + "\"}," +
         "\"label\":{\"$\":\"" + LABEL_STR + "\"}}}";
@@ -107,7 +108,15 @@ public class DLMInputHandlerTest {
     public void testJSONTupleInput() throws Exception {
         log.debug("testJSONTupleInput");
         URI testURI = new URI(URI_STR);
-        // Build an array of one
+        // Build a Badgerfish JSON array of one
+
+        // { "tupleList" : { "$" : [
+        //      {
+        //          "tupleID" : {"$": "test://mysite.ca/path/1"},
+        //          "shape" : {"$" : "polygon 0 0 0 0"},
+        //          "label" : {"$" : "label"}
+        //      }
+        // ]}}
         String jsonTuples = "{\"tupleList\":{\"$\":[" + TUPLE_JSON + "]}}";
         log.debug("jsonTuples string:" + jsonTuples);
 
