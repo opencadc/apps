@@ -1,10 +1,10 @@
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.InvalidParameterException;
-import javax.swing.plaf.synth.Region;
 import org.apache.log4j.Logger;
 
 public class DownloadTuple {
@@ -14,10 +14,10 @@ public class DownloadTuple {
     public final String shapeDescriptor;
     public final String label;
 
-    // unsure we need Region or not - only interesting
+    // unsure we need Shape or not - only interesting
     // in cadc-download-manager when DataLinkClient is putting
     // together cutouts
-    private Region shape;
+    private Shape shape;
 
     /**
      * Convenience ctor to support historic use where only URI was provided.
@@ -30,8 +30,8 @@ public class DownloadTuple {
     public DownloadTuple(String tupleIDstr, String shape, String label) {
         try {
             this.tupleID = new URI(tupleIDstr);
-        } catch (URISyntaxException u ) {
-            throw new InvalidParameterException("Invalid tupleID. " + tupleIDstr +": " + u.getReason());
+        } catch (URISyntaxException u) {
+            throw new InvalidParameterException("Invalid tupleID. " + tupleIDstr + ": " + u.getReason());
         } catch (NullPointerException npe) {
             throw new InvalidParameterException("tupleID can not be null.");
         }
