@@ -205,7 +205,6 @@ public class DownloadUtil {
                 }
 
                 DownloadTuple cur = outer.next();
-                
                 if (cur.parsingError != null) { // string -> URI fail
                     return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
                 }

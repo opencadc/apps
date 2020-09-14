@@ -70,6 +70,7 @@
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 <%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
 <%
@@ -86,7 +87,7 @@
 
     if (!StringUtil.hasLength(headerURL)) {
         if (!StringUtil.hasLength(skinURL)) {
-            skinURL = "https://localhost/cadc/skin/";
+            skinURL = "http://localhost/cadc/skin/";
         }
 
         if (!skinURL.endsWith("/")) {
@@ -97,7 +98,7 @@
             if (!skinURL.startsWith("/")) {
                 skinURL = "/" + skinURL;
             }
-            skinURL = "https://localhost" + skinURL;
+            skinURL = "http://localhost" + skinURL;
         }
 
         headerURL = skinURL + "htmlHead";

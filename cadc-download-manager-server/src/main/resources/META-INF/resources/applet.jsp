@@ -92,7 +92,7 @@
 
     if (!StringUtil.hasLength(headerURL)) {
         if (!StringUtil.hasLength(skinURL)) {
-            skinURL = "https://localhost/cadc/skin/";
+            skinURL = "http://localhost/cadc/skin/";
         }
 
         if (!skinURL.endsWith("/")) {
@@ -103,7 +103,7 @@
             if (!skinURL.startsWith("/")) {
                 skinURL = "/" + skinURL;
             }
-            skinURL = "https://localhost" + skinURL;
+            skinURL = "http://localhost" + skinURL;
         }
 
         headerURL = skinURL + "htmlHead";
