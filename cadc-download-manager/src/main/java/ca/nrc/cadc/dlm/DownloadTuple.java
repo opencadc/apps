@@ -78,67 +78,64 @@ import org.apache.log4j.Logger;
 public class DownloadTuple {
     private static Logger log = Logger.getLogger(DownloadTuple.class);
 
-    public final String tupleIDstr;
     public final URI tupleID;
-    public String shapeDescriptor;
+    private Shape cutout;
     public String label;
 
-    public Throwable parsingError;
+    public List<Throwable> validationErrors;
 
-    // unsure we need Shape or not - only interesting
-    // in cadc-download-manager when DataLinkClient is putting
-    // together cutouts
-    private Shape shape;
-
-    /**
-     * Convenience ctor to support historic use where only URI was provided.
-     * @param tupleIDstr String representing URI
-     */
-    public DownloadTuple(String tupleIDstr) {
-        this(tupleIDstr, null, null);
-    }
-
-    public DownloadTuple(String tupleIDstr, String shape, String label) {
-        String tempTupleStr = null;
-        URI tempURI = null;
-
-        if (!StringUtil.hasLength(tupleIDstr)) {
-            parsingError = new InvalidParameterException("tupleID can not be null or empty.");
-        } else {
-            tempTupleStr = tupleIDstr;
-            try {
-                tempURI = new URI(tupleIDstr);
-            } catch (URISyntaxException u) {
-                parsingError = u;
-            }
-            this.shapeDescriptor = shape;
-            this.label = label;
-        }
-        this.tupleIDstr = tempTupleStr;
-        this.tupleID = tempURI;
-    }
-
-    public DownloadTuple(URI tupleID, String shape, String label) {
-        this.tupleID = tupleID;
-        this.tupleIDstr = tupleID.toString();
-        this.shapeDescriptor = shape;
-        this.label = label;
-    }
-
-    
-    public String toInternalFormat() {
-        String tupleStr = tupleID.toString();
-
-        // This function might be able to provide different formats
-        // within the shapeDescriptor to substitute whitespace for a different character
-        if (StringUtil.hasLength(shapeDescriptor)) {
-            tupleStr += "{" + shapeDescriptor + "}";
-        }
-
-        if (StringUtil.hasLength(label)) {
-            tupleStr += "{" + label + "}";
-        }
-
-        return tupleStr;
-    }
+//    /**
+//     * Convenience ctor to support historic use where only URI was provided.
+//     * @param tupleIDstr String representing URI
+//     */
+//    public DownloadTuple(String tupleIDstr) {
+//        this(tupleIDstr, null, null);
+//    }
+//
+//    public DownloadTuple(String tupleIDstr, String cutout, String label) {
+//        String tempTupleStr = null;
+//        URI tempURI = null;
+//
+//        if (!StringUtil.hasLength(tupleIDstr)) {
+//            parsingError = new InvalidParameterException("tupleID can not be null or empty.");
+//        } else {
+//            tempTupleStr = tupleIDstr;
+//            try {
+//                tempURI = new URI(tupleIDstr);
+//            } catch (URISyntaxException u) {
+//                parsingError = u;
+//            }
+//            this.label = label;
+//        }
+//
+//        if (StringUtil.hasLength(shape)) {
+//            this.cutout = new Shape()
+//        }
+//        this.tupleIDstr = tempTupleStr;
+//        this.tupleID = tempURI;
+//    }
+//
+//    public DownloadTuple(URI tupleID, String shape, String label) {
+//        this.tupleID = tupleID;
+//        this.tupleIDstr = tupleID.toString();
+//        this.shapeDescriptor = shape;
+//        this.label = label;
+//    }
+//
+//
+//    public String toInternalFormat() {
+//        String tupleStr = tupleID.toString();
+//
+//        // This function might be able to provide different formats
+//        // within the shapeDescriptor to substitute whitespace for a different character
+//        if (StringUtil.hasLength(shapeDescriptor)) {
+//            tupleStr += "{" + shapeDescriptor + "}";
+//        }
+//
+//        if (StringUtil.hasLength(label)) {
+//            tupleStr += "{" + label + "}";
+//        }
+//
+//        return tupleStr;
+//    }
 }
