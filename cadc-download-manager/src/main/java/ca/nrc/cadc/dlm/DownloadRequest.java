@@ -6,27 +6,22 @@ import java.util.List;
 import java.util.Map;
 
 public class DownloadRequest {
-    public final List<DownloadTuple> requestList;
-    public Map<String, List<String>> params;
+    public List<DownloadTuple> requestList = new ArrayList<DownloadTuple>();
+    public List<Exception> validationErrors = new ArrayList<Exception>();
 
     // TODO: where is this set and why? Is it part of the data model?
     public Boolean removeDuplicates;
 
-    public DownloadRequest(List<DownloadTuple> requests) {
-        List<DownloadTuple> tmpList = new ArrayList<DownloadTuple>();
-        if (requests != null) {
-            tmpList = requests;
-        }
+    public Map<String, List<String>> params;
 
-        this.requestList = tmpList;
+    public DownloadRequest(List<DownloadTuple> requests) {
+        this.requestList = requests;
         // TODO: probably a lighter weight way than HashMap,
         //  yet this is always the first that comes to mind..
         this.params = new HashMap<String, List<String>>();
     }
 
-    public DownloadRequest() {
-        this(null);
-    }
+    public DownloadRequest() { }
 
     public void addRequest(DownloadTuple dt) {
         this.requestList.add(dt);
@@ -34,6 +29,14 @@ public class DownloadRequest {
 
     public void setParams(Map<String, List<String>> params) {
         this.params = params;
+    }
+
+    public List<Exception> getValidationErrors() {
+        return this.validationErrors;
+    }
+
+    public void addValidationError(Exception e) {
+        this.validationErrors.add(e);
     }
 
 }
