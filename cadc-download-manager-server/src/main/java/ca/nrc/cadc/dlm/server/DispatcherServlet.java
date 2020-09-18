@@ -287,6 +287,8 @@ public class DispatcherServlet extends HttpServlet {
                 inputHandler.parseInput();
 
                 tupleList = inputHandler.getTuples();
+                // DownloadRequest object instantiated here ??
+                // Probably isn't necessary in this Servlet as nothing is done with it...
 
                 if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);

@@ -154,6 +154,7 @@ public class ConsoleUI implements UserInterface, TransferListener {
 
     }
 
+    // TODO: this might change to a DownloadRequest that needs to be parsed out
     public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params) {
         Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(tupleList, params);
         while (i.hasNext()) {
@@ -166,6 +167,7 @@ public class ConsoleUI implements UserInterface, TransferListener {
         }
     }
 
+    // TODO: might be changes here if DownloadDescriptor signature changes
     private void addDownload(DownloadDescriptor dd) {
         if (downloadDir == null) {
             this.downloadDir = new File(System.getProperty("user.dir"));
@@ -178,6 +180,7 @@ public class ConsoleUI implements UserInterface, TransferListener {
         }
     }
 
+    // TODO: might be changes here if DownloadDescriptor signature changes
     private void logError(DownloadDescriptor dd) {
         // TODO: display in a window? create a Download in FAILED state?
         String msg = "[error] cannot download " + dd.uri + " because: " + dd.error;

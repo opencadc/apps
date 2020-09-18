@@ -116,6 +116,7 @@ public class UrlListServlet extends HttpServlet {
         paramMap.put("auth", forceAuth);
 
         List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
+        // DownloadRequest instantiation would go here... and go into iterateURLs?
 
         for (Iterator<DownloadDescriptor> iter =
              DownloadUtil.iterateURLs(tupleList, paramMap, true); iter

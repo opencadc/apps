@@ -166,10 +166,14 @@ public class DownloadUtil {
         return paramSet;
     }
 
+    // TODO: remove this before chcking in code - this is called from wget.jsp, Main, and UrlListServlet
+    // (in cadc-download-manager-server) as core of code that processes a DownloadRequest and returns urls
+    // to caller in order to access files and/or cutouts requested for download.
     public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params) {
         return iterateURLs(tuples, params, false);
     }
 
+    // If this changes to DownloadRequest object, what happens?
     public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params,
                                                            final boolean removeDuplicates) {
         final Set<URL> urls = new HashSet<>();

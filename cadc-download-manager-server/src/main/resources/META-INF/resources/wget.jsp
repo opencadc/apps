@@ -80,6 +80,9 @@
 
 <%
     List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
+    // TODO: DownloadRequest would need to go here?
+    // or would this work be better done somewhere else & only the results be
+    // sent here?
     String params = (String) request.getAttribute("params");
     Map<String,List<String>> paramMap = DownloadUtil.decodeParamMap(params);
 %>

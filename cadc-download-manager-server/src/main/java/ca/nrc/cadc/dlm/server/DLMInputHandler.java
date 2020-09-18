@@ -393,7 +393,7 @@ public class DLMInputHandler {
         List<DownloadTuple> dtList = new ArrayList<>();
 
         // Must be at least one
-        if (root.getChild("tuple", ns) != null) {
+        if (root.getChildren("tuple", ns) != null) {
             // ... but may be more than one
             List<Element> tupleElements = root.getChildren("tuple", ns);
 

@@ -160,6 +160,14 @@ public class Main {
 
                     List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
 
+                    // DownloadRequest goes here?
+                    // this.downloadRequest = new DownloadRequest();
+                    // might have to parse 'cutout' from here in the case of uri being passed in
+                    // with ICRS cutout (as from AS)
+                    // this.downloadRequest.globalParams = params;
+                    // OR
+                    // this.downloadRequest.parseGlobalParams(params);
+
                     if (forceAuthMethod != null) {
                         List<String> am = new ArrayList<>();
                         am.add(forceAuthMethod);

@@ -118,12 +118,19 @@ public class JavaWebStartServlet extends HttpServlet {
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
+
+        // Instantiate new DownloadRequest object
+        // this.downloadRequest = new DownloadRequest();
+        // ?? again, nothing done with it here. This post goes to DownloadManager.jsp immediately.
+
         // encode & in the param list for safe use in XML
         String params = (String) request.getAttribute("params");
         if (params != null) {
             params = params.replaceAll("&", "&amp;");
             request.setAttribute("params", params);
         }
+
+        // this.downloadRequest.params = params;
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
         // Nothing added in if user is anon
