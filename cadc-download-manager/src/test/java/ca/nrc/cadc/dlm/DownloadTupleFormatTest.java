@@ -1,3 +1,4 @@
+
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -68,64 +69,67 @@
 
 package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class DownloadTuple {
-    private static Logger log = Logger.getLogger(DownloadTuple.class);
+public class DownloadTupleFormatTest extends DownloadTupleTestBase {
+    private static Logger log = Logger.getLogger(DownloadTupleFormatTest.class);
 
-    private final URI id;
-    public final Shape cutout;
-    public final String label;
-
-    /**
-     * ctor
-     * @param id
-     */
-    public DownloadTuple(URI id) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
+    @Before
+    public void testSetup() {
+        try {
+            expectedURI = new URI(URI_STR);
+            expectedCutout = sf.parse(SHAPE_STR);
+            expectedLabel = LABEL_STR;
+        } catch (Exception unexpectedSetupError) {
+            log.error("DownalodTupleTest setup failed: " + unexpectedSetupError);
+            Assert.fail("test setup failed.");
         }
-        this.id = id;
-        this.cutout = null;
-        this.label = null;
     }
 
-    /**
-     * ctor
-     * @param id
-     * @param cutout
-     */
-    public DownloadTuple(URI id, Shape cutout) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        this.id = id;
-        this.cutout = cutout;
-        this.label = null;
+    
+    // TODO: all the parsingError stuff needs to be reworked...
+    @Test
+    public void testFormatsURIOnly() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
+        log.debug("internal format, uri only: " + dt.toInternalFormat());
+        Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), URI_STR);
+//        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
     }
 
-    /**
-     * ctor
-     * @param id
-     * @param cutout
-     * @param label
-     */
-    public DownloadTuple(URI id, Shape cutout, String label) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        if (label != null && cutout == null) {
-            throw new IllegalArgumentException("cutout can not be null if label is defined.");
-        }
-        this.id = id;
-        this.cutout = cutout;
-        this.label = label;
+    @Test
+    public void testFormat() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
+        log.debug("internal format, full: " + dt.toInternalFormat());
+        Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), TUPLE_INTERNAL);
+//        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
     }
 
-    public URI getid() {
-        return id;
+    @Test
+    public void testFormatNoLabel() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
+        log.debug("internal format, no label: " + dt.toInternalFormat());
+        Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), TUPLE_INTERNAL_SHAPE);
+//        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
     }
 
+    @Test
+    public void testInvalidNullURI() throws Exception {
+        DownloadTuple dt = new DownloadTuple(null, null, null);
+//        log.debug("parsing error: " + dt.parsingError);
+//        Assert.assertTrue("DownloadTuple ctor should have failed for null parameter", (dt.parsingError != null) );
+    }
+
+    @Test
+    public void testInvalidURI() throws Exception {
+//        DownloadTuple dt = new DownloadTuple("bad_URI_format has spaces");
+//        log.debug("parsing error: " + dt.parsingError);
+//        Assert.assertTrue("DownloadTuple ctor should have failed for null parameter", (dt.parsingError != null));
+    }
 }

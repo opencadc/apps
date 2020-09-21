@@ -75,15 +75,23 @@ import java.util.TreeSet;
 
 public class DownloadRequest {
     // Duplicate requests not allowed
-    public final Set<DownloadTuple> requestList;
-    public final List<Exception> validationErrors;
+    private final Set<DownloadTuple> tuples;
+    private final List<Exception> validationErrors;
 
     // Only consistent parameter left after DownloadTuples are validated
     // during input processing phase.
     public String runid;
 
     public DownloadRequest() {
-        this.requestList = new TreeSet<DownloadTuple>(new DownloadTupleComparator());
+        this.tuples = new TreeSet<DownloadTuple>(new DownloadTupleComparator());
         this.validationErrors = new ArrayList<Exception>();
+    }
+
+    public Set<DownloadTuple> getTuples() {
+        return tuples;
+    }
+
+    public List<Exception> getValidationErrors() {
+        return validationErrors;
     }
 }

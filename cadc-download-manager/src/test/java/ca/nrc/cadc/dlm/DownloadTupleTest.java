@@ -69,67 +69,54 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-public class DownloadTupleTest {
+public class DownloadTupleTest extends DownloadTupleTestBase {
     private static Logger log = Logger.getLogger(DownloadTupleTest.class);
-    private static String URI_STR = "test://mysite.ca/path/1";
-    private static String SHAPE_STR = "polygon 0 0 0 0 0";
-    private static String LABEL_STR = "label";
-    private ShapeFormat sf = new ShapeFormat();
-
-    // test://mysite.ca/path/1{polygon 0 0 0 0}
-    private static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}";
-
-    // test://mysite.ca/path/1{polygon 0 0 0 0}{label}
-    private static String TUPLE_INTERNAL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
-    // TODO: all the parsingError stuff needs to be reworked...
+    @Before
+    public void testSetup() {
+        try {
+            expectedURI = new URI(URI_STR);
+            expectedCutout = sf.parse(SHAPE_STR);
+            expectedLabel = LABEL_STR;
+        } catch (Exception unexpectedSetupError) {
+            log.error("DownalodTupleTest setup failed: " + unexpectedSetupError);
+            Assert.fail("test setup failed.");
+        }
+    }
+
     @Test
-    public void testFormatsURIOnly() throws Exception {
+    public void testURIOnly() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
-        log.debug("internal format, uri only: " + dt.toInternalFormat());
-        Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), URI_STR);
-//        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
+        log.debug("uri only: " + dt.getTupleID());
+        Assert.assertEquals("ctor didn't work", dt.getTupleID(),expectedURI);
     }
 
     @Test
-    public void testFormat() throws Exception {
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
-        log.debug("internal format, full: " + dt.toInternalFormat());
-        Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), TUPLE_INTERNAL);
-//        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
-    }
-
-    @Test
-    public void testFormatNoLabel() throws Exception {
+    public void testURIShape() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
-        log.debug("internal format, no label: " + dt.toInternalFormat());
-        Assert.assertEquals("invalid internal tuple format", dt.toInternalFormat(), TUPLE_INTERNAL_SHAPE);
-//        Assert.assertTrue("DownloadTuple ctor failed parsing tupleID.", (dt.parsingError == null) );
+        Assert.assertEquals("ctor didn't work for tupleID", dt.getTupleID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
     }
 
     @Test
-    public void testInvalidNullURI() throws Exception {
-        DownloadTuple dt = new DownloadTuple(null, null, null);
-//        log.debug("parsing error: " + dt.parsingError);
-//        Assert.assertTrue("DownloadTuple ctor should have failed for null parameter", (dt.parsingError != null) );
-    }
-
-    @Test
-    public void testInvalidURI() throws Exception {
-//        DownloadTuple dt = new DownloadTuple("bad_URI_format has spaces");
-//        log.debug("parsing error: " + dt.parsingError);
-//        Assert.assertTrue("DownloadTuple ctor should have failed for null parameter", (dt.parsingError != null));
+    public void testAllParams() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
+        Assert.assertEquals("ctor didn't work for tupleID", dt.getTupleID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
+        Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
     }
 }

@@ -1,3 +1,4 @@
+
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -69,63 +70,34 @@
 package ca.nrc.cadc.dlm;
 
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Before;
 
-public class DownloadTuple {
-    private static Logger log = Logger.getLogger(DownloadTuple.class);
+public abstract class DownloadTupleTestBase {
+    private static Logger log = Logger.getLogger(DownloadTupleTestBase.class);
+    protected static String URI_STR = "test://mysite.ca/path/1";
+    protected static String SHAPE_STR = "polygon 0 0 0 0 0";
+    protected static String LABEL_STR = "label";
+    protected ShapeFormat sf = new ShapeFormat();
 
-    private final URI id;
-    public final Shape cutout;
-    public final String label;
+    protected URI expectedURI;
+    protected Shape expectedCutout;
+    protected String expectedLabel;
 
-    /**
-     * ctor
-     * @param id
-     */
-    public DownloadTuple(URI id) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        this.id = id;
-        this.cutout = null;
-        this.label = null;
+    // test://mysite.ca/path/1{polygon 0 0 0 0}
+    protected static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}";
+
+    // test://mysite.ca/path/1{polygon 0 0 0 0}{label}
+    protected static String TUPLE_INTERNAL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
+
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
-    /**
-     * ctor
-     * @param id
-     * @param cutout
-     */
-    public DownloadTuple(URI id, Shape cutout) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        this.id = id;
-        this.cutout = cutout;
-        this.label = null;
-    }
-
-    /**
-     * ctor
-     * @param id
-     * @param cutout
-     * @param label
-     */
-    public DownloadTuple(URI id, Shape cutout, String label) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        if (label != null && cutout == null) {
-            throw new IllegalArgumentException("cutout can not be null if label is defined.");
-        }
-        this.id = id;
-        this.cutout = cutout;
-        this.label = label;
-    }
-
-    public URI getid() {
-        return id;
-    }
-
+    @Before
+    public void testSetup() {}
 }

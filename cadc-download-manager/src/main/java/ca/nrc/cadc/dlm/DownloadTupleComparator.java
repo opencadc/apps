@@ -41,10 +41,10 @@ class DownloadTupleComparator implements Comparator<DownloadTuple> {
         }
 
         // finally compare labels
-        ret = lhs.label.compareTo(rhs.label);
-
         if (lhs.label == null && rhs.label == null) {
-            return 0; // equal, continue to compare
+            // assert: the rest of the DownloadTuple has been equal
+            // up to this point, return 0
+            return 0;
         }
         if (lhs.label == null && rhs.label != null) {
             return -1; // null before not null
