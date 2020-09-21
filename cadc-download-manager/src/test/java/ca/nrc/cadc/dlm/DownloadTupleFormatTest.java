@@ -232,9 +232,17 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     }
 
     @Test
-    public void testParseMissingBraces() {
+    public void testParseMissingBracePair() {
         try {
             DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0 label}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1 polygon 0 0 0 0 0 0}{label");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
