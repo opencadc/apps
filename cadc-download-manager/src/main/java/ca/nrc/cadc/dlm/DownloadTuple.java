@@ -124,7 +124,7 @@ public class DownloadTuple {
         this.label = label;
     }
 
-    public URI getid() {
+    public URI getID() {
         return id;
     }
 

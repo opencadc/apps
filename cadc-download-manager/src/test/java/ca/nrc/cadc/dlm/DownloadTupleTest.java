@@ -101,14 +101,14 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
     @Test
     public void testURIOnly() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
-        log.debug("uri only: " + dt.getTupleID());
-        Assert.assertEquals("ctor didn't work", dt.getTupleID(),expectedURI);
+        log.debug("uri only: " + dt.getid());
+        Assert.assertEquals("ctor didn't work", dt.getid(),expectedURI);
     }
 
     @Test
     public void testURIShape() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
-        Assert.assertEquals("ctor didn't work for tupleID", dt.getTupleID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for id", dt.getid(), expectedURI);
         Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
     }
 
