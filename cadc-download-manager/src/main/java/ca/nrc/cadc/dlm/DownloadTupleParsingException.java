@@ -62,28 +62,24 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 4 $
  *
  ************************************************************************
  */
 
 package ca.nrc.cadc.dlm;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+/**
+ *
+ * @author pdowler
+ */
+public class DownloadTupleParsingException extends Exception {
 
-public class DownloadRequest {
-    // Duplicate requests not allowed
-    public final Set<DownloadTuple> requestList;
-    public final List<Exception> validationErrors;
+    public DownloadTupleParsingException(String msg) {
+        super(msg);
+    }
 
-    // Only consistent parameter left after DownloadTuples are validated
-    // during input processing phase.
-    public String runid;
-
-    public DownloadRequest() {
-        this.requestList = new TreeSet<DownloadTuple>(new DownloadTupleComparator());
-        this.validationErrors = new ArrayList<Exception>();
+    public DownloadTupleParsingException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

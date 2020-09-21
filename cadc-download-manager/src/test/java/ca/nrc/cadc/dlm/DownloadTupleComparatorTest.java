@@ -1,3 +1,4 @@
+
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -68,22 +69,80 @@
 
 package ca.nrc.cadc.dlm;
 
-import java.util.ArrayList;
-import java.util.List;
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import java.util.Set;
 import java.util.TreeSet;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class DownloadRequest {
-    // Duplicate requests not allowed
-    public final Set<DownloadTuple> requestList;
-    public final List<Exception> validationErrors;
+public class DownloadTupleComparatorTest {
+    private static Logger log = Logger.getLogger(DownloadTupleComparatorTest.class);
+    private Set<DownloadTuple> testTreeSet;
+    private ShapeFormat sf = new ShapeFormat();
 
-    // Only consistent parameter left after DownloadTuples are validated
-    // during input processing phase.
-    public String runid;
+    private String circleShape = "CIRCLE 1 2 3";
+    private String circleShape2 = "CIRCLE 4 5 6";
+    private String polygonShape = "POLYGON 1 2 3 4 5 6 ";
 
-    public DownloadRequest() {
-        this.requestList = new TreeSet<DownloadTuple>(new DownloadTupleComparator());
-        this.validationErrors = new ArrayList<Exception>();
+    private DownloadTuple d1;
+    private DownloadTuple d2;
+    private DownloadTuple d3;
+    private DownloadTuple d4;
+    private DownloadTuple d5;
+
+    @Before
+    public void beforeTest() throws Exception {
+        d1 = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape), "circleLabel");
+        d2 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), "circleLabel2");
+        d3 = new DownloadTuple(new URI("test://uri/3"), sf.parse(polygonShape), "polygonLabel");
+
+        d4 = new DownloadTuple(new URI("test://uri/1"), null, null);
+        d5 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), null);
+    }
+
+    @Test
+    public void testDuplicates() throws Exception {
+        // Add a duplicate, size of TreeSet should be one less than number of tuples
+        testTreeSet = new TreeSet(new DownloadTupleComparator());
+        DownloadTuple dup = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape), "circleLabel");
+        testTreeSet.add(d1);
+        testTreeSet.add(d2);
+        testTreeSet.add(dup);
+
+        Assert.assertTrue("Duplicate was added", testTreeSet.size() == 2 );
+
+        dup = new DownloadTuple(new URI("test://uri/1"), null, null);
+        testTreeSet.add(d4);
+        testTreeSet.add(dup);
+
+        Assert.assertTrue("Duplicate was added", testTreeSet.size() == 3 );
+
+        dup = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape2), null);
+        testTreeSet.add(d5);
+        testTreeSet.add(dup);
+
+        Assert.assertTrue("Duplicate was added", testTreeSet.size() == 4 );
+    }
+
+    @Test
+    public void testNoDuplicates() throws Exception {
+        // Add a duplicate, size of TreeSet should be one less than number of tuples
+        testTreeSet = new TreeSet(new DownloadTupleComparator());
+
+        testTreeSet.add(d1);
+        Assert.assertTrue("Fully populated DownloadTuple not added", testTreeSet.size() == 1 );
+        testTreeSet.add(d2);
+        Assert.assertTrue("Fully populated DownloadTuple not added", testTreeSet.size() == 2 );
+        testTreeSet.add(d3);
+        Assert.assertTrue("Fully populated DownloadTuple not added", testTreeSet.size() == 3 );
+        testTreeSet.add(d4);
+        Assert.assertTrue("Null shape and label DownloadTuple not added", testTreeSet.size() == 4 );
+        testTreeSet.add(d5);
+        Assert.assertTrue("Null label DownloadTuple not added", testTreeSet.size() == 5 );
     }
 }

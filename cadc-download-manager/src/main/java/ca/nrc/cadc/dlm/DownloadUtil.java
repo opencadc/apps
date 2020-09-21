@@ -209,19 +209,21 @@ public class DownloadUtil {
                 }
 
                 DownloadTuple cur = outer.next();
-                if (cur.parsingError != null) { // string -> URI fail
-                    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
-                }
+                // TODO: parsing errors will need to be handled. This is commented out
+                // while code rework for input validation is being done
+//                if (cur.parsingError != null) { // string -> URI fail
+//                    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
+//                }
                 try {
-                    inner = gen.downloadIterator(cur.tupleID);
+                    inner = gen.downloadIterator(cur.getTupleID());
                     if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
                     // inner was empty
                     inner = null;
-                    return new DownloadDescriptor(cur.tupleIDstr, "no matching files");
+                    return new DownloadDescriptor(cur.getTupleID().toString(), "no matching files");
                 } catch (Throwable t) {
-                    return new DownloadDescriptor(cur.tupleIDstr, t.toString());
+                    return new DownloadDescriptor(cur.getTupleID().toString(), t.toString());
                 }
             }
 
@@ -278,7 +280,9 @@ public class DownloadUtil {
                     }
                     curTupleStr += a;
                     if (endOfTuple == true) {
-                        DownloadTuple dt = parseInternalFormatTuple(curTupleStr);
+                        // TODO: this needs to move to a 'parse' function on DownloadTuple,
+                        // or have a DownloadTupleFormat class, or...
+                        DownloadTuple dt = new DownloadTuple(curTupleStr);
                         tupleList.add(dt);
                         curTupleStr = "";
                         endOfTuple = false;
@@ -290,53 +294,53 @@ public class DownloadUtil {
     }
 
 
-    public static DownloadTuple parseInternalFormatTuple(String tupleStr) {
-        log.info("tuple string input: " + tupleStr);
-
-        String [] tupleParts = tupleStr.split("\\{");
-        String tupleID;
-        String shapeDescriptor;
-        String label;
-
-        if (tupleParts.length > 3) {
-            throw new InvalidParameterException("tuple has too many parts '{..}': " + tupleStr);
-        }
-
-        if (tupleParts.length == 3) {
-            // grab optional third [2] parameter as label
-            String l = tupleParts[2];
-            if (l.length() > 1) {
-                // trim off trailing "}"
-                label = l.substring(0, l.length() - 1);
-            } else {
-                // invalid format
-                throw new InvalidParameterException("Iinvalid label format: " + tupleStr);
-            }
-        } else {
-            label = null;
-        }
-
-        if (tupleParts.length > 1) {
-            String sd = tupleParts[1];
-            if (sd.length() > 1) {
-                // trim off trailing "}"
-                shapeDescriptor = sd.substring(0, sd.length() - 1);
-            } else {
-                // invalid format
-                throw new InvalidParameterException("invalid shape descriptor: " + tupleStr);
-            }
-        } else {
-            shapeDescriptor = null;
-        }
-
-        String uriStr = tupleParts[0];
-        if (StringUtil.hasLength(uriStr)) {
-            tupleID = uriStr;
-        } else {
-            // invalid format - has to at least be a single URI passed in
-            throw new InvalidParameterException("missing tupleID: " + tupleStr);
-        }
-
-        return new DownloadTuple(tupleID, shapeDescriptor, label);
-    }
+//    public static DownloadTuple parseInternalFormatTuple(String tupleStr) {
+//        log.info("tuple string input: " + tupleStr);
+//
+//        String [] tupleParts = tupleStr.split("\\{");
+//        String tupleID;
+//        String shapeDescriptor;
+//        String label;
+//
+//        if (tupleParts.length > 3) {
+//            throw new InvalidParameterException("tuple has too many parts '{..}': " + tupleStr);
+//        }
+//
+//        if (tupleParts.length == 3) {
+//            // grab optional third [2] parameter as label
+//            String l = tupleParts[2];
+//            if (l.length() > 1) {
+//                // trim off trailing "}"
+//                label = l.substring(0, l.length() - 1);
+//            } else {
+//                // invalid format
+//                throw new InvalidParameterException("Iinvalid label format: " + tupleStr);
+//            }
+//        } else {
+//            label = null;
+//        }
+//
+//        if (tupleParts.length > 1) {
+//            String sd = tupleParts[1];
+//            if (sd.length() > 1) {
+//                // trim off trailing "}"
+//                shapeDescriptor = sd.substring(0, sd.length() - 1);
+//            } else {
+//                // invalid format
+//                throw new InvalidParameterException("invalid shape descriptor: " + tupleStr);
+//            }
+//        } else {
+//            shapeDescriptor = null;
+//        }
+//
+//        String uriStr = tupleParts[0];
+//        if (StringUtil.hasLength(uriStr)) {
+//            tupleID = uriStr;
+//        } else {
+//            // invalid format - has to at least be a single URI passed in
+//            throw new InvalidParameterException("missing tupleID: " + tupleStr);
+//        }
+//
+//        return new DownloadTuple(tupleID, shapeDescriptor, label);
+//    }
 }
