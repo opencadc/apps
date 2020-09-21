@@ -73,6 +73,8 @@ import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 public class DownloadTupleFormat {
@@ -84,78 +86,112 @@ public class DownloadTupleFormat {
      * @param tupleStr String representing a tuple
      */
     public DownloadTuple parse(String tupleStr) throws DownloadTupleParsingException {
-        log.info("tuple string input: " + tupleStr);
+        log.debug("tuple string input: " + tupleStr);
+        // Do a rough match of number of '{' to '}'
+        // This doesn't check for order or overall format
+        int openBraceCount = getCount(tupleStr, "\\{");
+        int closeBraceCount = getCount(tupleStr, "\\}");
 
+        log.debug("found count of open & close braces : " + openBraceCount + ", " + closeBraceCount);
+
+        if (openBraceCount != closeBraceCount) {
+            throw new DownloadTupleParsingException("invalid tuple format: mismatched braces ': " + tupleStr);
+        }
+
+        if (openBraceCount > 2) {
+            throw new DownloadTupleParsingException("invalid tuple format: too many braces ': " + tupleStr);
+        }
+
+        // Split out the tuple parts
         String [] tupleParts = tupleStr.split("\\{");
         String tmpTupleID;
         String tmpLabel;
-        URI tmpURI = null;
-        Shape tmpShape = null;
 
         if (tupleParts.length > 3) {
-            throw new DownloadTupleParsingException("tuple has too many parts '{..}': " + tupleStr);
+            throw new DownloadTupleParsingException("tuple has too many parts. expected max 3 and found ': " + tupleParts.length+ tupleStr);
         }
+        log.debug("tuple parts count: " + tupleParts.length);
 
         // Get any label that might be there
         if (tupleParts.length == 3) {
             // grab optional third [2] parameter as label
             String l = tupleParts[2];
             if (l.length() > 1) {
-                // trim off trailing "}"
+                // trim off trailing "}".
+                // guaranteed to be there due to
+                // check for equal occurrences of { and } above.
                 tmpLabel = l.substring(0, l.length() - 1);
             } else {
                 // invalid format
-                throw new DownloadTupleParsingException("Invalid label format: " + tupleStr);
+                throw new DownloadTupleParsingException("invalid label format: " + l + " in " + tupleStr);
             }
         } else {
             tmpLabel = null;
         }
 
-        // Get any shape that might be there
+        Shape tmpShape = null;
+        // Get any cutout that might be there
         if (tupleParts.length > 1) {
             String sd = tupleParts[1];
             if (sd.length() > 1) {
                 // trim off trailing "}"
+                // guaranteed to be there due to
+                // check for equal occurrences of { and } above.
                 String tmpShapeStr = sd.substring(0, sd.length() - 1);
+                log.debug("cutout string: " + tmpShapeStr);
                 if (StringUtil.hasLength(tmpShapeStr)) {
                     try {
                         ShapeFormat sf = new ShapeFormat();
                         tmpShape = sf.parse(tmpShapeStr);
+                        log.debug("parsed cutout.");
                     } catch (IllegalArgumentException ill) {
-                        log.debug("parsing error for shape: " + tmpShapeStr);
-                        throw new DownloadTupleParsingException("parsing error for shape:: ", ill);
+                        log.debug("parsing error for cutout: " + tmpShapeStr);
+                        throw new DownloadTupleParsingException("parsing error for cutout: " + ill);
+                    } catch (Exception e) {
+                        log.debug("other error for parsing cutout:" + e);
+                        throw new DownloadTupleParsingException("BUG for cutout: " + e);
                     }
                 }
             } else {
                 // invalid format
-                throw new DownloadTupleParsingException("invalid shape descriptor: " + tupleStr);
+                throw new DownloadTupleParsingException("invalid cutout: " + sd + " in " + tupleStr);
             }
         } else {
             tmpShape = null;
         }
 
         // Get tuple URI - should at least have this.
+        URI tmpURI = null;
         String uriStr = tupleParts[0];
+        log.debug("uri given: " + uriStr);
         if (StringUtil.hasLength(uriStr)) {
-            tmpTupleID = uriStr;
+            try {
+                tmpURI = new URI(uriStr);
+            } catch (URISyntaxException u) {
+                throw new DownloadTupleParsingException("parsing error for id: " + u);
+            }
         } else {
             // invalid format - has to at least be a single URI passed in
-            throw new DownloadTupleParsingException("missing tupleID: " + tupleStr);
-        }
-
-        if (!StringUtil.hasLength(tmpTupleID)) {
-            throw new DownloadTupleParsingException("missing tupleID: " + tupleStr);
-        } else {
-            try {
-                tmpURI = new URI(tmpTupleID);
-            } catch (URISyntaxException u) {
-                throw new DownloadTupleParsingException("parsing error for shape:: ", u);
-            }
-
+            throw new DownloadTupleParsingException("zero length id found: " + tupleStr);
         }
 
         return new DownloadTuple(tmpURI, tmpShape, tmpLabel);
     }
+
+
+    private int getCount(final String input, final String regexp) {
+        final Pattern p = Pattern.compile(regexp);
+        Matcher m = p.matcher(input);
+
+        int count = 0;
+        while (m.find()) {
+
+            count++;
+        }
+        log.debug("found " + count + " instances of " + regexp + " in " + input);
+        return count;
+    }
+
 
     public String format(DownloadTuple tuple) {
         String tupleStr = tuple.getID().toString();

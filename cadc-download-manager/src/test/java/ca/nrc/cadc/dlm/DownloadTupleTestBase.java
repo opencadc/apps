@@ -91,7 +91,7 @@ public abstract class DownloadTupleTestBase {
     protected String expectedLabel;
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
     @Before

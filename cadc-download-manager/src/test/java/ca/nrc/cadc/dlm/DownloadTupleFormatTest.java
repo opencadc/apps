@@ -69,10 +69,7 @@
 
 package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.dali.util.ShapeFormat;
-import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
@@ -83,10 +80,10 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     private DownloadTupleFormat df = new DownloadTupleFormat();
     private DownloadTuple fullTestTuple;
 
-    // test://mysite.ca/path/1{polygon 0 0 0 0}
+    // test://mysite.ca/path/1{polygon 0 0 0 0 0 0}
     private static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}";
 
-    // test://mysite.ca/path/1{polygon 0 0 0 0}{label}
+    // test://mysite.ca/path/1{polygon 0 0 0 0 0 0}{label}
     private static String TUPLE_INTERNAL_FULL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
 
     @Before
@@ -159,29 +156,87 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         Assert.assertEquals("ctor didn't work for label", dt.label, null);
     }
 
+
     @Test
-    public void testParseInvalidTuples() throws Exception {
+    public void testParseInvalidURI() {
         try {
-            DownloadTuple dt;
-            try {
-                dt = df.parse("test://mysite.ca/path/1{bad_polygon}{label}");
-            } catch (DownloadTupleParsingException parseError) {
-                log.info("expected parsing error: " + parseError);
-            }
+            DownloadTuple dt = df.parse("bad uri1{circle 0.0 0.0 0.0}{label}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
 
-            try {
-                // null cutout with label defined
-                dt = df.parse("test://mysite.ca/path/1{}{label}");
-            } catch (DownloadTupleParsingException parseError) {
-                log.info("expected parsing error: " + parseError);
-            }
+        try {
+            DownloadTuple dt = df.parse("bad uri1");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
 
-            try {
-                // missing {
-                dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}label}");
-            } catch (DownloadTupleParsingException parseError) {
-                log.info("expected parsing error: " + parseError);
-            }
+    @Test
+    public void testParseBadCutout() {
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{bad_polygon}{label}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{bad_polygon}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testParseBadFormatBraceMismatch() {
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1 circle 0.0 0.0 0.0}{label}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}label}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}{label");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+
+    }
+
+    @Test
+    public void testParseMissingBraces() {
+        try {
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0 label}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
             Assert.fail("unexpected error: " + unexpected);
         }
