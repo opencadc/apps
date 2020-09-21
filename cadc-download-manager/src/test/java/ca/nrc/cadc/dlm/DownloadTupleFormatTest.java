@@ -89,18 +89,13 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     // test://mysite.ca/path/1{polygon 0 0 0 0}{label}
     private static String TUPLE_INTERNAL_FULL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
 
-
     @Before
     public void testSetup() {
         try {
             expectedURI = new URI(URI_STR);
             expectedCutout = sf.parse(SHAPE_STR);
             expectedLabel = LABEL_STR;
-
             fullTestTuple = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
-            Assert.assertEquals("ctor didn't work for id", fullTestTuple.getID(), expectedURI);
-            Assert.assertEquals("ctor didn't work for cutout", fullTestTuple.cutout, expectedCutout);
-            Assert.assertEquals("ctor didn't work for label", fullTestTuple.label, expectedLabel);
         } catch (Exception unexpectedSetupError) {
             log.error("DownalodTupleTest setup failed: " + unexpectedSetupError);
             Assert.fail("test setup failed.");
@@ -139,7 +134,6 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         Assert.assertEquals("invalid internal tuple format", internalFormat, TUPLE_INTERNAL_SHAPE);
     }
 
-
     // Internal format string to DownloadTuple tests
     @Test
     public void testParseFullTuple() throws Exception {
@@ -164,4 +158,33 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         Assert.assertEquals("ctor didn't work for cutout", dt.cutout, null);
         Assert.assertEquals("ctor didn't work for label", dt.label, null);
     }
+
+    @Test
+    public void testParseInvalidTuples() throws Exception {
+        try {
+            DownloadTuple dt;
+            try {
+                dt = df.parse("test://mysite.ca/path/1{bad_polygon}{label}");
+            } catch (DownloadTupleParsingException parseError) {
+                log.info("expected parsing error: " + parseError);
+            }
+
+            try {
+                // null cutout with label defined
+                dt = df.parse("test://mysite.ca/path/1{}{label}");
+            } catch (DownloadTupleParsingException parseError) {
+                log.info("expected parsing error: " + parseError);
+            }
+
+            try {
+                // missing {
+                dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}label}");
+            } catch (DownloadTupleParsingException parseError) {
+                log.info("expected parsing error: " + parseError);
+            }
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
 }
