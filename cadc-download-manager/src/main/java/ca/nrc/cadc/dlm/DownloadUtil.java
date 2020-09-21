@@ -87,7 +87,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
- * Miscellanneous methods for use in JSP pages.
+ * Miscellaneous methods for use in JSP pages.
  *
  * @author pdowler
  */
@@ -215,15 +215,15 @@ public class DownloadUtil {
 //                    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
 //                }
                 try {
-                    inner = gen.downloadIterator(cur.getTupleID());
+                    inner = gen.downloadIterator(cur.getID());
                     if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
                     // inner was empty
                     inner = null;
-                    return new DownloadDescriptor(cur.getTupleID().toString(), "no matching files");
+                    return new DownloadDescriptor(cur.getID().toString(), "no matching files");
                 } catch (Throwable t) {
-                    return new DownloadDescriptor(cur.getTupleID().toString(), t.toString());
+                    return new DownloadDescriptor(cur.getID().toString(), t.toString());
                 }
             }
 
@@ -245,7 +245,9 @@ public class DownloadUtil {
      * @param args Array of Strings, should be arguments from a command line call
      * @return list of download tuples
      */
-    public static List<DownloadTuple> parseTuplesFromArgs(String[] args) {
+    public static List<DownloadTuple> parseTuplesFromArgs(String[] args)
+        throws DownloadTupleParsingException {
+
         List<DownloadTuple> tupleList = new ArrayList<>();
         String curTupleStr = "";
         for (String arg : args) {
@@ -280,9 +282,8 @@ public class DownloadUtil {
                     }
                     curTupleStr += a;
                     if (endOfTuple == true) {
-                        // TODO: this needs to move to a 'parse' function on DownloadTuple,
-                        // or have a DownloadTupleFormat class, or...
-                        DownloadTuple dt = new DownloadTuple(curTupleStr);
+                        DownloadTupleFormat df = new DownloadTupleFormat();
+                        DownloadTuple dt = df.parse(curTupleStr);
                         tupleList.add(dt);
                         curTupleStr = "";
                         endOfTuple = false;
@@ -293,54 +294,4 @@ public class DownloadUtil {
         return tupleList;
     }
 
-
-//    public static DownloadTuple parseInternalFormatTuple(String tupleStr) {
-//        log.info("tuple string input: " + tupleStr);
-//
-//        String [] tupleParts = tupleStr.split("\\{");
-//        String tupleID;
-//        String shapeDescriptor;
-//        String label;
-//
-//        if (tupleParts.length > 3) {
-//            throw new InvalidParameterException("tuple has too many parts '{..}': " + tupleStr);
-//        }
-//
-//        if (tupleParts.length == 3) {
-//            // grab optional third [2] parameter as label
-//            String l = tupleParts[2];
-//            if (l.length() > 1) {
-//                // trim off trailing "}"
-//                label = l.substring(0, l.length() - 1);
-//            } else {
-//                // invalid format
-//                throw new InvalidParameterException("Iinvalid label format: " + tupleStr);
-//            }
-//        } else {
-//            label = null;
-//        }
-//
-//        if (tupleParts.length > 1) {
-//            String sd = tupleParts[1];
-//            if (sd.length() > 1) {
-//                // trim off trailing "}"
-//                shapeDescriptor = sd.substring(0, sd.length() - 1);
-//            } else {
-//                // invalid format
-//                throw new InvalidParameterException("invalid shape descriptor: " + tupleStr);
-//            }
-//        } else {
-//            shapeDescriptor = null;
-//        }
-//
-//        String uriStr = tupleParts[0];
-//        if (StringUtil.hasLength(uriStr)) {
-//            tupleID = uriStr;
-//        } else {
-//            // invalid format - has to at least be a single URI passed in
-//            throw new InvalidParameterException("missing tupleID: " + tupleStr);
-//        }
-//
-//        return new DownloadTuple(tupleID, shapeDescriptor, label);
-//    }
 }

@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Level;
@@ -101,21 +99,21 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
     @Test
     public void testURIOnly() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
-        log.debug("uri only: " + dt.getid());
-        Assert.assertEquals("ctor didn't work", dt.getid(),expectedURI);
+        log.debug("uri only: " + dt.getID());
+        Assert.assertEquals("ctor didn't work", dt.getID(),expectedURI);
     }
 
     @Test
     public void testURIShape() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
-        Assert.assertEquals("ctor didn't work for id", dt.getid(), expectedURI);
+        Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
         Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
     }
 
     @Test
     public void testAllParams() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
-        Assert.assertEquals("ctor didn't work for tupleID", dt.getTupleID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
         Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
         Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
     }

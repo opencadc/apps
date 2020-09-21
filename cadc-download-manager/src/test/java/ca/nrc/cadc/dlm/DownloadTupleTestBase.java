@@ -80,7 +80,9 @@ import org.junit.Before;
 public abstract class DownloadTupleTestBase {
     private static Logger log = Logger.getLogger(DownloadTupleTestBase.class);
     protected static String URI_STR = "test://mysite.ca/path/1";
-    protected static String SHAPE_STR = "polygon 0 0 0 0 0";
+    // Knowing this doesn't make sense as a polygon, it adheres to the format needed
+    // by cadc-dali PolygonFormat
+    protected static String SHAPE_STR = "polygon 0.0 0.0 0.0 0.0 0.0 0.0";
     protected static String LABEL_STR = "label";
     protected ShapeFormat sf = new ShapeFormat();
 
@@ -88,14 +90,8 @@ public abstract class DownloadTupleTestBase {
     protected Shape expectedCutout;
     protected String expectedLabel;
 
-    // test://mysite.ca/path/1{polygon 0 0 0 0}
-    protected static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}";
-
-    // test://mysite.ca/path/1{polygon 0 0 0 0}{label}
-    protected static String TUPLE_INTERNAL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
-
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     @Before

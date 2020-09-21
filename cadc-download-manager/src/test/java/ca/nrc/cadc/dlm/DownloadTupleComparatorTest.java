@@ -95,6 +95,10 @@ public class DownloadTupleComparatorTest {
     private DownloadTuple d4;
     private DownloadTuple d5;
 
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+    }
+
     @Before
     public void beforeTest() throws Exception {
         d1 = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape), "circleLabel");
@@ -121,11 +125,10 @@ public class DownloadTupleComparatorTest {
         testTreeSet.add(dup);
 
         Assert.assertTrue("Duplicate was added", testTreeSet.size() == 3 );
-
-        dup = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape2), null);
         testTreeSet.add(d5);
         testTreeSet.add(dup);
 
+        log.debug("testTreeSet size: " + testTreeSet.size());
         Assert.assertTrue("Duplicate was added", testTreeSet.size() == 4 );
     }
 

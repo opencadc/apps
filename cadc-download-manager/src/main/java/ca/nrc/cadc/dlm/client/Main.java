@@ -74,6 +74,7 @@ import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.dlm.DownloadTuple;
+import ca.nrc.cadc.dlm.DownloadTupleParsingException;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
@@ -157,8 +158,15 @@ public class Main {
                     //String uriStr = fixNull(am.getValue("uris"));
                     String paramStr = fixNull(am.getValue("params"));
                     Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+                    List<DownloadTuple> tupleList = new ArrayList<DownloadTuple>();
 
-                    List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
+                    try {
+                        tupleList = DownloadUtil.parseTuplesFromArgs(args);
+                    } catch (DownloadTupleParsingException parsingException) {
+                        // TODO: what is this going to look like for the webstart app
+                        // in terms of reporting parsing errors?
+                        throw new IllegalArgumentException("unable to parse input tuples" + parsingException);
+                    }
 
                     // DownloadRequest goes here?
                     // this.downloadRequest = new DownloadRequest();

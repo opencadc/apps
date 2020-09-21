@@ -13,7 +13,7 @@ class DownloadTupleComparator implements Comparator<DownloadTuple> {
     @Override
     public int compare(DownloadTuple lhs, DownloadTuple rhs) {
         // Start with comparing URIs (tupleIDs)
-        int ret = lhs.getTupleID().compareTo(rhs.getTupleID());
+        int ret = lhs.getID().compareTo(rhs.getID());
         if (ret != 0) {
             return ret;
         }

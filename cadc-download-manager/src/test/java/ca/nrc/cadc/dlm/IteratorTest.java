@@ -19,6 +19,7 @@ import org.junit.Test;
  */
 public class IteratorTest {
     private static Logger log = Logger.getLogger(IteratorTest.class);
+    private DownloadTupleFormat df = new DownloadTupleFormat();
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -29,8 +30,8 @@ public class IteratorTest {
         log.debug("testIterateOK");
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple("http://www.google.com"));
-            dts.add(new DownloadTuple("test://www.example.com/test"));
+            dts.add(df.parse("http://www.google.com"));
+            dts.add(df.parse("test://www.example.com/test"));
 
             Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
             long num = 0;
@@ -53,8 +54,8 @@ public class IteratorTest {
 
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple("http://www.google.com"));
-            dts.add(new DownloadTuple("http://www.google.com"));
+            dts.add(df.parse("http://www.google.com"));
+            dts.add(df.parse("http://www.google.com"));
 
             Assert.assertEquals("tuple setup", 2, dts.size());
 
@@ -95,7 +96,7 @@ public class IteratorTest {
 
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple("fake:fake/baz"));
+            dts.add(df.parse("fake:fake/baz"));
 
             Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
             long num = 0;
@@ -116,7 +117,7 @@ public class IteratorTest {
     public void testIterateParams() {
         try {
             List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(new DownloadTuple("test://www.example.com/test"));
+            dts.add(df.parse("test://www.example.com/test"));
 
             String s2 = "runid=123&cutout=[1]&cutout=[2]";
             Map<String, List<String>> params = DownloadUtil.decodeParamMap(s2);

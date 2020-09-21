@@ -89,8 +89,11 @@ import java.util.Map;
 public class DownloadUtilTest {
     private static Logger log = Logger.getLogger(DownloadUtilTest.class);
 
-    private static String uriStr = "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um";
+    private static String URI_STR = "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um";
+    private static String SHAPE_STR = "circle 0.0 0.0 0.0";
+
     private ShapeFormat sf = new ShapeFormat();
+    private DownloadTupleFormat df = new DownloadTupleFormat();
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -100,12 +103,12 @@ public class DownloadUtilTest {
     public void iterateURLsRemoveDuplicates() throws Exception {
         final List<DownloadTuple> tupleList = mkTupleList(true);
         final List<DownloadDescriptor> expected = new ArrayList<DownloadDescriptor>();
-        expected.add(new DownloadDescriptor(tupleList.get(0).getTupleID().toString(), new URL("http://mysite.ca/path/1")));
-        expected.add(new DownloadDescriptor(tupleList.get(1).getTupleID().toString(), new URL("http://mysite.ca/path/2")));
-        expected.add(new DownloadDescriptor(tupleList.get(2).getTupleID().toString(), new URL("http://mysite.ca/path/3")));
-        expected.add(new DownloadDescriptor(tupleList.get(3).getTupleID().toString(), new URL("http://mysite.ca/path/4")));
-        expected.add(new DownloadDescriptor(tupleList.get(5).getTupleID().toString(), new URL("http://mysite.ca/path/5")));
-        expected.add(new DownloadDescriptor(tupleList.get(6).getTupleID().toString(), new URL("http://mysite.ca/path/6")));
+        expected.add(new DownloadDescriptor(tupleList.get(0).getID().toString(), new URL("http://mysite.ca/path/1")));
+        expected.add(new DownloadDescriptor(tupleList.get(1).getID().toString(), new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor(tupleList.get(2).getID().toString(), new URL("http://mysite.ca/path/3")));
+        expected.add(new DownloadDescriptor(tupleList.get(3).getID().toString(), new URL("http://mysite.ca/path/4")));
+        expected.add(new DownloadDescriptor(tupleList.get(5).getID().toString(), new URL("http://mysite.ca/path/5")));
+        expected.add(new DownloadDescriptor(tupleList.get(6).getID().toString(), new URL("http://mysite.ca/path/6")));
 
         // Dump test results into a list for easy validation.
         final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
@@ -124,13 +127,13 @@ public class DownloadUtilTest {
         final ArrayList<DownloadTuple> tupleList = mkTupleList(true);
 
         final List<DownloadDescriptor> expected = new ArrayList<DownloadDescriptor>();
-        expected.add(new DownloadDescriptor(tupleList.get(0).getTupleID().toString(), new URL("http://mysite.ca/path/1")));
-        expected.add(new DownloadDescriptor(tupleList.get(1).getTupleID().toString(), new URL("http://mysite.ca/path/2")));
-        expected.add(new DownloadDescriptor(tupleList.get(2).getTupleID().toString(), new URL("http://mysite.ca/path/3")));
-        expected.add(new DownloadDescriptor(tupleList.get(3).getTupleID().toString(), new URL("http://mysite.ca/path/4")));
-        expected.add(new DownloadDescriptor(tupleList.get(4).getTupleID().toString(), new URL("http://mysite.ca/path/2")));
-        expected.add(new DownloadDescriptor(tupleList.get(5).getTupleID().toString(), new URL("http://mysite.ca/path/5")));
-        expected.add(new DownloadDescriptor(tupleList.get(6).getTupleID().toString(), new URL("http://mysite.ca/path/6")));
+        expected.add(new DownloadDescriptor(tupleList.get(0).getID().toString(), new URL("http://mysite.ca/path/1")));
+        expected.add(new DownloadDescriptor(tupleList.get(1).getID().toString(), new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor(tupleList.get(2).getID().toString(), new URL("http://mysite.ca/path/3")));
+        expected.add(new DownloadDescriptor(tupleList.get(3).getID().toString(), new URL("http://mysite.ca/path/4")));
+        expected.add(new DownloadDescriptor(tupleList.get(4).getID().toString(), new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor(tupleList.get(5).getID().toString(), new URL("http://mysite.ca/path/5")));
+        expected.add(new DownloadDescriptor(tupleList.get(6).getID().toString(), new URL("http://mysite.ca/path/6")));
 
         // Dump test results into a list for easy validation.
         final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
@@ -147,15 +150,15 @@ public class DownloadUtilTest {
     private ArrayList<DownloadTuple> mkTupleList(boolean addDuplicate) throws Exception {
         ArrayList<DownloadTuple> tupleList = new ArrayList<DownloadTuple>();
 
-        tupleList.add(new DownloadTuple("test://mysite.ca/path/1"));
-        tupleList.add(new DownloadTuple("test://mysite.ca/path/2"));
-        tupleList.add(new DownloadTuple("test://mysite.ca/path/3"));
-        tupleList.add(new DownloadTuple("test://mysite.ca/path/4"));
+        tupleList.add(df.parse("test://mysite.ca/path/1"));
+        tupleList.add(df.parse("test://mysite.ca/path/2"));
+        tupleList.add(df.parse("test://mysite.ca/path/3"));
+        tupleList.add(df.parse("test://mysite.ca/path/4"));
         if (addDuplicate == true) {
-            tupleList.add(new DownloadTuple("test://mysite.ca/path/2"));
+            tupleList.add(df.parse("test://mysite.ca/path/2"));
         }
-        tupleList.add(new DownloadTuple("test://mysite.ca/path/5"));
-        tupleList.add(new DownloadTuple("test://mysite.ca/path/6"));
+        tupleList.add(df.parse("test://mysite.ca/path/5"));
+        tupleList.add(df.parse("test://mysite.ca/path/6"));
 
         return tupleList;
     }
@@ -164,11 +167,10 @@ public class DownloadUtilTest {
     public void iterateSingle() throws Exception {
         final List<DownloadTuple> tupleList = new ArrayList<>();
 
-        // TODO: need to change this to DownloadTuple.parse instead of ctor
-        tupleList.add(new DownloadTuple("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um"));
+        tupleList.add(df.parse("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um"));
 
         final List<DownloadDescriptor> expected = new ArrayList<>();
-        expected.add(new DownloadDescriptor(tupleList.get(0).getTupleID().toString(),
+        expected.add(new DownloadDescriptor(tupleList.get(0).getID().toString(),
             new URL("http://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um")));
 
         // Dump test results into a list for easy validation.
@@ -185,15 +187,15 @@ public class DownloadUtilTest {
 
     @Test
     public void testArgParsing() throws Exception {
-        URI testURI = new URI(uriStr);
-        String[] args =  {"-verbose", uriStr + "{shape_descriptor}{label}"};
-        Shape expectedCutout = sf.parse("shape_descriptor");
+        URI testURI = new URI(URI_STR);
+        String[] args =   {"-verbose", URI_STR + "{circle", "0.0", "0.0", "0.0}{label}"};
+        Shape expectedCutout = sf.parse(SHAPE_STR);
 
         try {
             List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
 
             for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getTupleID());
+                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
                 assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
                 assertEquals("tupleID didn't parse correctly", "label", dt.label);
             }
@@ -205,15 +207,15 @@ public class DownloadUtilTest {
 
     @Test
     public void testArgParsingSpaces() throws Exception {
-        URI testURI = new URI(uriStr);
-        String[] args =  {"-verbose", uriStr + "{shape", "descriptor}{label}"};
-        Shape expectedCutout = sf.parse("shape_descriptor");
+        URI testURI = new URI(URI_STR);
+        String[] args =  {"-verbose", URI_STR + "{circle", "0.0", "0.0", "0.0}{label}"};
+        Shape expectedCutout = sf.parse(SHAPE_STR);
 
         try {
             List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
 
             for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getTupleID());
+                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
                 assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
                 assertEquals("tupleID didn't parse correctly", "label", dt.label);
             }
@@ -225,15 +227,15 @@ public class DownloadUtilTest {
 
     @Test
     public void testArgParsingSingleString() throws Exception {
-        URI testURI = new URI(uriStr);
-        String[] args =  {uriStr + "{shape descriptor}{label}"};
-        Shape expectedCutout = sf.parse("shape_descriptor");
+        URI testURI = new URI(URI_STR);
+        String[] args =   {"-verbose", URI_STR + "{circle", "0.0", "0.0", "0.0}{label}"};
+        Shape expectedCutout = sf.parse(SHAPE_STR);
 
         try {
             List<DownloadTuple> tupleList = DownloadUtil.parseTuplesFromArgs(args);
 
             for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getTupleID());
+                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
                 assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
                 assertEquals("tupleID didn't parse correctly", "label", dt.label);
             }
@@ -242,18 +244,5 @@ public class DownloadUtilTest {
             System.out.println("Unexpected exception");
         }
     }
-
-    @Test
-    public void testParseInternalFormat() throws Exception {
-        String internalFormatTuple =  "test://mysite.ca/file{polygon 0 0 0 0 0}{label}";
-        URI testURI = new URI("test://mysite.ca/file");
-        Shape expectedCutout = sf.parse("shape_descriptor");
-
-        DownloadTuple dt = new DownloadTuple(internalFormatTuple);
-        assertEquals("tupleID didn't parse correctly", testURI, dt.getTupleID());
-        assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
-        assertEquals("tupleID didn't parse correctly", "label", dt.label);
-    }
-
 
 }

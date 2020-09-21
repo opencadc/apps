@@ -123,9 +123,7 @@ public class DownloadTupleFormat {
                         tmpShape = sf.parse(tmpShapeStr);
                     } catch (IllegalArgumentException ill) {
                         log.debug("parsing error for shape: " + tmpShapeStr);
-                        // TODO: throw this error?
                         throw new DownloadTupleParsingException("parsing error for shape:: ", ill);
-//                        validationErrors.add(ill);
                     }
                 }
             } else {
@@ -151,8 +149,6 @@ public class DownloadTupleFormat {
             try {
                 tmpURI = new URI(tmpTupleID);
             } catch (URISyntaxException u) {
-                // TODO: throw this error instead?
-//                validationErrors.add(u);
                 throw new DownloadTupleParsingException("parsing error for shape:: ", u);
             }
 
@@ -162,7 +158,7 @@ public class DownloadTupleFormat {
     }
 
     public String format(DownloadTuple tuple) {
-        String tupleStr = tuple.getTupleID().toString();
+        String tupleStr = tuple.getID().toString();
 
         if (tuple.cutout != null) {
             ShapeFormat sf = new ShapeFormat();
