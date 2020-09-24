@@ -129,9 +129,6 @@ public class DataLinkClient implements DownloadGenerator {
 
     // Package private for tests.
     String runID;
-    String cutout;
-    String label;
-    boolean downloadOnly = false;
     String requestFail;
     
     private final List<String> skipSemantics = new ArrayList<>();
@@ -154,23 +151,6 @@ public class DataLinkClient implements DownloadGenerator {
             return new FailIterator(dt, requestFail);
         }
 
-        // Set up query parameters needed in the DownloadIterator here.
-        // These will be tacked on to a URL down in the DownloadIterator private
-        // class. Are set as global here because otherwise they won't be found.
-
-        // The cutout is generated from DownloadTuple
-        if (dt.cutout != null) {
-            ShapeFormat sf = new ShapeFormat();
-            this.cutout = sf.format(dt.cutout);
-        } else {
-            this.downloadOnly = true;
-        }
-
-        if (dt.label != null) {
-            // TODO: potentially format label to be soda-file-friendly here
-            this.label = dt.label;
-        }
-
         try { // query datalink with uri and (for now) filters
             URI resourceID = resolver.getResourceID(dt.getID());
             AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
@@ -186,7 +166,8 @@ public class DataLinkClient implements DownloadGenerator {
             sb.append("?id=");
             sb.append(NetUtil.encode(dt.getID().toASCIIString()));
 
-            if (downloadOnly) {
+            // download only request
+            if (dt.cutout == null) {
                 sb.append("&request=").append(DOWNLOAD_REQUEST); // custom
             }
 
@@ -209,7 +190,7 @@ public class DataLinkClient implements DownloadGenerator {
 
                 VOTableReader r = new VOTableReader();
                 VOTableDocument doc = r.read(responseContent);
-                Iterator<DownloadDescriptor> ret = new DownloadIterator(doc);
+                Iterator<DownloadDescriptor> ret = new DownloadIterator(doc, dt);
                 return ret;
             } catch (Exception ex) {
                 log.debug("failed to read DataLink result table", ex);
@@ -240,6 +221,8 @@ public class DataLinkClient implements DownloadGenerator {
         private int errIndex;
         private int semIndex;
         private int ptIndex;
+        private DownloadTuple downloadTuple;
+        private boolean downloadOnly = false;
 
         private List<Object> curRow;
         private String curParams;
@@ -247,9 +230,14 @@ public class DataLinkClient implements DownloadGenerator {
         private Map<String, VOTableResource> serviceDefinitions;
         private Map<String, Integer> inputColumns;
 
-        public DownloadIterator(VOTableDocument doc) {
+        public DownloadIterator(VOTableDocument doc, DownloadTuple dt) {
             VOTableResource res = doc.getResourceByType("results");
             VOTableTable links = res.getTable();
+            this.downloadTuple = dt;
+
+            if (dt.cutout == null) {
+                downloadOnly = true;
+            }
 
             this.uriIndex = getColumnByName(COL_NAME_URI, links);
             this.urlIndex = getColumnByName(COL_NAME_URL, links);
@@ -433,20 +421,21 @@ public class DataLinkClient implements DownloadGenerator {
                     } else if (CUTOUT.equals(sem)) {
                         String standardID = getServiceProperty(sdef, "standardID");
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
-                            if (cutout != null) {
-                                curParams = "POS=" + cutout;
+                            if (downloadTuple.cutout != null) {
+                                ShapeFormat sf = new ShapeFormat();
+                                curParams = "POS=" +  sf.format(downloadTuple.cutout);
                             }
-                            if (label != null) {
-                                curParams += "&LABEL=" + label;
+                            if (downloadTuple.label != null) {
+                                curParams += "&LABEL=" + downloadTuple.label;
                             }
-                            log.debug("pass: " + url + " semantics: " + sem + " cutout: " + cutout);
+                            log.debug("pass: " + url + " semantics: " + sem + " cutout: " + downloadTuple.cutout);
                         } else {
                             curRow = null;
-                            log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + cutout);
+                            log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + downloadTuple.cutout);
                         }
-                    } else if (cutout != null) {
+                    } else if (downloadTuple.cutout != null) {
                         curRow = null;
-                        log.debug("skip: " + url + " semantics: " + sem + " cutout: " + cutout);
+                        log.debug("skip: " + url + " semantics: " + sem + " cutout: " + downloadTuple.cutout);
                     } else {
                         log.debug("pass: " + url + " semantics: " + sem);
                     }
