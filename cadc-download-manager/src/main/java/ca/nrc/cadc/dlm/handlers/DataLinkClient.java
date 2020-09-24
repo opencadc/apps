@@ -144,38 +144,6 @@ public class DataLinkClient implements DownloadGenerator {
         skipSemantics.add(PKG);
     }
 
-    private String getCutoutParameter(String cutoutStr) {
-        String ret = "";
-        if (StringUtil.hasLength(cutoutStr)) {
-            // transform to SODA CIRCLE or POLYGON param
-            // strip off old STC-S pre amble and just get the numeric values
-            String[] tokens = cutoutStr.split(" ");
-            List<Double> dvals = new ArrayList<>();
-            for (String t : tokens) {
-                try {
-                    Double d = new Double(t);
-                    dvals.add(d);
-                } catch (NumberFormatException ex) {
-                    log.debug("ignoring token in cutout: " + t);
-                }
-            }
-            DoubleArrayFormat daf = new DoubleArrayFormat();
-            if (dvals.size() == 3) {
-                ret = "CIRCLE=" + NetUtil.encode(daf.format(dvals.iterator()));
-            } else if (dvals.size() >= 6) {
-                ret = "POLYGON=" + NetUtil.encode(daf.format(dvals.iterator()));
-            } else if ("spectralinterval".equalsIgnoreCase(tokens[0])) {
-                ret = "BAND=" + NetUtil.encode(daf.format(dvals.iterator()));
-            } else {
-                // TODO: this needs to be handled, put out to the error handling
-                // somehow - should be considered part of validating the input,
-                // probably.
-                this.requestFail = "invalid parameter: cutout=" + cutout;
-            }
-        }
-        return ret;
-    }
-
     public void setRunID(String runID) {
         this.runID = runID;
     }
@@ -186,23 +154,22 @@ public class DataLinkClient implements DownloadGenerator {
             return new FailIterator(dt, requestFail);
         }
 
-        // Set up query parameters here
-        // The cutout is pulled from DownloadTuple
+        // Set up query parameters needed in the DownloadIterator here.
+        // These will be tacked on to a URL down in the DownloadIterator private
+        // class. Are set as global here because otherwise they won't be found.
+
+        // The cutout is generated from DownloadTuple
         if (dt.cutout != null) {
             ShapeFormat sf = new ShapeFormat();
-            this.cutout = getCutoutParameter(sf.format(dt.cutout));
+            this.cutout = sf.format(dt.cutout);
         } else {
             this.downloadOnly = true;
         }
 
         if (dt.label != null) {
-            // todo: potentially format label to be soda-file-friendly here
+            // TODO: potentially format label to be soda-file-friendly here
             this.label = dt.label;
         }
-
-        // these will be tacked on to the URL down in the DownloadIterator private
-        // class. Are set as global here because they need to be in order to be found.
-
 
         try { // query datalink with uri and (for now) filters
             URI resourceID = resolver.getResourceID(dt.getID());
@@ -413,11 +380,6 @@ public class DataLinkClient implements DownloadGenerator {
                         if (!url.toLowerCase().contains("runid=")) {
                             url = appendParam(url, "runid", runID);
                         }
-                        // TODO: this is where cutout would get appended, however it will
-                        // magically be derived from said things.
-                        // previously it had been set in 'setParams', and this.
-                        // However, to get the cutout parameter, this section of the code has to have
-                        // access to the current download tuple in order to discover it.
                         url = appendParams(url, curParams);
                         return new DownloadDescriptor(uri, new URL(url));
                     } catch (MalformedURLException ex) {
@@ -472,8 +434,7 @@ public class DataLinkClient implements DownloadGenerator {
                         String standardID = getServiceProperty(sdef, "standardID");
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
                             if (cutout != null) {
-                                // cutout is in key=value pair format already
-                                curParams = cutout;
+                                curParams = "POS=" + cutout;
                             }
                             if (label != null) {
                                 curParams += "&LABEL=" + label;
