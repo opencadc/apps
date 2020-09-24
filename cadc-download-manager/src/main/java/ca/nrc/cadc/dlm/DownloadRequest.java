@@ -80,7 +80,7 @@ public class DownloadRequest {
 
     // Only consistent parameter left after DownloadTuples are validated
     // during input processing phase.
-    public String runid;
+    public String runID;
 
     public DownloadRequest() {
         this.tuples = new TreeSet<DownloadTuple>(new DownloadTupleComparator());

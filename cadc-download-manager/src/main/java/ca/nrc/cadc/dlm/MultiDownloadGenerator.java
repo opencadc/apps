@@ -89,7 +89,7 @@ public class MultiDownloadGenerator implements DownloadGenerator {
     private static final String CACHE_FILENAME = MultiDownloadGenerator.class.getSimpleName() + ".properties";
 
     private final Map<String, DownloadGenerator> generators = new HashMap<String, DownloadGenerator>();
-    private Map<String, List<String>> params;
+    private String runID;
 
     public MultiDownloadGenerator() {
         this(MultiSchemeHandler.class.getClassLoader().getResource(CACHE_FILENAME));
@@ -124,28 +124,32 @@ public class MultiDownloadGenerator implements DownloadGenerator {
         }
     }
 
-    public void setParameters(Map<String, List<String>> params) {
-        this.params = params;
+//    public void setParameters(Map<String, List<String>> params) {
+//        this.params = params;
+//    }
+
+    public void setRunID(String runID) {
+        this.runID = runID;
     }
 
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
-        if (uri == null) {
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
+        if (dt == null) {
             return null;
         }
 
-        DownloadGenerator gen = generators.get(uri.getScheme());
+        DownloadGenerator gen = generators.get(dt.getID().getScheme());
         if (gen != null) {
-            gen.setParameters(params); // NOT THREAD SAFE use of the DownloadGenerator
-            return gen.downloadIterator(uri);
+            gen.setRunID(this.runID);
+            return gen.downloadIterator(dt);
         }
 
         // fallback: hope for the best
         try {
-            log.debug("fallback: " + uri);
-            URL url = uri.toURL();
-            return new SingleDownloadIterator(uri, url);
+            log.debug("fallback: " + dt);
+            URL url = dt.getID().toURL();
+            return new SingleDownloadIterator(dt, url);
         } catch (MalformedURLException mex) {
-            return new FailIterator(uri, "unknown URI scheme: " + uri.getScheme());
+            return new FailIterator(dt, "unknown URI scheme: " + dt.getID().getScheme());
         }
     }
 }

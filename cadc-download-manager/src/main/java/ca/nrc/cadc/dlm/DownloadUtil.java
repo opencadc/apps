@@ -169,17 +169,23 @@ public class DownloadUtil {
     // TODO: remove this before chcking in code - this is called from wget.jsp, Main, and UrlListServlet
     // (in cadc-download-manager-server) as core of code that processes a DownloadRequest and returns urls
     // to caller in order to access files and/or cutouts requested for download.
-    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params) {
-        return iterateURLs(tuples, params, false);
-    }
+//    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params) {
+//        return iterateURLs(tuples, params, false);
+//    }
 
     // If this changes to DownloadRequest object, what happens?
-    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params,
-                                                           final boolean removeDuplicates) {
+//    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params,
+//                                                           final boolean removeDuplicates) {
+//    public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest dRequest) { ?? or just the list of tuples?
+        public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest downloadRequest) {
+
         final Set<URL> urls = new HashSet<>();
         final MultiDownloadGenerator gen = new MultiDownloadGenerator();
-        final List<DownloadTuple> dt = tuples;
-        gen.setParameters(params);
+
+        // Q: how will params now be managed?
+//        final List<DownloadTuple> dt = tuples;
+        final Set<DownloadTuple> dt = downloadRequest.getTuples();
+        gen.setRunID(downloadRequest.runID);
 
         return new Iterator<DownloadDescriptor>() {
             Iterator<DownloadTuple> outer = dt.iterator();
@@ -199,9 +205,10 @@ public class DownloadUtil {
                     if (!inner.hasNext()) {
                         inner = null;
                     }
-                    if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
-                        return next();
-                    }
+                    // TODO:urls is a Set now is this duplicates bit necessary?
+//                    if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
+//                        return next();
+//                    }
                     if (dd.url != null) {
                         urls.add(dd.url);
                     }
@@ -211,11 +218,12 @@ public class DownloadUtil {
                 DownloadTuple cur = outer.next();
                 // TODO: parsing errors will need to be handled. This is commented out
                 // while code rework for input validation is being done
+                // this might take in a download tuple instead of a uri?
 //                if (cur.parsingError != null) { // string -> URI fail
 //                    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
 //                }
                 try {
-                    inner = gen.downloadIterator(cur.getID());
+                    inner = gen.downloadIterator(cur);
                     if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
@@ -245,8 +253,11 @@ public class DownloadUtil {
      * @param args Array of Strings, should be arguments from a command line call
      * @return list of download tuples
      */
-    public static List<DownloadTuple> parseTuplesFromArgs(String[] args)
-        throws DownloadTupleParsingException {
+//    public static List<DownloadTuple> parseTuplesFromArgs(String[] args)
+//        throws DownloadTupleParsingException {
+
+    public static DownloadRequest parseRequestFromArgs(String[] args) {
+        DownloadRequest downloadRequest = new DownloadRequest();
 
         List<DownloadTuple> tupleList = new ArrayList<>();
         String curTupleStr = "";
@@ -258,14 +269,17 @@ public class DownloadUtil {
                 // probably need to handle this split on whitespace thing as well.
 
                 String[] sas = arg.split(" ");
+                // And here is where DownloadRequest object should be built (where
+                // a function to build one would be useful.
+
                 boolean endOfTuple = false;
-                for (String a : sas) {
+                for (String segment : sas) {
                     // for the segment being processed, might be part of
                     // a building string, or a single entity
                     String nextSegment;
-                    if (a.endsWith("}")) {
+                    if (segment.endsWith("}")) {
                         endOfTuple = true;
-                    } else if (a.contains("}{") || a.contains("{")) {
+                    } else if (segment.contains("}{") || segment.contains("{")) {
                         // pass
                         endOfTuple = false;
                     } else {
@@ -280,18 +294,26 @@ public class DownloadUtil {
                     if (StringUtil.hasLength(curTupleStr)) {
                         curTupleStr += " ";
                     }
-                    curTupleStr += a;
+                    curTupleStr += segment;
                     if (endOfTuple == true) {
-                        DownloadTupleFormat df = new DownloadTupleFormat();
-                        DownloadTuple dt = df.parse(curTupleStr);
-                        tupleList.add(dt);
+                        try {
+                            DownloadTupleFormat df = new DownloadTupleFormat();
+                            DownloadTuple dt = df.parse(curTupleStr);
+                            downloadRequest.getTuples().add(dt);
+                        } catch (Exception e) {
+                            // df.parse will throw validation errors. Record
+                            // them and continue
+                            downloadRequest.getValidationErrors().add(e);
+                        }
                         curTupleStr = "";
                         endOfTuple = false;
                     }
                 }
             }
         }
-        return tupleList;
+//        return tupleList;
+            return downloadRequest;
     }
+
 
 }

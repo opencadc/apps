@@ -72,6 +72,7 @@
 package ca.nrc.cadc.dlm.client;
 
 import ca.nrc.cadc.appkit.ui.BrowserApplet;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
@@ -101,12 +102,12 @@ public class AppletWrapper extends JApplet {
             // not sure applet is used anymore?
             String uriStr = fixNull(getParameter("uris"));
             String[] args = {uriStr};
-            List<DownloadTuple> tuples = DownloadUtil.parseTuplesFromArgs(args);
+            DownloadRequest downloadReq = DownloadUtil.parseRequestFromArgs(args);
             String paramStr = fixNull(getParameter("params"));
             Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
             this.ui = new GraphicUI(Level.INFO);
-            ui.add(tuples, params);
+            ui.add(downloadReq, params);
 
             BrowserApplet f = new BrowserApplet(Constants.name, ui, this);
             this.validate();

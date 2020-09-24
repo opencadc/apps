@@ -72,6 +72,7 @@ package ca.nrc.cadc.dlm.handlers;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.FailIterator;
 import ca.nrc.cadc.dlm.ManifestReader;
 import ca.nrc.cadc.net.HttpDownload;
@@ -110,27 +111,34 @@ public class VOSDownloadGenerator implements DownloadGenerator {
         this.regClient = rc;
     }
 
-    public void setParameters(Map<String, List<String>> params) {
-        List<String> val = params.get("runid");
-        if (val != null && !val.isEmpty()) {
-            this.runID = val.get(0);
-        }
-        val = params.get("auth");
-        if (val != null && !val.isEmpty()) {
-            this.forceAuthMethod = val.get(0);
-        }
-        log.debug("force auth method: " + forceAuthMethod);
+    // TODO: 'auth' will need to be put in this class by some other method
+//    public void setParameters(Map<String, List<String>> params) {
+//        List<String> val = params.get("runid");
+//        if (val != null && !val.isEmpty()) {
+//            this.runID = val.get(0);
+//        }
+//        val = params.get("auth");
+//        if (val != null && !val.isEmpty()) {
+//            this.forceAuthMethod = val.get(0);
+//        }
+//        log.debug("force auth method: " + forceAuthMethod);
+//    }
+
+    public void setRunID(String runID) {
+        this.runID = runID;
     }
 
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
         try {
-            log.debug("downloadIterator: " + uri);
-            VOSURI vos = new VOSURI(uri);
+            log.debug("downloadIterator: " + dt.getID());
+            VOSURI vos = new VOSURI(dt.getID());
 
             StringBuilder sb = new StringBuilder();
             sb.append(vos.getPath());
             sb.append("?view=manifest");
 
+            // TOOD: for now this will always evaluate to null, untill
+            // it's decided whether this parameter is needed or not
             if (forceAuthMethod != null) {
                 sb.append("&auth=").append(forceAuthMethod);
             }
@@ -170,7 +178,7 @@ public class VOSDownloadGenerator implements DownloadGenerator {
                 }
             }
             if (t1 != null) { // fail + possible retry fail: report first fail
-                return new FailIterator(uri, "failed to resolve URI: " + t1.getMessage());
+                return new FailIterator(dt, "failed to resolve URI: " + t1.getMessage());
             }
 
             if (ManifestReader.CONTENT_TYPE.equals(get.getContentType())) { // view=manifest
@@ -180,14 +188,14 @@ public class VOSDownloadGenerator implements DownloadGenerator {
                 return r.read(responseContent);
             }
 
-            return new FailIterator(uri, "unable to download " + uri
+            return new FailIterator(dt, "unable to download " + dt.getID()
                 + " with view=manifest [" + get.getResponseCode() + ", " + get.getContentType() + "]");
         } catch (MalformedURLException bug) {
             log.error("failed to read DataLink result table", bug);
             throw new RuntimeException("BUG: failed to create DataLink query URL: " + bug);
         } catch (Exception ex) {
             log.debug("failed to read DataLink result table", ex);
-            return new FailIterator(uri, "failed to read output from view=manifest: " + ex.toString());
+            return new FailIterator(dt, "failed to read output from view=manifest: " + ex.toString());
         }
     }
 }

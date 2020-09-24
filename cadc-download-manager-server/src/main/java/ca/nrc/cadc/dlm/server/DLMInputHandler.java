@@ -235,6 +235,7 @@ public class DLMInputHandler {
 
             for (String u : tupleStrList) {
                 if (StringUtil.hasText(u)) {
+                    // TODO: will need to change to DownloadFormat.parse()
                     tuples.add(new DownloadTuple(u));
                 }
             }
@@ -407,6 +408,8 @@ public class DLMInputHandler {
                 Element labelEl = tupleElement.getChild("label", root.getNamespace());
                 String label = labelEl.getText();
 
+                // TODO: shoud use DownloadFormat.parse to build, so the validation is
+                // happening all out of the same code.
                 DownloadTuple dt = new DownloadTuple(tupleID, shape, label);
                 dtList.add(dt);
             }

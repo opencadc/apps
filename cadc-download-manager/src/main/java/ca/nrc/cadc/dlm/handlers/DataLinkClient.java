@@ -79,8 +79,10 @@ import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
+import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.FailIterator;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.NetUtil;
@@ -124,9 +126,11 @@ public class DataLinkClient implements DownloadGenerator {
     private static final String COL_NAME_SEMANTICS = "semantics";
     private final RegistryClient regClient;
     private final DataLinkServiceResolver resolver;
+
     // Package private for tests.
     String runID;
     String cutout;
+    String label;
     boolean downloadOnly = false;
     String requestFail;
     
@@ -140,22 +144,12 @@ public class DataLinkClient implements DownloadGenerator {
         skipSemantics.add(PKG);
     }
 
-    @Override
-    public void setParameters(Map<String, List<String>> params) {
-        List<String> val;
-
-        val = params.get("runid");
-        if (val != null && !val.isEmpty()) {
-            this.runID = val.get(0);
-        }
-
-        val = params.get("cutout");
-        if (val != null && !val.isEmpty()) {
+    private String getCutoutParameter(String cutoutStr) {
+        String ret = "";
+        if (StringUtil.hasLength(cutoutStr)) {
             // transform to SODA CIRCLE or POLYGON param
-            String str = val.get(0); // first only
-
             // strip off old STC-S pre amble and just get the numeric values
-            String[] tokens = str.split(" ");
+            String[] tokens = cutoutStr.split(" ");
             List<Double> dvals = new ArrayList<>();
             for (String t : tokens) {
                 try {
@@ -167,42 +161,63 @@ public class DataLinkClient implements DownloadGenerator {
             }
             DoubleArrayFormat daf = new DoubleArrayFormat();
             if (dvals.size() == 3) {
-                this.cutout = "CIRCLE=" + NetUtil.encode(daf.format(dvals.iterator()));
+                ret = "CIRCLE=" + NetUtil.encode(daf.format(dvals.iterator()));
             } else if (dvals.size() >= 6) {
-                this.cutout = "POLYGON=" + NetUtil.encode(daf.format(dvals.iterator()));
+                ret = "POLYGON=" + NetUtil.encode(daf.format(dvals.iterator()));
             } else if ("spectralinterval".equalsIgnoreCase(tokens[0])) {
-                this.cutout = "BAND=" + NetUtil.encode(daf.format(dvals.iterator()));
+                ret = "BAND=" + NetUtil.encode(daf.format(dvals.iterator()));
             } else {
-                this.requestFail = "invalid parameter: cutout=" + str;
+                // TODO: this needs to be handled, put out to the error handling
+                // somehow - should be considered part of validating the input,
+                // probably.
+                this.requestFail = "invalid parameter: cutout=" + cutout;
             }
         }
+        return ret;
+    }
 
-
-        if (cutout == null) {
-            this.downloadOnly = true;
-        }
+    public void setRunID(String runID) {
+        this.runID = runID;
     }
 
     @Override
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
         if (requestFail != null) {
-            return new FailIterator(uri, requestFail);
+            return new FailIterator(dt, requestFail);
         }
 
+        // Set up query parameters here
+        // The cutout is pulled from DownloadTuple
+        if (dt.cutout != null) {
+            ShapeFormat sf = new ShapeFormat();
+            this.cutout = getCutoutParameter(sf.format(dt.cutout));
+        } else {
+            this.downloadOnly = true;
+        }
+
+        if (dt.label != null) {
+            // todo: potentially format label to be soda-file-friendly here
+            this.label = dt.label;
+        }
+
+        // these will be tacked on to the URL down in the DownloadIterator private
+        // class. Are set as global here because they need to be in order to be found.
+
+
         try { // query datalink with uri and (for now) filters
-            URI resourceID = resolver.getResourceID(uri);
+            URI resourceID = resolver.getResourceID(dt.getID());
             AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
             if (am == null) {
                 am = AuthMethod.ANON;
             }
             URL serviceURL = regClient.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, am);
             if (serviceURL == null) {
-                return new FailIterator(uri, "failed to resolve URI: cannot find DataLink service " + resourceID);
+                return new FailIterator(dt, "failed to resolve URI: cannot find DataLink service " + resourceID);
             }
 
             StringBuilder sb = new StringBuilder(serviceURL.toExternalForm());
             sb.append("?id=");
-            sb.append(NetUtil.encode(uri.toASCIIString()));
+            sb.append(NetUtil.encode(dt.getID().toASCIIString()));
 
             if (downloadOnly) {
                 sb.append("&request=").append(DOWNLOAD_REQUEST); // custom
@@ -218,7 +233,7 @@ public class DataLinkClient implements DownloadGenerator {
             HttpGet get = new HttpGet(url, bos);
             get.run();
             if (get.getThrowable() != null) {
-                return new FailIterator(uri, "failed to resolve URI: " + get.getThrowable().getMessage());
+                return new FailIterator(dt, "failed to resolve URI: " + get.getThrowable().getMessage());
             }
 
             try {
@@ -398,6 +413,11 @@ public class DataLinkClient implements DownloadGenerator {
                         if (!url.toLowerCase().contains("runid=")) {
                             url = appendParam(url, "runid", runID);
                         }
+                        // TODO: this is where cutout would get appended, however it will
+                        // magically be derived from said things.
+                        // previously it had been set in 'setParams', and this.
+                        // However, to get the cutout parameter, this section of the code has to have
+                        // access to the current download tuple in order to discover it.
                         url = appendParams(url, curParams);
                         return new DownloadDescriptor(uri, new URL(url));
                     } catch (MalformedURLException ex) {
@@ -451,7 +471,13 @@ public class DataLinkClient implements DownloadGenerator {
                     } else if (CUTOUT.equals(sem)) {
                         String standardID = getServiceProperty(sdef, "standardID");
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
-                            curParams = cutout;
+                            if (cutout != null) {
+                                // cutout is in key=value pair format already
+                                curParams = cutout;
+                            }
+                            if (label != null) {
+                                curParams += "&LABEL=" + label;
+                            }
                             log.debug("pass: " + url + " semantics: " + sem + " cutout: " + cutout);
                         } else {
                             curRow = null;

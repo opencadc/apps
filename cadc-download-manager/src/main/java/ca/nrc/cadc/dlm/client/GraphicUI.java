@@ -73,6 +73,7 @@ import ca.nrc.cadc.appkit.ui.AbstractApplication;
 import ca.nrc.cadc.appkit.ui.ApplicationConfig;
 import ca.nrc.cadc.appkit.util.Util;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
@@ -126,8 +127,10 @@ public class GraphicUI extends AbstractApplication implements ChangeListener, Us
     }
 
     // This signature would use a DownloadRequest object - TODO
-    public void add(List<DownloadTuple> tupleList, Map<String, List<String>> params) {
-        Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(tupleList, params);
+    public void add(DownloadRequest downloadReq, Map<String, List<String>> params) {
+        // TODO: 'params' needs to be removed from this signature, even knowing that
+        //
+        Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq);
         this.inputQueue.push(iter);
     }
 

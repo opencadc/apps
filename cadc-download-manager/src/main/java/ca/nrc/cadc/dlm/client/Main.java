@@ -73,6 +73,7 @@ import ca.nrc.cadc.appkit.ui.Application;
 import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadTupleParsingException;
 import ca.nrc.cadc.dlm.DownloadUtil;
@@ -156,25 +157,17 @@ public class Main {
                     // TODO: Q: support 'uris' as input to this, when DownloadManager.jsp
                     // hasn't been using it for a while?
                     //String uriStr = fixNull(am.getValue("uris"));
+
+                    // TODO: how "params" are going to be removed, or otherwise communicated
+                    // through the jsps needs to be determined.
+                    // will it just be 'runid' that is passed now?
                     String paramStr = fixNull(am.getValue("params"));
                     Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
-                    List<DownloadTuple> tupleList = new ArrayList<DownloadTuple>();
-
-                    try {
-                        tupleList = DownloadUtil.parseTuplesFromArgs(args);
-                    } catch (DownloadTupleParsingException parsingException) {
-                        // TODO: what is this going to look like for the webstart app
-                        // in terms of reporting parsing errors?
-                        throw new IllegalArgumentException("unable to parse input tuples" + parsingException);
-                    }
-
-                    // DownloadRequest goes here?
-                    // this.downloadRequest = new DownloadRequest();
-                    // might have to parse 'cutout' from here in the case of uri being passed in
-                    // with ICRS cutout (as from AS)
-                    // this.downloadRequest.globalParams = params;
-                    // OR
-                    // this.downloadRequest.parseGlobalParams(params);
+//                    List<DownloadTuple> tupleList = new ArrayList<DownloadTuple>();
+                    DownloadRequest downloadRequest = DownloadUtil.parseRequestFromArgs(args);
+                    // At this point there are valid and invalid tuples, either part
+                    // of the request list in DownloadRequest, or part of the validationErrors list.
+                    // Q: what to do from here?
 
                     if (forceAuthMethod != null) {
                         List<String> am = new ArrayList<>();
@@ -204,7 +197,10 @@ public class Main {
                         frame.setVisible(true);
                     }
 
-                    ui.add(tupleList, params);
+
+//                    ui.add(tupleList, params);
+                    // TODO: both GraphicUI and ConsoleUI need to ingest DownloadRequest objects now
+                    ui.add(downloadRequest, params);
                     ui.start();
                     return true;
                 }

@@ -286,14 +286,15 @@ public class DispatcherServlet extends HttpServlet {
                 // external post
                 inputHandler.parseInput();
 
+                // DownloadRequest object would be pass out of here,
+                // including any tuple processing errors
                 tupleList = inputHandler.getTuples();
-                // DownloadRequest object instantiated here ??
-                // Probably isn't necessary in this Servlet as nothing is done with it...
 
                 if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
+                // DownloadRequest will be set as the forwarded attribute going forward...
                 request.setAttribute(INTERNAL_FORWARD_PARAMETER, tupleList);
                 log.debug("tupleList: " + tupleList.toString());
             }

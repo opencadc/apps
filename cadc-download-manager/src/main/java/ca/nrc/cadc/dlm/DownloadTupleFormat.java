@@ -185,7 +185,6 @@ public class DownloadTupleFormat {
 
         int count = 0;
         while (m.find()) {
-
             count++;
         }
         log.debug("found " + count + " instances of " + regexp + " in " + input);
@@ -207,5 +206,13 @@ public class DownloadTupleFormat {
 
         return tupleStr;
     }
+
+    // potentially have this function to use to create validated DownloadTuples,
+    // that can be used by the parse() above (parseInternal?) and from DLMINputHandler
+    // inc cadc-download-manager-server, from the code that ingests the JSON tuples. As it right now doesn't handle
+    // errors in any way.
+//    public String parseFromStrings(String idStr, String shapeStr, String label) {
+//
+//    }
 
 }
