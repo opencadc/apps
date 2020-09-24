@@ -29,11 +29,12 @@ public class IteratorTest {
     public void testIterateOK() {
         log.debug("testIterateOK");
         try {
-            List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(df.parse("http://www.google.com"));
-            dts.add(df.parse("test://www.example.com/test"));
+            DownloadRequest dr = new DownloadRequest();
+            dr.runID = "testRunID";
+            dr.getTuples().add(df.parse("http://www.google.com"));
+            dr.getTuples().add(df.parse("test://www.example.com/test"));
 
-            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
+            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dr);
             long num = 0;
             while (iter.hasNext()) {
                 DownloadDescriptor dd = iter.next();
@@ -42,7 +43,7 @@ public class IteratorTest {
                 Assert.assertEquals(DownloadDescriptor.OK, dd.status);
                 Assert.assertEquals("http", dd.url.getProtocol());
             }
-            Assert.assertEquals(dts.size(), num);
+            Assert.assertEquals(dr.getTuples().size(), num);
         } catch (Exception unexpected) {
             Assert.fail("unexpected error: " + unexpected.toString());
         }
@@ -53,13 +54,14 @@ public class IteratorTest {
         log.debug("testIterateDuplicates");
 
         try {
-            List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(df.parse("http://www.google.com"));
-            dts.add(df.parse("http://www.google.com"));
+            DownloadRequest dr = new DownloadRequest();
+            dr.runID = "testRunID";
+            dr.getTuples().add(df.parse("http://www.google.com"));
+            dr.getTuples().add(df.parse("http://www.google.com"));
 
-            Assert.assertEquals("tuple setup", 2, dts.size());
+            Assert.assertEquals("tuple setup", 1, dr.getTuples().size());
 
-            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
+            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dr);
             long num = 0;
             while (iter.hasNext()) {
                 DownloadDescriptor dd = iter.next();
@@ -68,22 +70,22 @@ public class IteratorTest {
                 Assert.assertEquals(DownloadDescriptor.OK, dd.status);
                 Assert.assertEquals("http", dd.url.getProtocol());
             }
-            Assert.assertEquals(2, num);
+            Assert.assertEquals(1, num);
             Assert.assertFalse(iter.hasNext());
 
-            // now test with removeDuplicates==true
-            iter = DownloadUtil.iterateURLs(dts, null, true);
-            DownloadDescriptor dd = iter.next();
-            log.debug("found: " + dd);
-            Assert.assertEquals(DownloadDescriptor.OK, dd.status);
-            Assert.assertEquals("http", dd.url.getProtocol());
-
-            dd = iter.next();
-            log.debug("found: " + dd);
-            Assert.assertEquals(DownloadDescriptor.ERROR, dd.status);
-            Assert.assertTrue(dd.error.contains("NoSuchElementException"));
-
-            Assert.assertFalse(iter.hasNext());
+//            // now test with removeDuplicates==true
+//            iter = DownloadUtil.iterateURLs(dr);
+//            DownloadDescriptor dd = iter.next();
+//            log.debug("found: " + dd);
+//            Assert.assertEquals(DownloadDescriptor.OK, dd.status);
+//            Assert.assertEquals("http", dd.url.getProtocol());
+//
+//            dd = iter.next();
+//            log.debug("found: " + dd);
+//            Assert.assertEquals(DownloadDescriptor.ERROR, dd.status);
+//            Assert.assertTrue(dd.error.contains("NoSuchElementException"));
+//
+//            Assert.assertFalse(iter.hasNext());
 
         } catch (Exception unexpected) {
             Assert.fail("unexpected error: " + unexpected.toString());
@@ -95,10 +97,11 @@ public class IteratorTest {
         log.debug("testIterateError");
 
         try {
-            List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(df.parse("fake:fake/baz"));
+            DownloadRequest dr = new DownloadRequest();
+            dr.runID = "testRunID";
+            dr.getTuples().add(df.parse("fake:fake/baz"));
 
-            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, null);
+            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dr);
             long num = 0;
             while (iter.hasNext()) {
                 DownloadDescriptor dd = iter.next();
@@ -106,43 +109,44 @@ public class IteratorTest {
                 log.debug("found: " + dd);
                 Assert.assertEquals(DownloadDescriptor.ERROR, dd.status);
             }
-            Assert.assertEquals(dts.size(), num);
+            Assert.assertEquals(dr.getTuples().size(), num);
 
         } catch (Exception unexpected) {
             Assert.fail("unexpected error: " + unexpected.toString());
         }
     }
 
-    @Test
-    public void testIterateParams() {
-        try {
-            List<DownloadTuple> dts = new ArrayList<>();
-            dts.add(df.parse("test://www.example.com/test"));
-
-            String s2 = "runid=123&cutout=[1]&cutout=[2]";
-            Map<String, List<String>> params = DownloadUtil.decodeParamMap(s2);
-
-            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, params);
-
-            long num = 0;
-            while (iter.hasNext()) {
-                DownloadDescriptor dd = iter.next();
-                num++;
-                log.debug("found: " + dd);
-                Assert.assertEquals(DownloadDescriptor.OK, dd.status);
-                Assert.assertEquals("http", dd.url.getProtocol());
-                URI.create(dd.uri);
-                Assert.assertNotNull(dd.url);
-                Assert.assertNotNull(dd.url.getQuery());
-                Assert.assertTrue(dd.url.getQuery().length() >= s2.length());
-                Assert.assertTrue(dd.url.getQuery().contains("runid=123"));
-                Assert.assertTrue(dd.url.getQuery().contains("cutout="));
-            }
-            Assert.assertEquals(dts.size(), num);
-
-        } catch (Exception unexpected) {
-            Assert.fail("unexpected error: " + unexpected.toString());
-        }
-    }
+//    @Test
+//    public void testIterateParams() {
+//        try {
+//            DownloadRequest dr = new DownloadRequest();
+//            dr.runID = "testRunID";
+//            dr.getTuples().add(df.parse("test://www.example.com/test"));
+//
+//            String s2 = "runid=123&cutout=[1]&cutout=[2]";
+//            Map<String, List<String>> params = DownloadUtil.decodeParamMap(s2);
+//
+//            Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(dts, params);
+//
+//            long num = 0;
+//            while (iter.hasNext()) {
+//                DownloadDescriptor dd = iter.next();
+//                num++;
+//                log.debug("found: " + dd);
+//                Assert.assertEquals(DownloadDescriptor.OK, dd.status);
+//                Assert.assertEquals("http", dd.url.getProtocol());
+//                URI.create(dd.uri);
+//                Assert.assertNotNull(dd.url);
+//                Assert.assertNotNull(dd.url.getQuery());
+//                Assert.assertTrue(dd.url.getQuery().length() >= s2.length());
+//                Assert.assertTrue(dd.url.getQuery().contains("runid=123"));
+//                Assert.assertTrue(dd.url.getQuery().contains("cutout="));
+//            }
+//            Assert.assertEquals(dts.size(), num);
+//
+//        } catch (Exception unexpected) {
+//            Assert.fail("unexpected error: " + unexpected.toString());
+//        }
+//    }
 
 }
