@@ -155,9 +155,18 @@ public class ConsoleUI implements UserInterface, TransferListener {
 
     }
 
-    // TODO: this might change to a DownloadRequest that needs to be parsed out
-    public void add(DownloadRequest downloadReq, Map<String, List<String>> params) {
-        // TODO: params from this signature needs to be removed
+    public void add(DownloadRequest downloadReq) {
+
+        // Report any validation errors found to the log
+        if (downloadReq.getValidationErrors() != null) {
+            System.err.println("input validation errors found: ");
+            for (Throwable err: downloadReq.getValidationErrors()) {
+                System.err.println(err.getMessage());
+            }
+        }
+
+        System.out.println("continuing to process valid tuples from input.");
+
         Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(downloadReq);
         while (i.hasNext()) {
             DownloadDescriptor dd = i.next();
@@ -169,7 +178,6 @@ public class ConsoleUI implements UserInterface, TransferListener {
         }
     }
 
-    // TODO: might be changes here if DownloadDescriptor signature changes
     private void addDownload(DownloadDescriptor dd) {
         if (downloadDir == null) {
             this.downloadDir = new File(System.getProperty("user.dir"));

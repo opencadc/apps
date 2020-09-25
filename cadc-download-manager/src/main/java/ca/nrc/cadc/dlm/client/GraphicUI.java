@@ -126,10 +126,16 @@ public class GraphicUI extends AbstractApplication implements ChangeListener, Us
         engineInitCond.set(false);
     }
 
-    // This signature would use a DownloadRequest object - TODO
-    public void add(DownloadRequest downloadReq, Map<String, List<String>> params) {
-        // TODO: 'params' needs to be removed from this signature, even knowing that
-        //
+    public void add(DownloadRequest downloadReq) {
+
+        // Report any validation errors found to the log
+        if (downloadReq.getValidationErrors() != null) {
+            for (Throwable err: downloadReq.getValidationErrors()) {
+                log.error(err.getMessage());
+            }
+        }
+        log.info("continuing to process valid tuples found.");
+
         Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq);
         this.inputQueue.push(iter);
     }

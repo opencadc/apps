@@ -132,7 +132,7 @@ public class DownloadUtilTest {
         expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/3", new URL("http://mysite.ca/path/3")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/4", new URL("http://mysite.ca/path/4")));
-        expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
+//        expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/5", new URL("http://mysite.ca/path/5")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/6", new URL("http://mysite.ca/path/6")));
 

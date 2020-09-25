@@ -158,24 +158,9 @@ public class Main {
                     // hasn't been using it for a while?
                     //String uriStr = fixNull(am.getValue("uris"));
 
-                    // TODO: how "params" are going to be removed, or otherwise communicated
-                    // through the jsps needs to be determined.
-                    // will it just be 'runid' that is passed now?
-                    String paramStr = fixNull(am.getValue("params"));
-                    Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
-
-                    log.debug("grabbing tuples from args");
-
-//                    List<DownloadTuple> tupleList = new ArrayList<DownloadTuple>();
                     DownloadRequest downloadRequest = DownloadUtil.parseRequestFromArgs(args);
-                    log.debug(downloadRequest);
-
-                    log.debug("grabbing runid");
                     String runIDStr = fixNull(am.getValue("runid"));
                     downloadRequest.runID = runIDStr;
-                    // At this point there are valid and invalid tuples, either part
-                    // of the request list in DownloadRequest, or part of the validationErrors list.
-                    // Q: what to do from here?
 
                     // TODO: 'auth' needs to be handled in the new paradigm soon...
 //                    if (forceAuthMethod != null) {
@@ -207,10 +192,13 @@ public class Main {
                     }
 
 
-//                    ui.add(tupleList, params);
-                    // TODO: both GraphicUI and ConsoleUI need to ingest DownloadRequest objects now
-                    ui.add(downloadRequest, params);
-                    ui.start();
+                    // Input validation messages will be printed in this section
+                    ui.add(downloadRequest);
+                    if (downloadRequest.getTuples().isEmpty()) {
+                        log.info("no tuples to work on, quitting...");
+                    } else {
+                        ui.start();
+                    }
                     return true;
                 }
             });

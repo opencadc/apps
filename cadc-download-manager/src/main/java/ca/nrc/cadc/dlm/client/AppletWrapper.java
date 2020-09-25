@@ -103,11 +103,11 @@ public class AppletWrapper extends JApplet {
             String uriStr = fixNull(getParameter("uris"));
             String[] args = {uriStr};
             DownloadRequest downloadReq = DownloadUtil.parseRequestFromArgs(args);
-            String paramStr = fixNull(getParameter("params"));
-            Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+            String runIDStr = fixNull(getParameter("runid"));
+            downloadReq.runID = runIDStr;
 
             this.ui = new GraphicUI(Level.INFO);
-            ui.add(downloadReq, params);
+            ui.add(downloadReq);
 
             BrowserApplet f = new BrowserApplet(Constants.name, ui, this);
             this.validate();

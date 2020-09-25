@@ -86,7 +86,7 @@ public interface UserInterface {
     String downloadDirConfigKey = "downloadManager.downloadDir";
     String debugKey = "downloadManager.debug";
 
-    public void add(DownloadRequest downloadReq , Map<String, List<String>> params);
+    public void add(DownloadRequest downloadReq);
 
     void start();
 
