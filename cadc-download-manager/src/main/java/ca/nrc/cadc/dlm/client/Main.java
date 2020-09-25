@@ -163,17 +163,26 @@ public class Main {
                     // will it just be 'runid' that is passed now?
                     String paramStr = fixNull(am.getValue("params"));
                     Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
+
+                    log.debug("grabbing tuples from args");
+
 //                    List<DownloadTuple> tupleList = new ArrayList<DownloadTuple>();
                     DownloadRequest downloadRequest = DownloadUtil.parseRequestFromArgs(args);
+                    log.debug(downloadRequest);
+
+                    log.debug("grabbing runid");
+                    String runIDStr = fixNull(am.getValue("runid"));
+                    downloadRequest.runID = runIDStr;
                     // At this point there are valid and invalid tuples, either part
                     // of the request list in DownloadRequest, or part of the validationErrors list.
                     // Q: what to do from here?
 
-                    if (forceAuthMethod != null) {
-                        List<String> am = new ArrayList<>();
-                        am.add(forceAuthMethod);
-                        params.put("auth", am);
-                    }
+                    // TODO: 'auth' needs to be handled in the new paradigm soon...
+//                    if (forceAuthMethod != null) {
+//                        List<String> am = new ArrayList<>();
+//                        am.add(forceAuthMethod);
+//                        params.put("auth", am);
+//                    }
                     if (headless) {
                         boolean decompress = am.isSet("decompress");
                         boolean overwrite = am.isSet("overwrite");

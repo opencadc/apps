@@ -105,9 +105,11 @@ public class MultiDownloadGenerator implements DownloadGenerator {
             Properties props = new Properties();
             props.load(url.openStream());
             Iterator<String> i = props.stringPropertyNames().iterator();
+
             while (i.hasNext()) {
                 String scheme = i.next();
                 String cname = props.getProperty(scheme);
+                log.debug("scheme found:" + scheme + cname);
                 try {
                     log.debug("loading: " + cname);
                     Class c = Class.forName(cname);
@@ -124,10 +126,6 @@ public class MultiDownloadGenerator implements DownloadGenerator {
         }
     }
 
-//    public void setParameters(Map<String, List<String>> params) {
-//        this.params = params;
-//    }
-
     public void setRunID(String runID) {
         this.runID = runID;
     }
@@ -137,6 +135,7 @@ public class MultiDownloadGenerator implements DownloadGenerator {
             return null;
         }
 
+        log.debug("scheme from download tuple: " + dt.getID().getScheme());
         DownloadGenerator gen = generators.get(dt.getID().getScheme());
         if (gen != null) {
             gen.setRunID(this.runID);

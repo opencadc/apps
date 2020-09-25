@@ -423,10 +423,10 @@ public class DataLinkClient implements DownloadGenerator {
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
                             if (downloadTuple.cutout != null) {
                                 ShapeFormat sf = new ShapeFormat();
-                                curParams = "POS=" +  sf.format(downloadTuple.cutout);
+                                curParams = "POS=" +  NetUtil.encode(sf.format(downloadTuple.cutout));
                             }
                             if (downloadTuple.label != null) {
-                                curParams += "&LABEL=" + downloadTuple.label;
+                                curParams += "&LABEL=" + NetUtil.encode(downloadTuple.label);
                             }
                             log.debug("pass: " + url + " semantics: " + sem + " cutout: " + downloadTuple.cutout);
                         } else {

@@ -71,6 +71,7 @@
 package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
@@ -277,19 +278,21 @@ public class DispatcherServlet extends HttpServlet {
 
         public Object run() throws Exception {
             // forward
-            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
+//            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
+            DownloadRequest downloadReq = (DownloadRequest) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
 
             // Set up input handling
             DLMInputHandler inputHandler = new DLMInputHandler(request);
 
-            if (tupleList == null) {
+            if (downloadReq == null) {
                 // external post
                 inputHandler.parseInput();
 
                 // DownloadRequest object would be pass out of here,
                 // including any tuple processing errors
-                tupleList = inputHandler.getTuples();
 
+//                tupleList = inputHandler.getTuples();
+                downloadReq = inputHandler.
                 if (tupleList == null || tupleList.isEmpty()) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
