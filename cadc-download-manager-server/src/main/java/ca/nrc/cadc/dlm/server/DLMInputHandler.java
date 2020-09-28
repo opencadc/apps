@@ -232,7 +232,6 @@ public class DLMInputHandler {
         // instance.
 
         DownloadRequest dr = new DownloadRequest();
-//        List<DownloadTuple> tuples = new ArrayList<>();
 
         // This format is how the .jsp files pass tuple information in to DLM
         List<String> tupleStrList = si.getParameters(PARAM_TUPLE);
@@ -240,8 +239,6 @@ public class DLMInputHandler {
 
             for (String u : tupleStrList) {
                 if (StringUtil.hasText(u)) {
-                    // TODO: will need to change to DownloadFormat.parse()
-//                    dr.getTuples().add(downloadTupleFormat.parse(u));
                     try {
                         dr.getTuples().add(downloadTupleFormat.parse(u));
                     } catch (DownloadTupleParsingException parseEx) {
@@ -252,10 +249,11 @@ public class DLMInputHandler {
         }
 
         // Check to see if JSON content sent
-        // How is parsing for this going to be rolle up in the DownloadRequest, though?
-        List<DownloadTuple> jsonTuples = (List<DownloadTuple>)si.getContent(DLMInlineContentHandler.CONTENT_KEY);
+        // TODO: How is error validation for this going to be roled up in the DownloadRequest, though?
+        DownloadRequest downloadReq = (DownloadRequest)si.getContent(DLMInlineContentHandler.CONTENT_KEY);
 
-        // Merge any tuples found into return list
+        // Merge any tuples & errors found into return list
+        Set<DownloadTuple> jsonTuples = downloadReq.getTuples();
         if (jsonTuples != null && !jsonTuples.isEmpty()) {
             // merge the two lists
             for (DownloadTuple downloadTup: jsonTuples) {
@@ -263,11 +261,19 @@ public class DLMInputHandler {
             }
         }
 
+        List<Exception> validationErrs = downloadReq.getValidationErrors();
+        if (validationErrs != null && !validationErrs.isEmpty()) {
+            // merge the two lists
+            for (Exception ex: validationErrs) {
+                dr.getValidationErrors().add(ex);
+            }
+        }
+
         // Check to see if any PARAM_URI entries are provided
         List<String> uriList = si.getParameters(PARAM_URI);
 
-        // process into a List<DownloadTuple>
-//        List<DownloadTuple> uriOnlyTuples = new ArrayList<>();
+        // Validate and add to list of tuples if possible.
+        // add to ist of errors if not
         if (uriList != null) {
             for (String u : uriList) {
                 if (StringUtil.hasText(u)) {
@@ -280,29 +286,9 @@ public class DLMInputHandler {
             }
         }
 
-//        // TODO: Set of downloadTuples should handle this, so adding directly should be oK.
-//        // Merge in any URI-only tuples into return list
-//        if (!uriOnlyTuples.isEmpty()) {
-//            // merge the two lists
-//            for (DownloadTuple u: uriOnlyTuples) {
-//                if (!tuples.contains(u)) {
-//                    tuples.add(u);
-//                }
-//            }
-//        }
-
         // In case nothing is passed in as 'uri' or 'uris,' check for
         // deprecated parameters
-//        List<DownloadTuple>
-         handleDeprecatedAPI(dr);
-//        if (!moreTuples.isEmpty()) {
-//            // merge the two lists
-//            for (DownloadTuple tup: moreTuples) {
-//                if (!tuples.contains(tup)) {
-//                    tuples.add(tup);
-//                }
-//            }
-//        }
+        handleDeprecatedAPI(dr);
 
         return dr;
     }
@@ -409,10 +395,10 @@ public class DLMInputHandler {
      * @param doc - Document containing tuple information
      * @return List of DownloadTuple
      */
-    protected static List<DownloadTuple> buildTupleArray(Document doc) {
+    protected static DownloadRequest buildDownloadRequest(Document doc) {
         Element root = doc.getRootElement();
         Namespace ns = root.getNamespace();
-        List<DownloadTuple> dtList = new ArrayList<>();
+        DownloadRequest downloadReq = new DownloadRequest();
 
         // Must be at least one
         if (root.getChildren("tuple", ns) != null) {
@@ -429,14 +415,15 @@ public class DLMInputHandler {
                 Element labelEl = tupleElement.getChild("label", root.getNamespace());
                 String label = labelEl.getText();
 
-                // TODO: shoud use DownloadFormat.parse to build, so the validation is
-                // happening all out of the same code.
-                // Needs a constructor that will do this, though.
-                DownloadTuple dt = new DownloadTuple(tupleID, shape, label);
-                dtList.add(dt);
+                try {
+                    DownloadTuple dt = downloadTupleFormat.parseUsingInternalFormat(tupleID, shape, label);
+                    downloadReq.getTuples().add(dt);
+                } catch (DownloadTupleParsingException parsingException) {
+                    downloadReq.getValidationErrors().add(parsingException);
+                }
             }
         }
-        return dtList;
+        return downloadReq;
     }
 
 }

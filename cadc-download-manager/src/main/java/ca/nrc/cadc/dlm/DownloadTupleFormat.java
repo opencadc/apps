@@ -80,9 +80,28 @@ import org.apache.log4j.Logger;
 public class DownloadTupleFormat {
     private static Logger log = Logger.getLogger(DownloadTupleFormat.class);
 
+
     /**
-     * Convenience ctor to parse from internal format string. Will also
-     * parse URI strings only.
+     * Put the set of strings into the internalformat before parsing into DownloadTuple.
+     * @param part1
+     * @param part2
+     * @param part3
+     * @return
+     * @throws DownloadTupleParsingException
+     */
+    public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
+        String tupleStr = part1;
+        if (StringUtil.hasLength(part2)){
+            tupleStr += "{" + part2 + "}";
+        }
+        if (StringUtil.hasLength(part3)){
+            tupleStr += "{" + part3 + "}";
+        }
+        return parse(tupleStr);
+    }
+
+    /**
+     * Parse DownloadTuple from internal format string.
      * @param tupleStr String representing a tuple
      */
     public DownloadTuple parse(String tupleStr) throws DownloadTupleParsingException {
@@ -192,6 +211,11 @@ public class DownloadTupleFormat {
     }
 
 
+    /**
+     * Output DownloadTuple in internal format
+     * @param tuple
+     * @return
+     */
     public String format(DownloadTuple tuple) {
         String tupleStr = tuple.getID().toString();
 

@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -85,7 +86,7 @@ import org.apache.log4j.Logger;
 public class DLMInlineContentHandler implements InlineContentHandler {
     private static Logger log = Logger.getLogger(DLMInlineContentHandler.class);
 
-    public static final String CONTENT_KEY = "DLMJsonTuples";
+    public static final String CONTENT_KEY = "DownloadRequest";
 
     public DLMInlineContentHandler() {}
 
@@ -99,7 +100,7 @@ public class DLMInlineContentHandler implements InlineContentHandler {
         }
 
         Content content = new Content();
-        List<DownloadTuple> dtList = new ArrayList<>();
+        DownloadRequest downloadReq = new DownloadRequest();
 
         if (contentType.toLowerCase().contains("application/json")) {
 
@@ -112,7 +113,7 @@ public class DLMInlineContentHandler implements InlineContentHandler {
 
                 JsonInputter inputter = new JsonInputter();
                 // Q: where can the json string come from in this context?
-                dtList = DLMInputHandler.buildTupleArray(inputter.input(json));
+                downloadReq = DLMInputHandler.buildDownloadRequest(inputter.input(json));
 
             } catch (IOException ioe) {
                 throw new IllegalArgumentException("could not get JSON input from request.");
@@ -123,7 +124,7 @@ public class DLMInlineContentHandler implements InlineContentHandler {
         }
 
         content.name = CONTENT_KEY;
-        content.value = dtList;
+        content.value = downloadReq;
         return content;
     }
 }

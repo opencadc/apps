@@ -141,6 +141,16 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     }
 
     @Test
+    public void testParseFullTupleFromStrings() throws Exception {
+        // This function can be used in InputHandler classes to leverage validation
+        // provided in df.parse
+        DownloadTuple dt = df.parseUsingInternalFormat(URI_STR, SHAPE_STR, LABEL_STR);
+        Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
+        Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
+    }
+
+    @Test
     public void testParseNoLabel() throws Exception {
         DownloadTuple dt = df.parse(TUPLE_INTERNAL_SHAPE);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);

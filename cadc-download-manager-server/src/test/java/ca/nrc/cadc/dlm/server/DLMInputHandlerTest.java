@@ -68,12 +68,15 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.xml.JsonInputter;
 
 import java.net.URI;
-import java.util.List;
+import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -81,13 +84,14 @@ import org.junit.Test;
 
 public class DLMInputHandlerTest {
     private static Logger log = Logger.getLogger(DLMInputHandlerTest.class);
+    private static ShapeFormat shapeFormat = new ShapeFormat();
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     private static String URI_STR = "test://mysite.ca/path/1";
-    private static String SHAPE_STR = "polygon 0 0 0 0";
+    private static String SHAPE_STR = "circle 10.0 11.0 0.5";
     private static String LABEL_STR = "label";
 
     // Using Badgerfish json so that JsonInputter can read it correctly
@@ -108,6 +112,7 @@ public class DLMInputHandlerTest {
     public void testJSONTupleInput() throws Exception {
         log.debug("testJSONTupleInput");
         URI testURI = new URI(URI_STR);
+        Shape testShape = shapeFormat.parse(SHAPE_STR);
         // Build a Badgerfish JSON array of one
 
         // { "tupleList" : { "$" : [
@@ -121,13 +126,14 @@ public class DLMInputHandlerTest {
         log.debug("jsonTuples string:" + jsonTuples);
 
         JsonInputter inputter = new JsonInputter();
-        List<DownloadTuple> dtList =  DLMInputHandler.buildTupleArray(inputter.input(jsonTuples));
+        DownloadRequest downloadReq =  DLMInputHandler.buildDownloadRequest(inputter.input(jsonTuples));
+        Set<DownloadTuple> dtSet = downloadReq.getTuples();
 
-        for (DownloadTuple dt: dtList) {
+        for (DownloadTuple dt: dtSet) {
             // each should have the same values
-            log.debug(dt.tupleID + dt.shapeDescriptor + dt.label + "...");
-            Assert.assertEquals("tupleID does not match", testURI, dt.tupleID);
-            Assert.assertEquals("shape does not match", SHAPE_STR, dt.shapeDescriptor);
+            log.debug(dt.getID().toASCIIString() + dt.cutout.toString() + dt.label + "...");
+            Assert.assertEquals("tuple ID does not match", testURI, dt.getID());
+            Assert.assertEquals("shape does not match", testShape, dt .cutout);
             Assert.assertEquals("label does not match", LABEL_STR, dt.label);
         }
     }

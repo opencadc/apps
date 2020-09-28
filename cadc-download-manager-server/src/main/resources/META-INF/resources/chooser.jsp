@@ -76,13 +76,20 @@
 <%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Set" %>
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+
 
 <%
     ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
     boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
-    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    List<Exception> validationErrList = downloadReq.getValidationErrors();
+    DownloadTupleFormat df = new DownloadTupleFormat();
 
     String params = (String) request.getAttribute("params");
 
@@ -145,15 +152,28 @@ var="langBundle" scope="request"/>
 <% }
 %>
 
-    <h1 id="wb-cont" class="wb-invisible"><fmt:message key="TITLE" bundle="${langBundle}"/></h1>
+    <h1 id="wb-cont" class=""><fmt:message key="TITLE" bundle="${langBundle}"/></h1>
 
+    <h3>
+    The following validation errors were found. You can continue to process the valid selections
+    or go back to fix these errors first. </h3>
+    <%
+        for (Exception ex: validationErrList) {
+            String erStr = ex.getLocalizedMessage();
+    %>
+    <span><%= erStr %></span><br/>
+    <%
+        }
+    %>
+
+    <%-- This line is the 'Choose a method' title--%>
     <h2><fmt:message key="PAGE_HEADER" bundle="${langBundle}"/></h2>
     <br/>
 
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
 
 <%      for (DownloadTuple tuple: tupleList) {
-            String tupleStr = tuple.toInternalFormat();
+            String tupleStr = df.format(tuple);
 %>
         <input type="hidden" name="tuple" value="<%= tupleStr %>" />
 <%

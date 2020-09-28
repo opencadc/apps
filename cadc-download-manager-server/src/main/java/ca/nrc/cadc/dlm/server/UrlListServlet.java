@@ -71,6 +71,7 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import java.io.IOException;
@@ -115,12 +116,9 @@ public class UrlListServlet extends HttpServlet {
         Map<String, List<String>> paramMap = DownloadUtil.decodeParamMap(params);
         paramMap.put("auth", forceAuth);
 
-        List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
-        // DownloadRequest instantiation would go here... and go into iterateURLs?
+        DownloadRequest downloadReq = (DownloadRequest) request.getAttribute("downloadRequest");
 
-        for (Iterator<DownloadDescriptor> iter =
-             DownloadUtil.iterateURLs(tupleList, paramMap, true); iter
-                 .hasNext(); ) {
+        for (Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq); iter.hasNext(); ) {
             final DownloadDescriptor dd = iter.next();
 
             if (dd.url != null) {

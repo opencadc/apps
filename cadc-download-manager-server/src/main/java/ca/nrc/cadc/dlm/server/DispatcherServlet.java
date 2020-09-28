@@ -80,6 +80,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -111,9 +112,9 @@ public class DispatcherServlet extends HttpServlet {
     private static final long serialVersionUID = 202008040800L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
-    private static String INTERNAL_FORWARD_PARAMETER = "tupleList";
     private static int ONE_YEAR = 365 * 24 * 3600;
 
+    public static String INTERNAL_FORWARD_PARAMETER = "downloadRequest";
     public static String URLS = "URL List";
     public static String HTMLLIST = "HTML List";
     public static String WEBSTART = "Java Webstart";
@@ -278,7 +279,6 @@ public class DispatcherServlet extends HttpServlet {
 
         public Object run() throws Exception {
             // forward
-//            List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
             DownloadRequest downloadReq = (DownloadRequest) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
 
             // Set up input handling
@@ -288,30 +288,31 @@ public class DispatcherServlet extends HttpServlet {
                 // external post
                 inputHandler.parseInput();
 
-                // DownloadRequest object would be pass out of here,
-                // including any tuple processing errors
+                downloadReq = inputHandler.getDownloadRequest();
+                Set<DownloadTuple> tupleList = downloadReq.getTuples();
+                List<Exception> validationErrList = downloadReq.getValidationErrors();
 
-//                tupleList = inputHandler.getTuples();
-                downloadReq = inputHandler.
-                if (tupleList == null || tupleList.isEmpty()) {
+                if ((tupleList == null || tupleList.isEmpty() &&
+                    (validationErrList == null || validationErrList.isEmpty()))) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
                 // DownloadRequest will be set as the forwarded attribute going forward...
-                request.setAttribute(INTERNAL_FORWARD_PARAMETER, tupleList);
-                log.debug("tupleList: " + tupleList.toString());
+                request.setAttribute(INTERNAL_FORWARD_PARAMETER, downloadReq);
+
             }
 
-            String params = (String) request.getAttribute("params");
-            if (params == null) {
-                Map<String, List<String>> paramMap = inputHandler.getParameters();
-                if (paramMap != null && !paramMap.isEmpty()) {
-                    params = DownloadUtil.encodeParamMap(paramMap);
-                    request.setAttribute("params", params);
-                }
-            }
+//            String params = (String) request.getAttribute("params");
+//            if (params == null) {
+//                Map<String, List<String>> paramMap = inputHandler.getParameters();
+//                if (paramMap != null && !paramMap.isEmpty()) {
+//                    params = DownloadUtil.encodeParamMap(paramMap);
+//                    request.setAttribute("params", params);
+//                }
+//            }
 
-            log.debug("params: " + params);
+//            log.debug("params: " + params);
+            // TODO: Q: will runid percolate through here correctly?
 
             // check for preferred/selected download method
             String target = getDownloadMethod(request, response);
