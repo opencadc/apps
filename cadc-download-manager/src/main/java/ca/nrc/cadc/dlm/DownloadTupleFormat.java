@@ -82,25 +82,6 @@ public class DownloadTupleFormat {
 
 
     /**
-     * Put the set of strings into the internalformat before parsing into DownloadTuple.
-     * @param part1
-     * @param part2
-     * @param part3
-     * @return
-     * @throws DownloadTupleParsingException
-     */
-    public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
-        String tupleStr = part1;
-        if (StringUtil.hasLength(part2)){
-            tupleStr += "{" + part2 + "}";
-        }
-        if (StringUtil.hasLength(part3)){
-            tupleStr += "{" + part3 + "}";
-        }
-        return parse(tupleStr);
-    }
-
-    /**
      * Parse DownloadTuple from internal format string.
      * @param tupleStr String representing a tuple
      */
@@ -127,7 +108,8 @@ public class DownloadTupleFormat {
         String tmpLabel;
 
         if (tupleParts.length > 3) {
-            throw new DownloadTupleParsingException("tuple has too many parts. expected max 3 and found ': " + tupleParts.length+ tupleStr);
+            throw new DownloadTupleParsingException("tuple has too many parts. expected max 3 and found "
+                + tupleParts.length + ": " + tupleStr);
         }
         log.debug("tuple parts count: " + tupleParts.length);
 
@@ -231,12 +213,28 @@ public class DownloadTupleFormat {
         return tupleStr;
     }
 
-    // potentially have this function to use to create validated DownloadTuples,
-    // that can be used by the parse() above (parseInternal?) and from DLMINputHandler
-    // inc cadc-download-manager-server, from the code that ingests the JSON tuples. As it right now doesn't handle
-    // errors in any way.
-//    public String parseFromStrings(String idStr, String shapeStr, String label) {
-//
-//    }
+    /**
+     * Put a set of strings into the internalformat before parsing into DownloadTuple.
+     * Note: this code can be used at the tail end of parsing JSON input, or other blob-type data
+     * that is provided in String format. Use this function to leverage the validation code found
+     * in parse(internal_format_string).
+     * @param part1
+     * @param part2
+     * @param part3
+     * @return
+     * @throws DownloadTupleParsingException
+     */
+    public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
+
+
+        String tupleStr = part1;
+        if (StringUtil.hasLength(part2)) {
+            tupleStr += "{" + part2 + "}";
+        }
+        if (StringUtil.hasLength(part3)) {
+            tupleStr += "{" + part3 + "}";
+        }
+        return parse(tupleStr);
+    }
 
 }

@@ -166,24 +166,17 @@ public class DownloadUtil {
         return paramSet;
     }
 
-    // TODO: remove this before chcking in code - this is called from wget.jsp, Main, and UrlListServlet
-    // (in cadc-download-manager-server) as core of code that processes a DownloadRequest and returns urls
-    // to caller in order to access files and/or cutouts requested for download.
-//    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params) {
-//        return iterateURLs(tuples, params, false);
-//    }
-
-    // If this changes to DownloadRequest object, what happens?
-//    public static Iterator<DownloadDescriptor> iterateURLs(List<DownloadTuple> tuples, Map<String, List<String>> params,
-//                                                           final boolean removeDuplicates) {
-//    public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest dRequest) { ?? or just the list of tuples?
-        public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest downloadRequest) {
+    /**
+     * Generate an Iterator of DownloadDescriptors to be reported to caller. URLs and and
+     * errors found while generating URLs are included in the DownloadDescriptors.
+     * @param downloadRequest includes tuples with URIs to be translated to URLs
+     * @return Iterator with DownloadDescriptors
+     */
+    public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest downloadRequest) {
 
         final Set<URL> urls = new HashSet<>();
         final MultiDownloadGenerator gen = new MultiDownloadGenerator();
 
-        // Q: how will params now be managed?
-//        final List<DownloadTuple> dt = tuples;
         final Set<DownloadTuple> dt = downloadRequest.getTuples();
         gen.setRunID(downloadRequest.runID);
 
@@ -206,9 +199,9 @@ public class DownloadUtil {
                         inner = null;
                     }
                     // TODO:urls is a Set now is this duplicates bit necessary?
-//                    if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
-//                        return next();
-//                    }
+                    //if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
+                    //    return next();
+                    // }
                     if (dd.url != null) {
                         urls.add(dd.url);
                     }
@@ -219,9 +212,9 @@ public class DownloadUtil {
                 // TODO: parsing errors will need to be handled. This is commented out
                 // while code rework for input validation is being done
                 // this might take in a download tuple instead of a uri?
-//                if (cur.parsingError != null) { // string -> URI fail
-//                    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
-//                }
+                //if (cur.parsingError != null) { // string -> URI fail
+                //    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
+                //}
                 try {
                     inner = gen.downloadIterator(cur);
                     if (inner.hasNext()) {
@@ -242,7 +235,7 @@ public class DownloadUtil {
     }
 
     /**
-     * Parse tuples from a set of args (String[]). They are assumed to be a
+     * Parse DownloadRequest from a set of args (String[]). They are assumed to be a
      * space-delimited set of values of format:
      * ID{shape descriptor}{label}
      * Where:
@@ -253,9 +246,6 @@ public class DownloadUtil {
      * @param args Array of Strings, should be arguments from a command line call
      * @return list of download tuples
      */
-//    public static List<DownloadTuple> parseTuplesFromArgs(String[] args)
-//        throws DownloadTupleParsingException {
-
     public static DownloadRequest parseRequestFromArgs(String[] args) {
         DownloadRequest downloadRequest = new DownloadRequest();
 
@@ -311,8 +301,8 @@ public class DownloadUtil {
                 }
             }
         }
-//        return tupleList;
-            return downloadRequest;
+
+        return downloadRequest;
     }
 
 

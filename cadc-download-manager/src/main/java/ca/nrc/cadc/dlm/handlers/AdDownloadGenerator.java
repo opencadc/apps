@@ -93,16 +93,18 @@ import org.apache.log4j.Logger;
 public class AdDownloadGenerator implements DownloadGenerator {
     private static final Logger log = Logger.getLogger(AdDownloadGenerator.class);
     private String runID;
-//    private static final Set<String> PARAMS;
-//
-//    static {
-//        PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
-//        PARAMS.add("logkey");
-//        PARAMS.add("logvalue");
-//        PARAMS.add("cutout");
-//        PARAMS.add("runid");
-//    }
-    // TODO: cutout will have to be handled some other way
+    //    private static final Set<String> PARAMS;
+    //
+    //    static {
+    //        PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
+    //        PARAMS.add("logkey");
+    //        PARAMS.add("logvalue");
+    //        PARAMS.add("cutout");
+    //        PARAMS.add("runid");
+    //    }
+    // TODO: #technical debt; cutout with [#] format still needs to be
+    //  handled
+    // Q: what happens with 'logkey' and 'logvalue' above?
 
     private AdSchemeHandler ad;
     private Map<String, List<String>> params;
@@ -119,33 +121,38 @@ public class AdDownloadGenerator implements DownloadGenerator {
         try {
             URL url = ad.getURL(dt.getID());
             StringBuilder sb = new StringBuilder(url.toExternalForm());
-            sb.append("?runid=");
-            sb.append(this.runID);
+
+            if (this.runID != null) {
+                sb.append("?runid=");
+                sb.append(this.runID);
+            }
+            url = new URL(sb.toString());
+
             // TODO: all of this is likely to be yanked, or have to be
             // dealt with at some time in future when the cutout & other parameters
             // are somehow represented here
-//            if (params != null) {
-//                StringBuilder sb = new StringBuilder(url.toExternalForm());
-//                boolean first = true;
-//                Iterator<Map.Entry<String, List<String>>> i = params.entrySet().iterator();
-//                while (i.hasNext()) {
-//                    Map.Entry<String, List<String>> me = i.next();
-//                    if (PARAMS.contains(me.getKey()) && me.getValue() != null) {
-//                        for (String v : me.getValue()) {
-//                            if (first) {
-//                                sb.append("?");
-//                            } else {
-//                                sb.append("&");
-//                            }
-//                            first = false;
-//                            sb.append(me.getKey());
-//                            sb.append("=");
-//                            sb.append(URLEncoder.encode(v, "UTF-8"));
-//                        }
-//                    }
-//                }
-                url = new URL(sb.toString());
-//            }
+            //            if (params != null) {
+            //                StringBuilder sb = new StringBuilder(url.toExternalForm());
+            //                boolean first = true;
+            //                Iterator<Map.Entry<String, List<String>>> i = params.entrySet().iterator();
+            //                while (i.hasNext()) {
+            //                    Map.Entry<String, List<String>> me = i.next();
+            //                    if (PARAMS.contains(me.getKey()) && me.getValue() != null) {
+            //                        for (String v : me.getValue()) {
+            //                            if (first) {
+            //                                sb.append("?");
+            //                            } else {
+            //                                sb.append("&");
+            //                            }
+            //                            first = false;
+            //                            sb.append(me.getKey());
+            //                            sb.append("=");
+            //                            sb.append(URLEncoder.encode(v, "UTF-8"));
+            //                        }
+            //                    }
+            //                }
+            //                url = new URL(sb.toString());
+            //            }
             return new SingleDownloadIterator(dt, url);
         } catch (Exception ex) {
             return new FailIterator(dt, "failed to resolve URI: " + ex.getMessage());

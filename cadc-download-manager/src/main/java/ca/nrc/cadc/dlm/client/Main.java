@@ -163,11 +163,11 @@ public class Main {
                     downloadRequest.runID = runIDStr;
 
                     // TODO: 'auth' needs to be handled in the new paradigm soon...
-//                    if (forceAuthMethod != null) {
-//                        List<String> am = new ArrayList<>();
-//                        am.add(forceAuthMethod);
-//                        params.put("auth", am);
-//                    }
+                    //                    if (forceAuthMethod != null) {
+                    //                        List<String> am = new ArrayList<>();
+                    //                        am.add(forceAuthMethod);
+                    //                        params.put("auth", am);
+                    //                    }
                     if (headless) {
                         boolean decompress = am.isSet("decompress");
                         boolean overwrite = am.isSet("overwrite");

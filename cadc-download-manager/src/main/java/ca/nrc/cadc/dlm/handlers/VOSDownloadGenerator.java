@@ -112,17 +112,17 @@ public class VOSDownloadGenerator implements DownloadGenerator {
     }
 
     // TODO: 'auth' will need to be put in this class by some other method
-//    public void setParameters(Map<String, List<String>> params) {
-//        List<String> val = params.get("runid");
-//        if (val != null && !val.isEmpty()) {
-//            this.runID = val.get(0);
-//        }
-//        val = params.get("auth");
-//        if (val != null && !val.isEmpty()) {
-//            this.forceAuthMethod = val.get(0);
-//        }
-//        log.debug("force auth method: " + forceAuthMethod);
-//    }
+    //    public void setParameters(Map<String, List<String>> params) {
+    //        List<String> val = params.get("runid");
+    //        if (val != null && !val.isEmpty()) {
+    //            this.runID = val.get(0);
+    //        }
+    //        val = params.get("auth");
+    //        if (val != null && !val.isEmpty()) {
+    //            this.forceAuthMethod = val.get(0);
+    //        }
+    //        log.debug("force auth method: " + forceAuthMethod);
+    //    }
 
     public void setRunID(String runID) {
         this.runID = runID;
