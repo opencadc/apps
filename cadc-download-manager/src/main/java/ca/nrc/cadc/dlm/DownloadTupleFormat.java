@@ -147,7 +147,7 @@ public class DownloadTupleFormat {
                         log.debug("parsed cutout.");
                     } catch (IllegalArgumentException ill) {
                         log.debug("parsing error for cutout: " + tmpShapeStr);
-                        throw new DownloadTupleParsingException("cutout parsing error: " + ill + ": " + tupleStr );
+                        throw new DownloadTupleParsingException("cutout parsing error: " + ill + ": " + tupleStr);
                     } catch (Exception e) {
                         log.debug("other error for parsing cutout:" + e);
                         throw new DownloadTupleParsingException("BUG for cutout:" + e + ": " + tupleStr);
