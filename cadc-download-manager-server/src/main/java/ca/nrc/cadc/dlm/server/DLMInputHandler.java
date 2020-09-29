@@ -233,6 +233,11 @@ public class DLMInputHandler {
 
         DownloadRequest dr = new DownloadRequest();
 
+        // get runid, if present
+        if (servletRequest.getParameter("runid") != null) {
+            dr.runID = (String) servletRequest.getParameter("runid");
+        }
+
         // This format is how the .jsp files pass tuple information in to DLM
         List<String> tupleStrList = si.getParameters(PARAM_TUPLE);
         if ((tupleStrList != null) && (tupleStrList.size() > 0)) {
@@ -249,23 +254,24 @@ public class DLMInputHandler {
         }
 
         // Check to see if JSON content sent
-        // TODO: How is error validation for this going to be roled up in the DownloadRequest, though?
         DownloadRequest downloadReq = (DownloadRequest)si.getContent(DLMInlineContentHandler.CONTENT_KEY);
 
-        // Merge any tuples & errors found into return list
-        Set<DownloadTuple> jsonTuples = downloadReq.getTuples();
-        if (jsonTuples != null && !jsonTuples.isEmpty()) {
-            // merge the two lists
-            for (DownloadTuple downloadTup: jsonTuples) {
-                dr.getTuples().add(downloadTup);
+        if (downloadReq != null) {
+            // Merge any tuples & errors found into return list
+            Set<DownloadTuple> jsonTuples = downloadReq.getTuples();
+            if (jsonTuples != null && !jsonTuples.isEmpty()) {
+                // merge the two lists
+                for (DownloadTuple downloadTup : jsonTuples) {
+                    dr.getTuples().add(downloadTup);
+                }
             }
-        }
 
-        List<Exception> validationErrs = downloadReq.getValidationErrors();
-        if (validationErrs != null && !validationErrs.isEmpty()) {
-            // merge the two lists
-            for (Exception ex: validationErrs) {
-                dr.getValidationErrors().add(ex);
+            List<Exception> validationErrs = downloadReq.getValidationErrors();
+            if (validationErrs != null && !validationErrs.isEmpty()) {
+                // merge the two lists
+                for (Exception ex : validationErrs) {
+                    dr.getValidationErrors().add(ex);
+                }
             }
         }
 

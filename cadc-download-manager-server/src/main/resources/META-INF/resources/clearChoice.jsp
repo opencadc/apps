@@ -69,13 +69,17 @@
 
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
-<%@ page import="java.net.URI" %>
-<%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
 <%
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-    String fragment = (String) request.getAttribute("fragment");
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    DownloadTupleFormat df = new DownloadTupleFormat();
 %>
 
 <%
@@ -139,20 +143,44 @@
 <br>
 <div style="padding-left: 2em; padding-right: 2em">
     <form name="dmsubmitform" action="/downloadManager/download" method="POST">
-        <c:forEach var="uri" items="<%= uriList %>">
-            <input type="hidden" name="uri" value="${uri}" />
-        </c:forEach>
-        <input type="hidden" name="fragment" value="<%= fragment %>" />
+        <%      for (DownloadTuple tuple: tupleList) {
+            String tupleStr = df.format(tuple);
+        %>
+        <input type="hidden" name="tuple" value="${tupleStr}" />
+        <%
+            }
+        %>
+        <%     if ( downloadReq.runID != null ) {
+        %>
+        <input type="hidden" name="runid" value="<%= downloadReq.runID %>" />
+        <%      }
+        %>
+        <%     if ( skinURL != null ) {
+        %>
+        <input type="hidden" name="skin" value="<%= skinURL %>" />
+        <%      }
+        %>
         <input type="hidden" name="execute" value="Submit" />
-        <input type="hidden" name="skin" value="<%= skin %>" />
     </form>
     
     <form name="clear" action="/downloadManager/download" method="POST">
-        <c:forEach var="uri" items="<%= uriList %>">
-            <input type="hidden" name="uri" value="${uri}" />
-        </c:forEach>
-        <input type="hidden" name="fragment" value="<%= fragment %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
+        <%      for (DownloadTuple tuple: tupleList) {
+            String tupleStr = df.format(tuple);
+        %>
+        <input type="hidden" name="tuple" value="${tupleStr}" />
+        <%
+            }
+        %>
+        <%     if ( downloadReq.runID != null ) {
+        %>
+        <input type="hidden" name="runid" value="<%= downloadReq.runID %>" />
+        <%      }
+        %>
+        <%     if ( skinURL != null ) {
+        %>
+        <input type="hidden" name="skin" value="<%= skinURL %>" />
+        <%      }
+        %>
         <input type="submit" name="clearCookie" value="Chose one of the other download methods" />
         <input type="submit" OnClick="closemyself()" value="Close window" />
     </form>

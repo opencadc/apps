@@ -73,14 +73,17 @@
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
-<%@ page import="java.util.List" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
 <%
-    // we need these to offer the option to go back to the method choice page
-    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
-    String fragment = (String) request.getAttribute("fragment");
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    DownloadTupleFormat df = new DownloadTupleFormat();
 %>
 
 <%
@@ -149,14 +152,23 @@
 <div style="padding-left: 2em; padding-right: 2em">
     <form action="/downloadManager/download" method="POST">
         <%      for (DownloadTuple tuple: tupleList) {
-            String tupleStr = tuple.toInternalFormat();
+            String tupleStr = df.format(tuple);
         %>
         <input type="hidden" name="tuple" value="${tupleStr}" />
         <%
             }
         %>
-        <input type="hidden" name="fragment" value="<%= fragment %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
+        <%     if ( downloadReq.runID != null ) {
+        %>
+        <input type="hidden" name="runid" value="<%= downloadReq.runID %>" />
+        <%      }
+        %>
+        <%     if ( skinURL != null ) {
+        %>
+        <input type="hidden" name="skin" value="<%= skinURL %>" />
+        <%      }
+        %>
+
         <input type="submit" name="method" value="Chose one of the other download methods" />
     </form>
 </div

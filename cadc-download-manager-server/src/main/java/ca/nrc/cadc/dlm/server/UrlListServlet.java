@@ -112,11 +112,13 @@ public class UrlListServlet extends HttpServlet {
         List<String> forceAuth = new ArrayList<>(1);
         forceAuth.add(AuthMethod.PASSWORD.getValue());
 
-        String params = (String) request.getAttribute("params");
-        Map<String, List<String>> paramMap = DownloadUtil.decodeParamMap(params);
-        paramMap.put("auth", forceAuth);
+        // TODO: 'auth' needs to be handled, or determined deprecated
+        //String params = (String) request.getAttribute("params");
+        //Map<String, List<String>> paramMap = DownloadUtil.decodeParamMap(params);
+        //paramMap.put("auth", forceAuth);
 
         DownloadRequest downloadReq = (DownloadRequest) request.getAttribute("downloadRequest");
+        downloadReq.runID = (String) request.getAttribute("runid");
 
         for (Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq); iter.hasNext(); ) {
             final DownloadDescriptor dd = iter.next();

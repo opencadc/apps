@@ -124,7 +124,7 @@ public class DownloadTupleFormat {
                 tmpLabel = l.substring(0, l.length() - 1);
             } else {
                 // invalid format
-                throw new DownloadTupleParsingException("invalid label format: " + l + " in " + tupleStr);
+                throw new DownloadTupleParsingException("invalid label format: " + tupleStr);
             }
         } else {
             tmpLabel = null;
@@ -147,15 +147,15 @@ public class DownloadTupleFormat {
                         log.debug("parsed cutout.");
                     } catch (IllegalArgumentException ill) {
                         log.debug("parsing error for cutout: " + tmpShapeStr);
-                        throw new DownloadTupleParsingException("parsing error for cutout: " + ill);
+                        throw new DownloadTupleParsingException("cutout parsing error: " + ill + ": " + tupleStr );
                     } catch (Exception e) {
                         log.debug("other error for parsing cutout:" + e);
-                        throw new DownloadTupleParsingException("BUG for cutout: " + e);
+                        throw new DownloadTupleParsingException("BUG for cutout:" + e + ": " + tupleStr);
                     }
                 }
             } else {
                 // invalid format
-                throw new DownloadTupleParsingException("invalid cutout: " + sd + " in " + tupleStr);
+                throw new DownloadTupleParsingException("invalid cutout: " + tupleStr);
             }
         } else {
             tmpShape = null;
@@ -169,7 +169,7 @@ public class DownloadTupleFormat {
             try {
                 tmpURI = new URI(uriStr);
             } catch (URISyntaxException u) {
-                throw new DownloadTupleParsingException("parsing error for id: " + u);
+                throw new DownloadTupleParsingException("id parsing error: " + u + ": " + tupleStr);
             }
         } else {
             // invalid format - has to at least be a single URI passed in
@@ -225,8 +225,6 @@ public class DownloadTupleFormat {
      * @throws DownloadTupleParsingException
      */
     public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
-
-
         String tupleStr = part1;
         if (StringUtil.hasLength(part2)) {
             tupleStr += "{" + part2 + "}";

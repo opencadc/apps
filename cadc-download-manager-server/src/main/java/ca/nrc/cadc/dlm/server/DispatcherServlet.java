@@ -226,7 +226,6 @@ public class DispatcherServlet extends HttpServlet {
         ServletLogInfo logInfo = new ServletLogInfo(request);
         log.info(logInfo.start());
 
-
         long start = System.currentTimeMillis();
 
         try {
@@ -299,7 +298,6 @@ public class DispatcherServlet extends HttpServlet {
                 }
                 // DownloadRequest will be set as the forwarded attribute going forward...
                 request.setAttribute(INTERNAL_FORWARD_PARAMETER, downloadReq);
-
             }
 
             // check for preferred/selected download method

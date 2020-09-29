@@ -72,6 +72,7 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.IOException;
@@ -119,18 +120,12 @@ public class JavaWebStartServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
 
-        // Instantiate new DownloadRequest object
-        // this.downloadRequest = new DownloadRequest();
-        // ?? again, nothing done with it here. This post goes to DownloadManager.jsp immediately.
-
         // encode & in the param list for safe use in XML
-        String params = (String) request.getAttribute("params");
-        if (params != null) {
-            params = params.replaceAll("&", "&amp;");
-            request.setAttribute("params", params);
-        }
-
-        // this.downloadRequest.params = params;
+        //String params = (String) request.getAttribute("params");
+        //if (params != null) {
+        //    params = params.replaceAll("&", "&amp;");
+        //    request.setAttribute("params", params);
+        //}
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
         // Nothing added in if user is anon

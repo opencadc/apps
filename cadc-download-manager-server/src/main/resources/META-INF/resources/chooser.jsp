@@ -91,7 +91,7 @@
     List<Exception> validationErrList = downloadReq.getValidationErrors();
     DownloadTupleFormat df = new DownloadTupleFormat();
 
-    String params = (String) request.getAttribute("params");
+    String runid = downloadReq.runID;
 
     String requestHeaderLang = request.getHeader("Content-Language");
     if (requestHeaderLang == null) {
@@ -152,23 +152,34 @@ var="langBundle" scope="request"/>
 <% }
 %>
 
-    <h1 id="wb-cont" class=""><fmt:message key="TITLE" bundle="${langBundle}"/></h1>
+    <h1 id="wb-cont" class="wb-invisible"><fmt:message key="TITLE" bundle="${langBundle}"/></h1>
 
-    <h3>
-    The following validation errors were found. You can continue to process the valid selections
-    or go back to fix these errors first. </h3>
+    <%-- This line is the 'Choose a method' titl e--%>
+    <h2><fmt:message key="PAGE_HEADER" bundle="${langBundle}"/></h2>
+    <br/>
+
+<%-- Display any validation errors found --%>
+<%     if ( validationErrList.size() > 0 ) {
+
+%>
+<p class="grid-12 color-attention">
+    The following validation errors were found. You can continue to process your other selections
+    or go back to fix these errors first. </p>
+<p class=grid-12">
+<ul>
     <%
         for (Exception ex: validationErrList) {
             String erStr = ex.getLocalizedMessage();
     %>
-    <span><%= erStr %></span><br/>
+    <li><%= erStr %></li>
     <%
         }
     %>
+</ul>
+</p>
 
-    <%-- This line is the 'Choose a method' title--%>
-    <h2><fmt:message key="PAGE_HEADER" bundle="${langBundle}"/></h2>
-    <br/>
+<% }
+%>
 
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
 
@@ -180,7 +191,11 @@ var="langBundle" scope="request"/>
         }
 %>
 
-        <input type="hidden" name="params" value="<%= params %>" />
+<%     if ( downloadReq.runID != null ) {
+%>
+        <input type="hidden" name="runid" value="<%= runid %>" />
+<%      }
+%>
 
         <div class="grid-12">
             <c:if test="<%=enableWebstart%>" >

@@ -106,15 +106,13 @@
 </head>
 
 <body>
-<c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
 
-<h2>
-	You have not selected any datasets to download. Please go back to the
-	previous page and ensure you have marked the datasets you intend to
-	retrieve.
-</h2>
-
-
+<h2>No datasets found</h2>
+	<p> You have not selected any datasets to download, or there are validation errors such that no
+  valid datasets can be found.</br>
+    Please go back to the previous page and ensure you have marked the datasets you intend to
+	retrieve and have fixed any errors reported.
+</p>
 
 </body>
 </html>

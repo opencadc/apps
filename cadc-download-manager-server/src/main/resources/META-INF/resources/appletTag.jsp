@@ -70,12 +70,15 @@
 <%--
     Simple JSP page to write out the applet tag that launches the DownloadManager applet.
 --%>
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
-<%@ page import="java.net.URI" %>
-<%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="java.util.Set" %>
 <%
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-    String fragment = (String) request.getAttribute("fragment");
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    DownloadTupleFormat df = new DownloadTupleFormat();
 %>
 
 <applet name="DownloadManager"
@@ -84,10 +87,19 @@
         archive="cadcDownloadManagerClient.jar,cadcUtil.jar,log4j.jar"
         width="600" height="600">
 
-    <c:forEach var="uri" items="<%= uriList %>">
-        <input type="hidden" name="uri" value="${uri}" />
-    </c:forEach>
-    <param name="fragment" value="<%= fragment %>" />
+    <%      for (DownloadTuple tuple: tupleList) {
+        String tupleStr = df.format(tuple);
+    %>
+    <input type="hidden" name="tuple" value="${tupleStr}" />
+    <%
+        }
+    %>
+    <%     if ( downloadReq.runID != null ) {
+    %>
+    <input type="hidden" name="runid" value="<%= downloadReq.runID %>" />
+    <%
+        }
+    %>
 </applet>
 
     

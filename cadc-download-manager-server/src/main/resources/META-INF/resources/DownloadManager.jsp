@@ -78,10 +78,14 @@
 <%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+<%@ page import="java.util.Set" %>
 
-<%
-    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
-    String params = (String) request.getAttribute("params");
+<%   DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    DownloadTupleFormat df = new DownloadTupleFormat();
     String codebase = (String) request.getAttribute("codebase");
     String ssocookieArg = "";
     String ssocookiedomainArg = "";
@@ -141,14 +145,16 @@
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
 <%      for (DownloadTuple tuple: tupleList) {
-          String tupleStr = tuple.toInternalFormat();
+          String tupleStr =String tupleStr = df.format(tuple);
 %>
           <argument><%= tupleStr %></argument>
 <%
         }
+
+    if (downloadReq.runID != null) {
 %>
-        <argument>--params=<%= params %></argument>
-<%
+        <argument>--runid=<%= downloadReq.runID %></argument>
+<%  }
     if (!ssocookieArg.isEmpty())
     {
 %>

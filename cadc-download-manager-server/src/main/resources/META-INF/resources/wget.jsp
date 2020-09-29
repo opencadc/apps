@@ -69,22 +69,17 @@
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+
 <%@ page import="ca.nrc.cadc.dlm.DownloadDescriptor" %>
-<%@ page import="java.util.Iterator" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
-<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="java.util.Iterator" %>
 
 <%
-    List<DownloadTuple> tupleList = (List<DownloadTuple>) request.getAttribute("tupleList");
-    // TODO: DownloadRequest would need to go here?
-    // or would this work be better done somewhere else & only the results be
-    // sent here?
-    String params = (String) request.getAttribute("params");
-    Map<String,List<String>> paramMap = DownloadUtil.decodeParamMap(params);
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
 %>
 
 <%
@@ -134,7 +129,7 @@
 
 <p>
 <%
-    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(tupleList, paramMap, true);
+    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq);
     while ( iter.hasNext() )
     {
         DownloadDescriptor dd = iter.next();
