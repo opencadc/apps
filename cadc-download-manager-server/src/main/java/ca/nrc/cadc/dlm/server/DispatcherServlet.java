@@ -292,8 +292,8 @@ public class DispatcherServlet extends HttpServlet {
                 Set<DownloadTuple> tupleList = downloadReq.getTuples();
                 List<Exception> validationErrList = downloadReq.getValidationErrors();
 
-                if ((tupleList == null || tupleList.isEmpty() &&
-                    (validationErrList == null || validationErrList.isEmpty()))) {
+                if ((tupleList == null || tupleList.isEmpty()
+                    && (validationErrList == null || validationErrList.isEmpty()))) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
@@ -301,18 +301,6 @@ public class DispatcherServlet extends HttpServlet {
                 request.setAttribute(INTERNAL_FORWARD_PARAMETER, downloadReq);
 
             }
-
-//            String params = (String) request.getAttribute("params");
-//            if (params == null) {
-//                Map<String, List<String>> paramMap = inputHandler.getParameters();
-//                if (paramMap != null && !paramMap.isEmpty()) {
-//                    params = DownloadUtil.encodeParamMap(paramMap);
-//                    request.setAttribute("params", params);
-//                }
-//            }
-
-//            log.debug("params: " + params);
-            // TODO: Q: will runid percolate through here correctly?
 
             // check for preferred/selected download method
             String target = getDownloadMethod(request, response);

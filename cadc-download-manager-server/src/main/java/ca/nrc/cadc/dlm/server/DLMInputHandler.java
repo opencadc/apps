@@ -296,8 +296,8 @@ public class DLMInputHandler {
     /**
      * Check for deprecated parameters in the request. Convert to the most current for Download Manager's API.
      * Kept for backward compatibility.
-     * (last rev: Aug 24, 2020, s2739, HJ)
-     * @return list of URIs.
+     * @param dr DownloadRequest to put validated tuples or validation errors.
+     *
      */
     public static void handleDeprecatedAPI(DownloadRequest dr) {
 
