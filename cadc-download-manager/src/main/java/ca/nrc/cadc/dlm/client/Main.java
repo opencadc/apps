@@ -75,10 +75,12 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
+import ca.nrc.cadc.dlm.DownloadTupleFormat;
 import ca.nrc.cadc.dlm.DownloadTupleParsingException;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.StringUtil;
 import java.awt.Component;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -151,14 +153,13 @@ public class Main {
 
             final ConditionVar downloadCompleteCond = new ConditionVar();
 
-
             boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>() {
                 public Boolean run() {
                     // TODO: Q: support 'uris' as input to this, when DownloadManager.jsp
                     // hasn't been using it for a while?
                     //String uriStr = fixNull(am.getValue("uris"));
 
-                    DownloadRequest downloadRequest = DownloadUtil.parseRequestFromArgs(args);
+                    DownloadRequest downloadRequest = getDownloadRequest(am);
                     String runIDStr = fixNull(am.getValue("runid"));
                     downloadRequest.runID = runIDStr;
 
@@ -236,13 +237,63 @@ public class Main {
         return s;
     }
 
+    public static DownloadRequest getDownloadRequest(ArgumentMap argMap) {
+        DownloadRequest downloadRequest = new DownloadRequest();
+        String curTupleStr = "";
+
+        // Iterate through the positional arguments and attempt to construct tuples
+        // URI{DALI position string}{label}
+
+        List<String> positionalArgs = argMap.getPositionalArgs();
+        for (String segment : positionalArgs) {
+            log.debug("segment: " + segment);
+
+            boolean endOfTuple = false;
+
+            if (segment.endsWith("}")) {
+                endOfTuple = true;
+            } else if (segment.contains("}{") || segment.contains("{")) {
+                // pass
+                endOfTuple = false;
+            } else {
+                if (StringUtil.hasLength(curTupleStr)) {
+                    endOfTuple = false;
+                } else {
+                    endOfTuple = true;
+                }
+            }
+
+            // concatenate a into curTupleStr & continue
+            if (StringUtil.hasLength(curTupleStr)) {
+                curTupleStr += " ";
+            }
+            curTupleStr += segment;
+            if (endOfTuple == true) {
+                try {
+                    DownloadTupleFormat df = new DownloadTupleFormat();
+                    DownloadTuple dt = df.parse(curTupleStr);
+                    downloadRequest.getTuples().add(dt);
+                } catch (Exception e) {
+                    // df.parse will throw validation errors. Record
+                    // them and continue
+                    downloadRequest.getValidationErrors().add(e);
+                }
+                curTupleStr = "";
+                endOfTuple = false;
+            }
+        }
+
+        return downloadRequest;
+    }
+
     private static void usage() {
         System.out.println("cadc-download-manager -h || --help");
         System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of URIs>");
-        System.out.println("         [ --fragment=<common fragment to append to all URIs> ]");
+        System.out.println("         [ --runid=<runid> ]");
         System.out.println("         [ --ssocookie=<cookie value to use in sso authentication> ]");
         System.out.println("         [ --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)> ]");
-        System.out.println("         [--headless] : run in non-interactive (no GUI) mode");
+        System.out.println("         [ --tuple=<URI{DALI position string}{label}> ]");
+        System.out.println("         [ --headless ] : run in non-interactive (no GUI) mode");
         System.out.println();
         System.out.println("optional arguments to use with --headless:");
         System.out.println("        --dest=<directory> : directory must exist and be writable by the user");

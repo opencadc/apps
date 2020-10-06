@@ -101,8 +101,11 @@ public class AppletWrapper extends JApplet {
             // TODO: this method of bringing in parameters won't work with the multiple tuples as parameters
             // not sure applet is used anymore?
             String uriStr = fixNull(getParameter("uris"));
-            String[] args = {uriStr};
-            DownloadRequest downloadReq = DownloadUtil.parseRequestFromArgs(args);
+
+            // TODO: if it's even going to be supported going forward, the 'uris'
+            // string here needs to be parsed into individual tuples in downloadRequest
+            // #technicalDebt
+            DownloadRequest downloadReq = new DownloadRequest();
             String runIDStr = fixNull(getParameter("runid"));
             downloadReq.runID = runIDStr;
 

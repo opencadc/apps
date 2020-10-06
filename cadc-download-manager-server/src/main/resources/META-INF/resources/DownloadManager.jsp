@@ -145,7 +145,7 @@
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
 <%      for (DownloadTuple tuple: tupleList) {
-          String tupleStr =String tupleStr = df.format(tuple);
+          String tupleStr = df.format(tuple);
 %>
           <argument><%= tupleStr %></argument>
 <%

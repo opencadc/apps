@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009.                            (c) 2009.
+ *  (c) 2009, 2020.                      (c) 2009, 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,7 +73,6 @@ import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URL;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -233,77 +232,5 @@ public class DownloadUtil {
             }
         };
     }
-
-    /**
-     * Parse DownloadRequest from a set of args (String[]). They are assumed to be a
-     * space-delimited set of values of format:
-     * ID{shape descriptor}{label}
-     * Where:
-     * - ID = URI
-     * - shape descriptor (optional): space delimited set of values: string name + coordinates (used for cutouts)
-     * - label (optional): filename-compatible target name
-     *
-     * @param args Array of Strings, should be arguments from a command line call
-     * @return list of download tuples
-     */
-    public static DownloadRequest parseRequestFromArgs(String[] args) {
-        DownloadRequest downloadRequest = new DownloadRequest();
-
-        List<DownloadTuple> tupleList = new ArrayList<>();
-        String curTupleStr = "";
-        for (String arg : args) {
-            // Skip any values that start with '-', as these aren't part of a tuple
-            if (!arg.startsWith("-")) {
-                // take care in case environment keeps all space seperated args
-                // as a single arg, eg single <argument> element in JNLP
-                // probably need to handle this split on whitespace thing as well.
-
-                String[] sas = arg.split(" ");
-                // And here is where DownloadRequest object should be built (where
-                // a function to build one would be useful.
-
-                boolean endOfTuple = false;
-                for (String segment : sas) {
-                    // for the segment being processed, might be part of
-                    // a building string, or a single entity
-                    String nextSegment;
-                    if (segment.endsWith("}")) {
-                        endOfTuple = true;
-                    } else if (segment.contains("}{") || segment.contains("{")) {
-                        // pass
-                        endOfTuple = false;
-                    } else {
-                        if (StringUtil.hasLength(curTupleStr)) {
-                            endOfTuple = false;
-                        } else {
-                            endOfTuple = true;
-                        }
-                    }
-
-                    // concatenate a into curTupleStr & continue
-                    if (StringUtil.hasLength(curTupleStr)) {
-                        curTupleStr += " ";
-                    }
-                    curTupleStr += segment;
-                    if (endOfTuple == true) {
-                        try {
-                            DownloadTupleFormat df = new DownloadTupleFormat();
-                            DownloadTuple dt = df.parse(curTupleStr);
-                            downloadRequest.getTuples().add(dt);
-                        } catch (Exception e) {
-                            // df.parse will throw validation errors. Record
-                            // them and continue
-                            downloadRequest.getValidationErrors().add(e);
-                        }
-                        curTupleStr = "";
-                        endOfTuple = false;
-                    }
-                }
-            }
-        }
-
-        return downloadRequest;
-    }
-
 
 }

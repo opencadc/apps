@@ -69,11 +69,8 @@
 
 package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -88,11 +85,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DownloadUtilTest {
-    private static Logger log = Logger.getLogger(DownloadUtilTest.class);
-
-    private static String URI_STR = "test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um";
-    private static String SHAPE_STR = "circle 0.0 0.0 0.0";
-
     private ShapeFormat sf = new ShapeFormat();
     private DownloadTupleFormat df = new DownloadTupleFormat();
 
@@ -132,7 +124,6 @@ public class DownloadUtilTest {
         expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/3", new URL("http://mysite.ca/path/3")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/4", new URL("http://mysite.ca/path/4")));
-//        expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/5", new URL("http://mysite.ca/path/5")));
         expected.add(new DownloadDescriptor("test://mysite.ca/path/6", new URL("http://mysite.ca/path/6")));
 
@@ -185,69 +176,6 @@ public class DownloadUtilTest {
         }
 
         assertEquals("Should have 1 item.", expected, downloadDescriptorList);
-    }
-
-    @Test
-    public void testArgParsing() throws Exception {
-        URI testURI = new URI(URI_STR);
-        String[] args =   {"-verbose", URI_STR + "{circle", "0.0", "0.0", "0.0}{label}"};
-        Shape expectedCutout = sf.parse(SHAPE_STR);
-
-        try {
-            DownloadRequest dr = DownloadUtil.parseRequestFromArgs(args);
-            Set<DownloadTuple> tupleList = dr.getTuples();
-
-            for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
-                assertEquals("tupleID didn't parse correctly", "label", dt.label);
-            }
-
-        } catch (Exception e) {
-            System.out.println("Unexpected exception");
-        }
-    }
-
-    @Test
-    public void testArgParsingSpaces() throws Exception {
-        URI testURI = new URI(URI_STR);
-        String[] args =  {"-verbose", URI_STR + "{circle", "0.0", "0.0", "0.0}{label}"};
-        Shape expectedCutout = sf.parse(SHAPE_STR);
-
-        try {
-            DownloadRequest dr = DownloadUtil.parseRequestFromArgs(args);
-            Set<DownloadTuple> tupleList = dr.getTuples();
-
-            for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
-                assertEquals("tupleID didn't parse correctly", "label", dt.label);
-            }
-
-        } catch (Exception e) {
-            System.out.println("Unexpected exception");
-        }
-    }
-
-    @Test
-    public void testArgParsingSingleString() throws Exception {
-        URI testURI = new URI(URI_STR);
-        String[] args =   {"-verbose", URI_STR + "{circle", "0.0", "0.0", "0.0}{label}"};
-        Shape expectedCutout = sf.parse(SHAPE_STR);
-
-        try {
-            DownloadRequest dr = DownloadUtil.parseRequestFromArgs(args);
-            Set<DownloadTuple> tupleList = dr.getTuples();
-
-            for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
-                assertEquals("tupleID didn't parse correctly", "label", dt.label);
-            }
-
-        } catch (Exception e) {
-            System.out.println("Unexpected exception");
-        }
     }
 
 }
