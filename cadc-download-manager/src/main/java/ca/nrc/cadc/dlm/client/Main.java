@@ -236,7 +236,7 @@ public class Main {
         }
         return s;
     }
-
+    
     public static DownloadRequest getDownloadRequest(ArgumentMap argMap) {
         DownloadRequest downloadRequest = new DownloadRequest();
         String curTupleStr = "";
@@ -252,7 +252,7 @@ public class Main {
 
             if (segment.endsWith("}")) {
                 endOfTuple = true;
-            } else if (segment.contains("}{") || segment.contains("{")) {
+            } else if (segment.contains("{")) {
                 // pass
                 endOfTuple = false;
             } else {
