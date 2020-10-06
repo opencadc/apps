@@ -155,6 +155,43 @@ public class MainArgParsingTest {
         }
     }
 
+    public void testArgParsingInvalidSpacingMultipleTuples() {
+        // 'Invalid' refers to no space between the tuples, so there's no distinct
+        // end to the tuples in the input
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{testLabel_1011}"
+            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{testLabel_98}";
+
+        String[] args =   testArgStr.split(" ");
+        ArgumentMap am = new ArgumentMap(args);
+
+        try {
+            DownloadRequest dr = Main.getDownloadRequest(am);
+            Set<DownloadTuple> tupleList = dr.getTuples();
+            assertEquals("Should be no valid tuples found. (found " + tupleList.size() + ")", 0, tupleList.size());
+            assertEquals("Should be no 1 tuple found. (found " + dr.getValidationErrors().size() + ")", 1, dr.getValidationErrors().size());
+
+        } catch (Exception e) {
+            System.out.println("Unexpected exception");
+        }
+
+        testArgStr = "test://cadc.nrc.ca/TEST/testDevice1   {circle 10.0 11.0 0.5}{testLabel_1011}"
+            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{testLabel_98}";
+
+        args =   testArgStr.split(" ");
+        am = new ArgumentMap(args);
+
+        try {
+            DownloadRequest dr = Main.getDownloadRequest(am);
+            Set<DownloadTuple> tupleList = dr.getTuples();
+            assertEquals("Should be 1 valid tuple found. (found " + tupleList.size() + ")", 1, tupleList.size());
+            assertEquals("Should be no 1 tuple found. (found " + dr.getValidationErrors().size() + ")", 1, dr.getValidationErrors().size());
+
+        } catch (Exception e) {
+            System.out.println("Unexpected exception");
+        }
+
+    }
+
     @Test
     public void testInvalidArgNoURI() {
         String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{testLabel_1011} "
