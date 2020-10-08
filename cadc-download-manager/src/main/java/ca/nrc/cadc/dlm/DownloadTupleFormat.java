@@ -245,7 +245,7 @@ public class DownloadTupleFormat {
         try {
             URI tmpURI = new URI(uriStr);
             return new DownloadTuple(tmpURI, cutoutStr);
-        } catch( URISyntaxException uriEx)  {
+        } catch (URISyntaxException uriEx)  {
             throw new DownloadTupleParsingException("invalid id for tuple:" + uriEx);
         }
     }
