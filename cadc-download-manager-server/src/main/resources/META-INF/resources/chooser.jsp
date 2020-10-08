@@ -74,14 +74,12 @@
 <%@ page import="ca.nrc.cadc.config.ApplicationConfiguration" %>
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
 <%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
-<%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Set" %>
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
-<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
-
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
 
 <%
     ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
@@ -89,7 +87,6 @@
     DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
     Set<DownloadTuple> tupleList = downloadReq.getTuples();
     List<Exception> validationErrList = downloadReq.getValidationErrors();
-    DownloadTupleFormat df = new DownloadTupleFormat();
 
     String runid = downloadReq.runID;
 
@@ -167,14 +164,11 @@ var="langBundle" scope="request"/>
     or go back to fix these errors first. </p>
 <p class=grid-12">
 <ul>
-    <%
-        for (Exception ex: validationErrList) {
-            String erStr = ex.getLocalizedMessage();
-    %>
-    <li><%= erStr %></li>
-    <%
-        }
-    %>
+
+    <c:forEach var="ex" items="<%= validationErrList %>">
+        <li>${ex.getLocalizedMessage()}</li>
+    </c:forEach>
+
 </ul>
 </p>
 
@@ -183,19 +177,13 @@ var="langBundle" scope="request"/>
 
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
 
-<%      for (DownloadTuple tuple: tupleList) {
-            String tupleStr = df.format(tuple);
-%>
-        <input type="hidden" name="tuple" value="<%= tupleStr %>" />
-<%
-        }
-%>
+        <c:forEach var="tuple" items="<%= tupleList %>">
+            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
+        </c:forEach>
 
-<%     if ( downloadReq.runID != null ) {
-%>
-        <input type="hidden" name="runid" value="<%= runid %>" />
-<%      }
-%>
+        <c:if test="<%= downloadReq.runID != null %>" >
+            <input type="hidden" name="runid" value="${downloadReq.runID}" />
+        </c:if>
 
         <div class="grid-12">
             <c:if test="<%=enableWebstart%>" >

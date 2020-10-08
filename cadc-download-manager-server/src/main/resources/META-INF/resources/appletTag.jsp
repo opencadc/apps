@@ -75,10 +75,11 @@
 <%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
 <%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
 <%@ page import="java.util.Set" %>
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
+
 <%
     DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
     Set<DownloadTuple> tupleList = downloadReq.getTuples();
-    DownloadTupleFormat df = new DownloadTupleFormat();
 %>
 
 <applet name="DownloadManager"
@@ -87,19 +88,13 @@
         archive="cadcDownloadManagerClient.jar,cadcUtil.jar,log4j.jar"
         width="600" height="600">
 
-    <%      for (DownloadTuple tuple: tupleList) {
-        String tupleStr = df.format(tuple);
-    %>
-    <input type="hidden" name="tuple" value="${tupleStr}" />
-    <%
-        }
-    %>
-    <%     if ( downloadReq.runID != null ) {
-    %>
-    <input type="hidden" name="runid" value="<%= downloadReq.runID %>" />
-    <%
-        }
-    %>
+    <c:forEach var="tuple" items="<%= tupleList %>">
+        <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
+    </c:forEach>
+
+    <c:if test="<%= downloadReq.runID != null %>" >
+        <input type="hidden" name="runid" value="${downloadReq.runID}" />
+    </c:if>
 </applet>
 
     

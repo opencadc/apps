@@ -79,14 +79,12 @@
 <%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
 <%@ page import="java.util.Set" %>
-<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
+
 <%
     DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
     Set<DownloadTuple> tupleList = downloadReq.getTuples();
-    DownloadTupleFormat df = new DownloadTupleFormat();
-%>
 
-<%
     // If calling program has provided values they should be here
     String headerURL = SkinUtil.headerURL;
     String footerURL = SkinUtil.footerURL;
@@ -151,23 +149,18 @@
     
 <div style="padding-left: 2em; padding-right: 2em">
     <form action="/downloadManager/download" method="POST">
-        <%      for (DownloadTuple tuple: tupleList) {
-            String tupleStr = df.format(tuple);
-        %>
-        <input type="hidden" name="tuple" value="${tupleStr}" />
-        <%
-            }
-        %>
-        <%     if ( downloadReq.runID != null ) {
-        %>
-        <input type="hidden" name="runid" value="<%= downloadReq.runID %>" />
-        <%      }
-        %>
-        <%     if ( skinURL != null ) {
-        %>
-        <input type="hidden" name="skin" value="<%= skinURL %>" />
-        <%      }
-        %>
+
+        <c:forEach var="tuple" items="<%= tupleList %>">
+            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
+        </c:forEach>
+
+        <c:if test="<%= downloadReq.runID != null %>" >
+            <input type="hidden" name="runid" value="${downloadReq.runID}" />
+        </c:if>
+
+        <c:if test="<%= skinURL != null %>" >
+            <input type="hidden" name="skin" value="<%= skinURL %>" />
+        </c:if>
 
         <input type="submit" name="method" value="Chose one of the other download methods" />
     </form>
