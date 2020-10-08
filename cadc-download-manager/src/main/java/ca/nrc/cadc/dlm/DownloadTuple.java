@@ -76,7 +76,8 @@ public class DownloadTuple {
     private static Logger log = Logger.getLogger(DownloadTuple.class);
 
     private final URI id;
-    public final Shape cutout;
+    public final Shape posCutout;
+    public final String pixelCutout;
     public final String label;
 
     /**
@@ -88,7 +89,8 @@ public class DownloadTuple {
             throw new IllegalArgumentException("id can not be null");
         }
         this.id = id;
-        this.cutout = null;
+        this.posCutout = null;
+        this.pixelCutout = null;
         this.label = null;
     }
 
@@ -102,7 +104,23 @@ public class DownloadTuple {
             throw new IllegalArgumentException("id can not be null");
         }
         this.id = id;
-        this.cutout = cutout;
+        this.posCutout = cutout;
+        this.pixelCutout = null;
+        this.label = null;
+    }
+
+    /**
+     * ctor
+     * @param id
+     * @param cutout
+     */
+    public DownloadTuple(URI id, String cutout) {
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
+        this.id = id;
+        this.posCutout = null;
+        this.pixelCutout = cutout;
         this.label = null;
     }
 
@@ -120,7 +138,27 @@ public class DownloadTuple {
             throw new IllegalArgumentException("cutout can not be null if label is defined.");
         }
         this.id = id;
-        this.cutout = cutout;
+        this.posCutout = cutout;
+        this.pixelCutout = null;
+        this.label = label;
+    }
+
+    /**
+     * ctor
+     * @param id
+     * @param cutout
+     * @param label
+     */
+    public DownloadTuple(URI id, String cutout, String label) {
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
+        if (label != null && cutout == null) {
+            throw new IllegalArgumentException("cutout can not be null if label is defined.");
+        }
+        this.id = id;
+        this.posCutout = null;
+        this.pixelCutout = cutout;
         this.label = label;
     }
 

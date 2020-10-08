@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2018.                            (c) 2018.
+ *  (c) 2020.                            (c) 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -131,9 +131,9 @@ public class DLMInputHandlerTest {
 
         for (DownloadTuple dt: dtSet) {
             // each should have the same values
-            log.debug(dt.getID().toASCIIString() + dt.cutout.toString() + dt.label + "...");
+            log.debug(dt.getID().toASCIIString() + dt.posCutout.toString() + dt.label + "...");
             Assert.assertEquals("tuple ID does not match", testURI, dt.getID());
-            Assert.assertEquals("shape does not match", testShape, dt .cutout);
+            Assert.assertEquals("shape does not match", testShape, dt .posCutout);
             Assert.assertEquals("label does not match", LABEL_STR, dt.label);
         }
     }

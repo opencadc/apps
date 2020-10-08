@@ -79,7 +79,8 @@ import org.apache.log4j.Logger;
 
 public class DownloadTupleFormat {
     private static Logger log = Logger.getLogger(DownloadTupleFormat.class);
-
+    // Use this to determine which type of cutout is passed in
+    MultiDownloadGenerator multiDG = new MultiDownloadGenerator();
 
     /**
      * Parse DownloadTuple from internal format string.
@@ -130,8 +131,8 @@ public class DownloadTupleFormat {
             tmpLabel = null;
         }
 
-        Shape tmpShape = null;
         // Get any cutout that might be there
+        Shape tmpShape = null;
         if (tupleParts.length > 1) {
             String sd = tupleParts[1];
             if (sd.length() > 1) {
@@ -139,6 +140,7 @@ public class DownloadTupleFormat {
                 // guaranteed to be there due to
                 // check for equal occurrences of { and } above.
                 String tmpShapeStr = sd.substring(0, sd.length() - 1);
+                // put off parsing until id is parsed
                 log.debug("cutout string: " + tmpShapeStr);
                 if (StringUtil.hasLength(tmpShapeStr)) {
                     try {
@@ -157,8 +159,6 @@ public class DownloadTupleFormat {
                 // invalid format
                 throw new DownloadTupleParsingException("invalid cutout: " + tupleStr);
             }
-        } else {
-            tmpShape = null;
         }
 
         // Get tuple URI - should at least have this.
@@ -176,9 +176,9 @@ public class DownloadTupleFormat {
             throw new DownloadTupleParsingException("zero length id found: " + tupleStr);
         }
 
+
         return new DownloadTuple(tmpURI, tmpShape, tmpLabel);
     }
-
 
     private int getCount(final String input, final String regexp) {
         final Pattern p = Pattern.compile(regexp);
@@ -192,7 +192,6 @@ public class DownloadTupleFormat {
         return count;
     }
 
-
     /**
      * Output DownloadTuple in internal format
      * @param tuple
@@ -201,9 +200,9 @@ public class DownloadTupleFormat {
     public String format(DownloadTuple tuple) {
         String tupleStr = tuple.getID().toString();
 
-        if (tuple.cutout != null) {
+        if (tuple.posCutout != null) {
             ShapeFormat sf = new ShapeFormat();
-            tupleStr += "{" + sf.format(tuple.cutout) + "}";
+            tupleStr += "{" + sf.format(tuple.posCutout) + "}";
         }
 
         if (StringUtil.hasLength(tuple.label)) {
@@ -233,6 +232,22 @@ public class DownloadTupleFormat {
             tupleStr += "{" + part3 + "}";
         }
         return parse(tupleStr);
+    }
+
+    /**
+     * Create a DownloadTuple using a URI string and a cutout string that
+     * @param uriStr
+     * @param cutoutStr
+     * @return
+     * @throws DownloadTupleParsingException
+     */
+    public DownloadTuple parsePixelStringTuple(String uriStr, String cutoutStr) throws DownloadTupleParsingException  {
+        try {
+            URI tmpURI = new URI(uriStr);
+            return new DownloadTuple(tmpURI, cutoutStr);
+        } catch( URISyntaxException uriEx)  {
+            throw new DownloadTupleParsingException("invalid id for tuple:" + uriEx);
+        }
     }
 
 }

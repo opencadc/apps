@@ -89,6 +89,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     @Before
     public void testSetup() {
         try {
+            // TODO: need CUTOUT tests as well as POS tests
             expectedURI = new URI(URI_STR);
             expectedCutout = sf.parse(SHAPE_STR);
             expectedLabel = LABEL_STR;
@@ -102,10 +103,10 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     // DownloadTuple to internalt format tests
     @Test
     public void testFormatURIOnly() throws Exception {
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR));
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, null);
-        Assert.assertEquals("ctor didn't work for label", dt.label, null);
+        Assert.assertEquals("ctor didn't work for cutout", null, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for label", null, dt.label);
 
         String internalFormat = df.format(dt);
         log.debug("internal format, uri only: " + df.format(dt));
@@ -123,8 +124,8 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     public void testFormatNoLabel() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
-        Assert.assertEquals("ctor didn't work for label", dt.label, null);
+        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for label", null, dt.label);
 
         String internalFormat = df.format(dt);
         log.debug("internal format, no label: " + internalFormat);
@@ -136,8 +137,8 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     public void testParseFullTuple() throws Exception {
         DownloadTuple dt = df.parse(TUPLE_INTERNAL_FULL);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
-        Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
+        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
     }
 
     @Test
@@ -146,23 +147,25 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         // provided in df.parse
         DownloadTuple dt = df.parseUsingInternalFormat(URI_STR, SHAPE_STR, LABEL_STR);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
-        Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
+        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
     }
 
     @Test
     public void testParseNoLabel() throws Exception {
         DownloadTuple dt = df.parse(TUPLE_INTERNAL_SHAPE);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
-        Assert.assertEquals("ctor didn't work for label", dt.label, null);
+        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for cutout", null, dt.pixelCutout);
+        Assert.assertEquals("ctor didn't work for label", null, dt.label);
     }
 
     @Test
     public void testParseIDOnlyl() throws Exception {
         DownloadTuple dt = df.parse(URI_STR);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, null);
+        Assert.assertEquals("ctor didn't work for cutout", dt.posCutout, null);
+        Assert.assertEquals("ctor didn't work for cutout", dt.pixelCutout, null);
         Assert.assertEquals("ctor didn't work for label", dt.label, null);
     }
 
@@ -187,7 +190,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     }
 
     @Test
-    public void testParseBadCutout() {
+    public void testParseBadShapeCutout() {
         try {
             DownloadTuple dt = df.parse("test://mysite.ca/path/1{bad_polygon}{label}");
         } catch (DownloadTupleParsingException parseError) {
@@ -197,7 +200,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         }
 
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{bad_polygon}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{oblong 11.0 10.0 0.5}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -260,11 +263,28 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         }
     }
 
-
     @Test
     public void testParseTooManyBraces() {
         try {
             DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0}{label}{extraLabel}");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testParsePixelCutoutl() throws Exception {
+        try {
+            String pixelString = "[1]";
+            URI expectURI = new URI("ivo://mysite.ca/path/1");
+            DownloadTuple test = df.parsePixelStringTuple(URI_STR, pixelString);
+            Assert.assertEquals("ctor didn't work for id", expectURI, test.getID());
+            Assert.assertEquals("ctor didn't work for cutout", null, test.posCutout);
+            Assert.assertEquals("ctor didn't work for cutout", pixelString, test.pixelCutout);
+            Assert.assertEquals("ctor didn't work for label", null, test.label);
+
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {

@@ -105,7 +105,7 @@ public class DownloadTupleComparatorTest {
         d2 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), "circleLabel2");
         d3 = new DownloadTuple(new URI("test://uri/3"), sf.parse(polygonShape), "polygonLabel");
 
-        d4 = new DownloadTuple(new URI("test://uri/1"), null, null);
+        d4 = new DownloadTuple(new URI("test://uri/1"));
         d5 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), null);
     }
 
@@ -120,7 +120,7 @@ public class DownloadTupleComparatorTest {
 
         Assert.assertTrue("Duplicate was added", testTreeSet.size() == 2 );
 
-        dup = new DownloadTuple(new URI("test://uri/1"), null, null);
+        dup = new DownloadTuple(new URI("test://uri/1"));
         testTreeSet.add(d4);
         testTreeSet.add(dup);
 

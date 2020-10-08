@@ -113,7 +113,7 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.cutout);
+                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.posCutout);
                 assertEquals("tupleID didn't parse correctly", "testLabel_1011", dt.label);
             }
 
@@ -140,10 +140,10 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 if (dt.getID().toString().contains("testDevice2")) {
-                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout2, dt.cutout);
+                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout2, dt.posCutout);
                     assertEquals("tupleID didn't parse correctly", "testLabel_98", dt.label);
                 } else if (dt.getID().toString().contains("testDevice1")) {
-                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.cutout);
+                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.posCutout);
                     assertEquals("tupleID didn't parse correctly", "testLabel_1011", dt.label);
                 } else {
                     Assert.fail("IDs did not parse correctly");
@@ -211,7 +211,7 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 assertEquals("URI didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.cutout);
+                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.posCutout);
                 assertEquals("tupleID didn't parse correctly", "testLabel_1011", dt.label);
             }
 
@@ -236,7 +236,7 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 assertEquals("URI didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor should be null", null, dt.cutout);
+                assertEquals("shapeDescriptor should be null", null, dt.posCutout);
                 assertEquals("tupleID didn't parse correctly", null, dt.label);
             }
 
@@ -261,7 +261,7 @@ public class MainArgParsingTest {
             for (DownloadTuple dt: tupleList) {
                 if (dt.getID().toString().contains("testDevice1") ||
                     dt.getID().toString().contains("testDevice2")) {
-                    assertEquals("shapeDescriptor should be null", null, dt.cutout);
+                    assertEquals("shapeDescriptor should be null", null, dt.posCutout);
                     assertEquals("tupleID didn't parse correctly", null, dt.label);
                 }
             }
@@ -287,7 +287,7 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 assertEquals("URI didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.cutout);
+                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.posCutout);
                 assertEquals("tupleID should be null", null, dt.label);
             }
 
@@ -314,10 +314,10 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 if (dt.getID().toString().contains("testDevice2")) {
-                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout2, dt.cutout);
+                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout2, dt.posCutout);
                     assertEquals("tupleID didn't parse correctly", null, dt.label);
                 } else if (dt.getID().toString().contains("testDevice1")) {
-                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.cutout);
+                    assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.posCutout);
                     assertEquals("tupleID didn't parse correctly", "testLabel_1011", dt.label);
                 } else {
                     Assert.fail("IDs did not parse correctly");
@@ -348,7 +348,7 @@ public class MainArgParsingTest {
 
             for (DownloadTuple dt: tupleList) {
                 assertEquals("URI didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.cutout);
+                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout1, dt.posCutout);
                 assertEquals("tupleID didn't parse correctly", "testLabel_98", dt.label);
             }
 

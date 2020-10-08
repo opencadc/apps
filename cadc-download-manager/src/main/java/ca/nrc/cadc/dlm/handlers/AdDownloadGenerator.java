@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011, 2020                       (c) 2011, 2020
+*  (c) 2020                             (c) 2020
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,9 +75,11 @@ import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.FailIterator;
 import ca.nrc.cadc.dlm.SingleDownloadIterator;
 import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
+import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -102,12 +104,11 @@ public class AdDownloadGenerator implements DownloadGenerator {
     //        PARAMS.add("cutout");
     //        PARAMS.add("runid");
     //    }
-    // TODO: #technical debt; cutout with [#] format still needs to be
-    //  handled
+    // TODO: #technical debt:
     // Q: what happens with 'logkey' and 'logvalue' above?
 
     private AdSchemeHandler ad;
-    private Map<String, List<String>> params;
+    private Map<String, String> queryParams = new HashMap<String, String>();
 
     public AdDownloadGenerator() {
         this.ad = new AdSchemeHandler();
@@ -120,46 +121,44 @@ public class AdDownloadGenerator implements DownloadGenerator {
     public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
         try {
             URL url = ad.getURL(dt.getID());
-            StringBuilder sb = new StringBuilder(url.toExternalForm());
+            log.debug("url string bfore query processing: " + url.toString());
 
             if (this.runID != null) {
-                sb.append("?runid=");
-                sb.append(this.runID);
+                queryParams.put("runid", this.runID);
             }
-            url = new URL(sb.toString());
 
-            // TODO: all of this is likely to be yanked, or have to be
-            // dealt with at some time in future when the cutout & other parameters
-            // are somehow represented here
-            //            if (params != null) {
-            //                StringBuilder sb = new StringBuilder(url.toExternalForm());
-            //                boolean first = true;
-            //                Iterator<Map.Entry<String, List<String>>> i = params.entrySet().iterator();
-            //                while (i.hasNext()) {
-            //                    Map.Entry<String, List<String>> me = i.next();
-            //                    if (PARAMS.contains(me.getKey()) && me.getValue() != null) {
-            //                        for (String v : me.getValue()) {
-            //                            if (first) {
-            //                                sb.append("?");
-            //                            } else {
-            //                                sb.append("&");
-            //                            }
-            //                            first = false;
-            //                            sb.append(me.getKey());
-            //                            sb.append("=");
-            //                            sb.append(URLEncoder.encode(v, "UTF-8"));
-            //                        }
-            //                    }
-            //                }
-            //                url = new URL(sb.toString());
-            //            }
+            if (StringUtil.hasLength(dt.pixelCutout)) {
+                // pixelCutout is a passthrough value - no validation
+                // has been done on it.
+                queryParams.put("cutout", dt.pixelCutout);
+            }
+
+            if (!queryParams.isEmpty()) {
+                StringBuilder sb = new StringBuilder(url.toExternalForm());
+                boolean first = true;
+                Iterator<Map.Entry<String, String>> i = queryParams.entrySet().iterator();
+                log.debug("url string: " + sb.toString());
+                while (i.hasNext()) {
+                    Map.Entry<String, String> me = i.next();
+                    if (me.getValue() != null) {
+                        if (first) {
+                            sb.append("?");
+                        } else {
+                            sb.append("&");
+                        }
+                        first = false;
+                        sb.append(me.getKey());
+                        sb.append("=");
+                        sb.append(URLEncoder.encode(me.getValue(), "UTF-8"));
+                    }
+                }
+                log.debug("url string: " + sb.toString());
+                url = new URL(sb.toString());
+            }
             return new SingleDownloadIterator(dt, url);
         } catch (Exception ex) {
             return new FailIterator(dt, "failed to resolve URI: " + ex.getMessage());
         }
     }
 
-    public void setParameters(Map<String, List<String>> params) {
-        this.params = params;
-    }
 }

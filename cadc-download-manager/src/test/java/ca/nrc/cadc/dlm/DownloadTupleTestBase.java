@@ -1,4 +1,3 @@
-
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
@@ -79,7 +78,7 @@ import org.junit.Before;
 
 public abstract class DownloadTupleTestBase {
     private static Logger log = Logger.getLogger(DownloadTupleTestBase.class);
-    protected static String URI_STR = "test://mysite.ca/path/1";
+    protected static String URI_STR = "ivo://mysite.ca/path/1";
     // Knowing this doesn't make sense as a polygon, it adheres to the format needed
     // by cadc-dali PolygonFormat
     protected static String SHAPE_STR = "polygon 0.0 0.0 0.0 0.0 0.0 0.0";

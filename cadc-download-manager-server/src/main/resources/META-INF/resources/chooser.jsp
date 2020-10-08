@@ -159,18 +159,18 @@ var="langBundle" scope="request"/>
 <%     if ( validationErrList.size() > 0 ) {
 
 %>
-<p class="grid-12 color-attention">
-    The following validation errors were found. You can continue to process your other selections
-    or go back to fix these errors first. </p>
-<p class=grid-12">
-<ul>
+    <p class="grid-12 color-attention">
+        The following validation errors were found. You can continue to process your other selections
+        or go back to fix these errors first. </p>
+    <p class=grid-12">
+    <ul>
 
-    <c:forEach var="ex" items="<%= validationErrList %>">
-        <li>${ex.getLocalizedMessage()}</li>
-    </c:forEach>
+        <c:forEach var="ex" items="<%= validationErrList %>">
+            <li>${ex.getLocalizedMessage()}</li>
+        </c:forEach>
 
-</ul>
-</p>
+    </ul>
+    </p>
 
 <% }
 %>

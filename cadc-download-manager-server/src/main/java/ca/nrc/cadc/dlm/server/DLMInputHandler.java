@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009, 2020.                      (c) 2009, 2020.
+*  (c)2020.                             (c)2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -77,22 +77,14 @@ import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.SyncInput;
 import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.xml.JsonInputter;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -105,11 +97,14 @@ import org.jdom2.Namespace;
  * @author pdowler
  */
 public class DLMInputHandler {
-    // public API for DownloadManager is to accept and interpret these two params
-    static final String PARAM_URI = "uri";
-    static final String PARAM_TUPLE = "tuple";
-    static final String PARAM_PARAMLIST = "params";
+    // public API for DownloadManager is to accept and interpret these
     static final String PARAM_METHOD = "method";
+    static final String PARAM_PARAMLIST = "params";
+    static final String PARAM_PIXEL_CUTOUT = "cutout";
+    static final String PARAM_POS_CUTOUT = "pos";
+    static final String PARAM_TUPLE = "tuple";
+    static final String PARAM_URI = "uri";
+
     static final List<String> INTERNAL_PARAMS = new ArrayList<String>();
 
     private static final Logger log = Logger.getLogger(DLMInputHandler.class);
@@ -120,6 +115,8 @@ public class DLMInputHandler {
     static {
         INTERNAL_PARAMS.add(PARAM_URI);
         INTERNAL_PARAMS.add(PARAM_TUPLE);
+        INTERNAL_PARAMS.add(PARAM_PIXEL_CUTOUT);
+        INTERNAL_PARAMS.add(PARAM_POS_CUTOUT);
         INTERNAL_PARAMS.add(PARAM_PARAMLIST);
         INTERNAL_PARAMS.add(PARAM_METHOD);
     }
@@ -275,7 +272,28 @@ public class DLMInputHandler {
             }
         }
 
+        // Check to see if a POS or CUTOUT parameter is provided
+
+        List<String> posCutoutParams = si.getParameters(PARAM_POS_CUTOUT);
+        String posCutoutStr = null;
+        if (posCutoutParams != null) {
+            if (posCutoutParams.size() > 1) {
+                throw new IllegalArgumentException("only one POS parameter allowed.");
+            }
+            posCutoutStr = posCutoutParams.get(0);
+        }
+
+        List<String> pixelCutoutParams = si.getParameters(PARAM_PIXEL_CUTOUT);
+        String pixelCutout = null;
+        if (pixelCutoutParams != null) {
+            if (pixelCutoutParams.size() > 1) {
+                throw new IllegalArgumentException("only one CUTOUT parameter allowed.");
+            }
+            pixelCutout = pixelCutoutParams.get(0);
+        }
+
         // Check to see if any PARAM_URI entries are provided
+        // If there is one, it will be added to any URI parameters
         List<String> uriList = si.getParameters(PARAM_URI);
 
         // Validate and add to list of tuples if possible.
@@ -284,7 +302,15 @@ public class DLMInputHandler {
             for (String u : uriList) {
                 if (StringUtil.hasText(u)) {
                     try {
-                        dr.getTuples().add(downloadTupleFormat.parse(u));
+                        DownloadTuple dt = null;
+                        if (StringUtil.hasLength(posCutoutStr)) {
+                            dt = downloadTupleFormat.parseUsingInternalFormat(u, posCutoutStr, null);
+                        } else if (StringUtil.hasLength(pixelCutout)) {
+                            dt = downloadTupleFormat.parsePixelStringTuple(u, pixelCutout);
+                        } else {
+                            dt = downloadTupleFormat.parse(u);
+                        }
+                        dr.getTuples().add(dt);
                     } catch (DownloadTupleParsingException parseEx) {
                         dr.getValidationErrors().add(parseEx);
                     }
