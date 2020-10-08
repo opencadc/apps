@@ -1,14 +1,15 @@
+
 /*
  ************************************************************************
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009, 2020                       (c) 2009, 2020
+ *  (c) 2020.                            (c) 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
  *  All rights reserved                  Tous droits réservés
- *                                       
+ *
  *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
  *  expressed, implied, or               énoncée, implicite ou légale,
  *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +32,10 @@
  *  software without specific prior      de ce logiciel sans autorisation
  *  written permission.                  préalable et particulière
  *                                       par écrit.
- *                                       
+ *
  *  This file is part of the             Ce fichier fait partie du projet
  *  OpenCADC project.                    OpenCADC.
- *                                       
+ *
  *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
  *  you can redistribute it and/or       vous pouvez le redistribuer ou le
  *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +45,7 @@
  *  either version 3 of the              : soit la version 3 de cette
  *  License, or (at your option)         licence, soit (à votre gré)
  *  any later version.                   toute version ultérieure.
- *                                       
+ *
  *  OpenCADC is distributed in the       OpenCADC est distribué
  *  hope that it will be useful,         dans l’espoir qu’il vous
  *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +55,7 @@
  *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
  *  General Public License for           Générale Publique GNU Affero
  *  more details.                        pour plus de détails.
- *                                       
+ *
  *  You should have received             Vous devriez avoir reçu une
  *  a copy of the GNU Affero             copie de la Licence Générale
  *  General Public License along         Publique GNU Affero avec
@@ -62,75 +63,58 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 4 $
  *
  ************************************************************************
  */
 
-package ca.nrc.cadc.dlm.server;
+package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.dlm.DownloadDescriptor;
-import ca.nrc.cadc.dlm.DownloadRequest;
-import ca.nrc.cadc.dlm.DownloadTuple;
-import ca.nrc.cadc.dlm.DownloadUtil;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
+public class DownloadTupleTest extends DownloadTupleTestBase {
+    private static Logger log = Logger.getLogger(DownloadTupleTest.class);
 
-/**
- * Download pre-processor for URL List download method.
- *
- * @author adriand
- */
-public class UrlListServlet extends HttpServlet {
-    public static final String FILE_LIST_TARGET = "/urlList";
-    private static final long serialVersionUID = 202008181200L;
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+    }
 
-    /**
-     * Handle POSTed download request from an external page.
-     *
-     * @param request  The HTTP Request
-     * @param response The HTTP Response
-     * @throws java.io.IOException if stream processing fails
-     */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws  IOException {
-
-        response.setContentType("text/plain");
-        response.setHeader("Content-Disposition",
-            "attachement;filename=\"cadcUrlList.txt\"");
-
-        // force auth method
-        List<String> forceAuth = new ArrayList<>(1);
-        forceAuth.add(AuthMethod.PASSWORD.getValue());
-
-        // TODO: 'auth' needs to be handled, or determined deprecated
-        //String params = (String) request.getAttribute("params");
-        //Map<String, List<String>> paramMap = DownloadUtil.decodeParamMap(params);
-        //paramMap.put("auth", forceAuth);
-
-        DownloadRequest downloadReq = (DownloadRequest) request.getAttribute("downloadRequest");
-        downloadReq.runID = (String) request.getAttribute("runid");
-
-        for (Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq); iter.hasNext(); ) {
-            final DownloadDescriptor dd = iter.next();
-
-            if (dd.url != null) {
-                response.getOutputStream().println(dd.url.toString());
-            } else {
-                response.getOutputStream().println("ERROR\t" + dd.uri + "\t"
-                    + dd.error);
-            }
+    @Before
+    public void testSetup() {
+        try {
+            expectedURI = new URI(URI_STR);
+            expectedCutout = sf.parse(SHAPE_STR);
+            expectedLabel = LABEL_STR;
+        } catch (Exception unexpectedSetupError) {
+            log.error("DownalodTupleTest setup failed: " + unexpectedSetupError);
+            Assert.fail("test setup failed.");
         }
+    }
 
-        response.getOutputStream().flush();
+    @Test
+    public void testURIOnly() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
+        log.debug("uri only: " + dt.getID());
+        Assert.assertEquals("ctor didn't work", dt.getID(),expectedURI);
+    }
+
+    @Test
+    public void testURIShape() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
+        Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
+    }
+
+    @Test
+    public void testAllParams() throws Exception {
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
+        Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
+        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
+        Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
     }
 }

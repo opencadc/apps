@@ -69,6 +69,10 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.util.Log4jInit;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -81,87 +85,97 @@ import java.util.List;
 import java.util.Map;
 
 public class DownloadUtilTest {
+    private ShapeFormat sf = new ShapeFormat();
+    private DownloadTupleFormat df = new DownloadTupleFormat();
+
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+    }
 
     @Test
     public void iterateURLsRemoveDuplicates() throws Exception {
-        final List<String> uriList = new ArrayList<>();
+        final DownloadRequest downloadReq = mkDownloadRequest(true);
 
-        uriList.add("test://mysite.ca/path/2");
-        uriList.add("test://mysite.ca/path/3");
-        uriList.add("test://mysite.ca/path/4");
-        uriList.add("test://mysite.ca/path/5");
-        uriList.add("test://mysite.ca/path/2");
-        uriList.add("test://mysite.ca/path/6");
-
-        final List<DownloadDescriptor> expected = new ArrayList<>();
-        expected.add(new DownloadDescriptor(uriList.get(0), new URL("http://mysite.ca/path/2")));
-        expected.add(new DownloadDescriptor(uriList.get(1), new URL("http://mysite.ca/path/3")));
-        expected.add(new DownloadDescriptor(uriList.get(2), new URL("http://mysite.ca/path/4")));
-        expected.add(new DownloadDescriptor(uriList.get(3), new URL("http://mysite.ca/path/5")));
-        expected.add(new DownloadDescriptor(uriList.get(5), new URL("http://mysite.ca/path/6")));
+        final List<DownloadDescriptor> expected = new ArrayList<DownloadDescriptor>();
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/1", new URL("http://mysite.ca/path/1")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/3", new URL("http://mysite.ca/path/3")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/4", new URL("http://mysite.ca/path/4")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/5", new URL("http://mysite.ca/path/5")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/6", new URL("http://mysite.ca/path/6")));
 
         // Dump test results into a list for easy validation.
         final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
-        final Map<String, List<String>> params = Collections.emptyMap();
 
-        for (final Iterator<DownloadDescriptor> iterator =
-             DownloadUtil.iterateURLs(uriList, params, true); iterator.hasNext(); ) {
+        final Iterator<DownloadDescriptor> iterator = DownloadUtil.iterateURLs(downloadReq);
+        while (iterator.hasNext()) {
             downloadDescriptorList.add(iterator.next());
         }
 
-        assertEquals("Should have 5 items due to a duplicate.", expected, downloadDescriptorList);
+        assertEquals("Should have 6 items due to a duplicate.", expected, downloadDescriptorList);
     }
 
     @Test
     public void iterateURLsWithDuplicates() throws Exception {
-        final List<String> uriList = new ArrayList<>();
+        final DownloadRequest downloadReq = mkDownloadRequest(true);
 
-        uriList.add("test://mysite.ca/path/2");
-        uriList.add("test://mysite.ca/path/3");
-        uriList.add("test://mysite.ca/path/4");
-        uriList.add("test://mysite.ca/path/5");
-        uriList.add("test://mysite.ca/path/2");
-        uriList.add("test://mysite.ca/path/6");
-
-        final List<DownloadDescriptor> expected = new ArrayList<>();
-        expected.add(new DownloadDescriptor(uriList.get(0), new URL("http://mysite.ca/path/2")));
-        expected.add(new DownloadDescriptor(uriList.get(1), new URL("http://mysite.ca/path/3")));
-        expected.add(new DownloadDescriptor(uriList.get(2), new URL("http://mysite.ca/path/4")));
-        expected.add(new DownloadDescriptor(uriList.get(3), new URL("http://mysite.ca/path/5")));
-        expected.add(new DownloadDescriptor(uriList.get(4), new URL("http://mysite.ca/path/2")));
-        expected.add(new DownloadDescriptor(uriList.get(5), new URL("http://mysite.ca/path/6")));
+        final List<DownloadDescriptor> expected = new ArrayList<DownloadDescriptor>();
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/1", new URL("http://mysite.ca/path/1")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/2", new URL("http://mysite.ca/path/2")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/3", new URL("http://mysite.ca/path/3")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/4", new URL("http://mysite.ca/path/4")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/5", new URL("http://mysite.ca/path/5")));
+        expected.add(new DownloadDescriptor("test://mysite.ca/path/6", new URL("http://mysite.ca/path/6")));
 
         // Dump test results into a list for easy validation.
         final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
-        final Map<String, List<String>> params = Collections.emptyMap();
 
         for (final Iterator<DownloadDescriptor> iterator =
-             DownloadUtil.iterateURLs(uriList, params, false); iterator.hasNext(); ) {
+             DownloadUtil.iterateURLs(downloadReq); iterator.hasNext(); ) {
             downloadDescriptorList.add(iterator.next());
         }
 
-        assertEquals("Should have 6 items.", expected, downloadDescriptorList);
+        assertEquals("Should have 7 items.", expected, downloadDescriptorList);
+    }
+
+    private DownloadRequest mkDownloadRequest(boolean addDuplicate) throws Exception {
+        DownloadRequest dr = new DownloadRequest();
+        dr.runID = "testRunID";
+
+        dr.getTuples().add(df.parse("test://mysite.ca/path/1"));
+        dr.getTuples().add(df.parse("test://mysite.ca/path/2"));
+        dr.getTuples().add(df.parse("test://mysite.ca/path/3"));
+        dr.getTuples().add(df.parse("test://mysite.ca/path/4"));
+        if (addDuplicate == true) {
+            dr.getTuples().add(df.parse("test://mysite.ca/path/2"));
+        }
+        dr.getTuples().add(df.parse("test://mysite.ca/path/5"));
+        dr.getTuples().add(df.parse("test://mysite.ca/path/6"));
+
+        return dr;
     }
 
     @Test
     public void iterateSingle() throws Exception {
-        final List<String> uriList = new ArrayList<>();
-
-        uriList.add("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um");
+        DownloadTuple testtuple = df.parse("test://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um");
+        DownloadRequest dr = new DownloadRequest();
+        dr.getTuples().add(testtuple);
+        dr.runID = "testrunID";
 
         final List<DownloadDescriptor> expected = new ArrayList<>();
-        expected.add(new DownloadDescriptor(uriList.get(0),
-                                            new URL("http://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um")));
+        expected.add(new DownloadDescriptor(testtuple.getID().toString(),
+            new URL("http://cadc.nrc.ca/JCMT/scuba2_00047_20180426T160429/raw-450um")));
 
         // Dump test results into a list for easy validation.
         final List<DownloadDescriptor> downloadDescriptorList = new ArrayList<>();
         final Map<String, List<String>> params = Collections.emptyMap();
 
         for (final Iterator<DownloadDescriptor> iterator =
-             DownloadUtil.iterateURLs(uriList, params, false); iterator.hasNext(); ) {
+             DownloadUtil.iterateURLs(dr); iterator.hasNext(); ) {
             downloadDescriptorList.add(iterator.next());
         }
 
         assertEquals("Should have 1 item.", expected, downloadDescriptorList);
     }
+
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,38 +72,38 @@
 <%@ taglib uri="WEB-INF/fmt.tld" prefix="fmt" %>
 
 <%@ page import="ca.nrc.cadc.config.ApplicationConfiguration" %>
-<%@ page import="ca.nrc.cadc.dlm.server.ServerUtil" %>
 <%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
-<%@ page import="ca.nrc.cadc.dlm.server.UrlListServlet" %>
 <%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
-<%@ page import="java.net.URI" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Set" %>
 <%@ page import="ca.nrc.cadc.util.StringUtil" %>
-
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
 
 <%
     ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
     boolean enableWebstart = configuration.lookupBoolean("org.opencadc.dlm.webstart.enable", true);
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    List<Exception> validationErrList = downloadReq.getValidationErrors();
 
-    String params = (String) request.getAttribute("params");
+    String runid = downloadReq.runID;
 
     String requestHeaderLang = request.getHeader("Content-Language");
     if (requestHeaderLang == null) {
         requestHeaderLang = "en";
     }
 
+    // If calling program has provided values they should be here
     String headerURL = SkinUtil.headerURL;
     String footerURL = SkinUtil.footerURL;
     String bodyHeaderURL = "";
-
-    // If calling program has provided
     String skinURL = SkinUtil.skinURL;
 
     if (!StringUtil.hasLength(headerURL)) {
-        String skin = (String) request.getParameter("skin");
         if (!StringUtil.hasLength(skinURL)) {
-            skinURL = "https://localhost/cadc/skin/";
+            skinURL = "http://localhost/cadc/skin/";
         }
 
         if (!skinURL.endsWith("/")) {
@@ -114,14 +114,13 @@
             if (!skinURL.startsWith("/")) {
                 skinURL = "/" + skinURL;
             }
-            skinURL = "https://localhost" + skinURL;
+            skinURL = "http://localhost" + skinURL;
         }
 
         headerURL = skinURL + "htmlHead";
         bodyHeaderURL = skinURL + "bodyHeader";
         footerURL = skinURL + "bodyFooter";
     }
-
 %>
 
 
@@ -129,7 +128,6 @@
 <fmt:setLocale value="<%= requestHeaderLang %>" scope="request"/>
 <fmt:setBundle basename="ca.nrc.cadc.downloadManager.downloadManagerBundle"
 var="langBundle" scope="request"/>
-
 
 <% if (StringUtil.hasLength(skinURL)) {
 %>
@@ -153,16 +151,39 @@ var="langBundle" scope="request"/>
 
     <h1 id="wb-cont" class="wb-invisible"><fmt:message key="TITLE" bundle="${langBundle}"/></h1>
 
+    <%-- This line is the 'Choose a method' titl e--%>
     <h2><fmt:message key="PAGE_HEADER" bundle="${langBundle}"/></h2>
     <br/>
 
+<%-- Display any validation errors found --%>
+<%     if ( validationErrList.size() > 0 ) {
+
+%>
+<p class="grid-12 color-attention">
+    The following validation errors were found. You can continue to process your other selections
+    or go back to fix these errors first. </p>
+<p class=grid-12">
+<ul>
+
+    <c:forEach var="ex" items="<%= validationErrList %>">
+        <li>${ex.getLocalizedMessage()}</li>
+    </c:forEach>
+
+</ul>
+</p>
+
+<% }
+%>
+
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
 
-        <c:forEach var="uri" items="<%= uriList %>">
-            <input type="hidden" name="uri" value="${uri}" />
+        <c:forEach var="tuple" items="<%= tupleList %>">
+            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
         </c:forEach>
 
-        <input type="hidden" name="params" value="<%= params %>" />
+        <c:if test="<%= downloadReq.runID != null %>" >
+            <input type="hidden" name="runid" value="${downloadReq.runID}" />
+        </c:if>
 
         <div class="grid-12">
             <c:if test="<%=enableWebstart%>" >

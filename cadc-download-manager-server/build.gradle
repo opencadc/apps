@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'maven'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.7.1'
+    id 'com.jfrog.bintray' version '1.8.4'
     id 'checkstyle'
 }
 
@@ -21,15 +21,17 @@ group = 'org.opencadc'
 sourceCompatibility = 1.8
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
-    compile 'javax.servlet:javax.servlet-api:3.1.+'
+    compile 'log4j:log4j:[1.2,)'
+    compile 'javax.servlet:javax.servlet-api:[3.1,)'
 
-    compile 'org.opencadc:cadc-util:1.+'
-    compile 'org.opencadc:cadc-log:1.+'
-    compile 'org.opencadc:cadc-registry:1.+'
-    compile 'org.opencadc:cadc-app-kit:1.+'
-    compile 'org.opencadc:cadc-download-manager:[1.1,)'
-    compile 'org.opencadc:cadc-web-util:[1.2.7, )'
+    compile 'org.opencadc:cadc-util:[1.0,)'
+    compile 'org.opencadc:cadc-log:[1.0,)'
+    compile 'org.opencadc:cadc-registry:[1.0,)'
+    compile 'org.opencadc:cadc-rest:[1.2.15,)'
+    compile 'org.opencadc:cadc-app-kit:[1.0,)'
+    compile 'org.opencadc:cadc-download-manager:[1.4.0,)'
+    compile 'org.opencadc:cadc-web-util:[1.2.7,)'
+    compile 'commons-io:commons-io:[2.7,)'
 
     testCompile 'junit:junit:4.+'
     testCompile 'org.easymock:easymock:3.+'

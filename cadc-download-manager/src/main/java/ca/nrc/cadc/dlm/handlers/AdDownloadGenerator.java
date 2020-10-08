@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2011, 2020                       (c) 2011, 2020
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,6 +71,7 @@ package ca.nrc.cadc.dlm.handlers;
 
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.FailIterator;
 import ca.nrc.cadc.dlm.SingleDownloadIterator;
 import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
@@ -91,15 +92,19 @@ import org.apache.log4j.Logger;
  */
 public class AdDownloadGenerator implements DownloadGenerator {
     private static final Logger log = Logger.getLogger(AdDownloadGenerator.class);
-    private static final Set<String> PARAMS;
-
-    static {
-        PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
-        PARAMS.add("logkey");
-        PARAMS.add("logvalue");
-        PARAMS.add("cutout");
-        PARAMS.add("runid");
-    }
+    private String runID;
+    //    private static final Set<String> PARAMS;
+    //
+    //    static {
+    //        PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
+    //        PARAMS.add("logkey");
+    //        PARAMS.add("logvalue");
+    //        PARAMS.add("cutout");
+    //        PARAMS.add("runid");
+    //    }
+    // TODO: #technical debt; cutout with [#] format still needs to be
+    //  handled
+    // Q: what happens with 'logkey' and 'logvalue' above?
 
     private AdSchemeHandler ad;
     private Map<String, List<String>> params;
@@ -108,34 +113,49 @@ public class AdDownloadGenerator implements DownloadGenerator {
         this.ad = new AdSchemeHandler();
     }
 
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+    public void setRunID(String runID) {
+        this.runID = runID;
+    }
+
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
         try {
-            URL url = ad.getURL(uri);
-            if (params != null) {
-                StringBuilder sb = new StringBuilder(url.toExternalForm());
-                boolean first = true;
-                Iterator<Map.Entry<String, List<String>>> i = params.entrySet().iterator();
-                while (i.hasNext()) {
-                    Map.Entry<String, List<String>> me = i.next();
-                    if (PARAMS.contains(me.getKey()) && me.getValue() != null) {
-                        for (String v : me.getValue()) {
-                            if (first) {
-                                sb.append("?");
-                            } else {
-                                sb.append("&");
-                            }
-                            first = false;
-                            sb.append(me.getKey());
-                            sb.append("=");
-                            sb.append(URLEncoder.encode(v, "UTF-8"));
-                        }
-                    }
-                }
-                url = new URL(sb.toString());
+            URL url = ad.getURL(dt.getID());
+            StringBuilder sb = new StringBuilder(url.toExternalForm());
+
+            if (this.runID != null) {
+                sb.append("?runid=");
+                sb.append(this.runID);
             }
-            return new SingleDownloadIterator(uri, url);
+            url = new URL(sb.toString());
+
+            // TODO: all of this is likely to be yanked, or have to be
+            // dealt with at some time in future when the cutout & other parameters
+            // are somehow represented here
+            //            if (params != null) {
+            //                StringBuilder sb = new StringBuilder(url.toExternalForm());
+            //                boolean first = true;
+            //                Iterator<Map.Entry<String, List<String>>> i = params.entrySet().iterator();
+            //                while (i.hasNext()) {
+            //                    Map.Entry<String, List<String>> me = i.next();
+            //                    if (PARAMS.contains(me.getKey()) && me.getValue() != null) {
+            //                        for (String v : me.getValue()) {
+            //                            if (first) {
+            //                                sb.append("?");
+            //                            } else {
+            //                                sb.append("&");
+            //                            }
+            //                            first = false;
+            //                            sb.append(me.getKey());
+            //                            sb.append("=");
+            //                            sb.append(URLEncoder.encode(v, "UTF-8"));
+            //                        }
+            //                    }
+            //                }
+            //                url = new URL(sb.toString());
+            //            }
+            return new SingleDownloadIterator(dt, url);
         } catch (Exception ex) {
-            return new FailIterator(uri, "failed to resolve URI: " + ex.getMessage());
+            return new FailIterator(dt, "failed to resolve URI: " + ex.getMessage());
         }
     }
 

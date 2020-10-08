@@ -69,27 +69,24 @@
 
 package ca.nrc.cadc.dlm;
 
-import java.net.URI;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author pdowler
  */
 public interface DownloadGenerator {
     /**
-     * Set a list of optional parameters for the resolver.
-     *
-     * @param params map containing optional parameters
+     * Value used globally on all query strings
+     * @param runID
      */
-    public void setParameters(Map<String, List<String>> params);
+    public void setRunID(String runID);
 
     /**
      * Return a stream of download descriptors for the specified URI.
      *
-     * @param uri the URi to resolve into one or more downloads
+     * @param dt the DownloadTuple to resolve into one or more downloads
      * @return iterator with one or more download descriptors
      */
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri);
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt);
+
 }

@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009, 2020.                      (c) 2009, 2020.
+*  (c) 2018.                            (c) 2018.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -69,40 +69,15 @@
 
 package ca.nrc.cadc.dlm.server;
 
-import java.net.URL;
-import javax.servlet.http.HttpServletRequest;
-import org.apache.log4j.Logger;
+public class DLMParsingException extends Exception {
+    private static final long serialVersionUID = -5942924380206370808L;
 
-/**
- * <p>Functions for parsing input parameters for Download Manager
- * </p>
- *
- * @author pdowler
- */
-public class ServerUtil {
-    private static final Logger log = Logger.getLogger(ServerUtil.class);
-
-    private ServerUtil() {
+    public DLMParsingException(String message) {
+        super(message);
     }
 
-    /**
-     * Get name of codebase from request object.
-     *
-     * @param request  The HTTP Request.
-     * @return String   Location of codebase.
-     */
-    public static String getCodebase(HttpServletRequest request) {
-        // Called from JavaWebStartServlet - can it be migrated to DLMInputHandler without
-        // having to make a parent class of the Servlets to hold the instance?
-        try {
-            URL req = new URL(request.getRequestURL().toString());
-            String ret = req.getProtocol() + "://" + req.getHost();
-            ret += request.getContextPath();
-            return ret;
-        } catch (Throwable oops) {
-            log.error("failed to generate codebase URL", oops);
-        }
-        return null;
+    public DLMParsingException(String message, Throwable cause) {
+        super(message, cause);
     }
 
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2011, 2020                       (c) 2011, 2020
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.dlm;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
 
@@ -77,21 +76,21 @@ import java.util.Iterator;
  * @author pdowler
  */
 public class SingleDownloadIterator implements Iterator<DownloadDescriptor> {
-    URI uri;
+    DownloadTuple dt;
     URL url;
 
-    public SingleDownloadIterator(URI uri, URL url) {
-        this.uri = uri;
+    public SingleDownloadIterator(DownloadTuple dt, URL url) {
+        this.dt = dt;
         this.url = url;
     }
 
     public boolean hasNext() {
-        return (uri != null);
+        return (dt != null);
     }
 
     public DownloadDescriptor next() {
-        DownloadDescriptor ret = new DownloadDescriptor(uri.toASCIIString(), url);
-        uri = null;
+        DownloadDescriptor ret = new DownloadDescriptor(dt.getID().toASCIIString(), url);
+        dt = null;
         url = null;
         return ret;
     }

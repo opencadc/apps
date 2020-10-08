@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2009.                            (c) 2009.
+ *  (c) 2009, 2020.                      (c) 2009, 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,7 +72,6 @@ package ca.nrc.cadc.dlm;
 import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import ca.nrc.cadc.util.StringUtil;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,7 +86,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
- * Miscellanneous methods for use in JSP pages.
+ * Miscellaneous methods for use in JSP pages.
  *
  * @author pdowler
  */
@@ -166,19 +165,22 @@ public class DownloadUtil {
         return paramSet;
     }
 
-    public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params) {
-        return iterateURLs(uris, params, false);
-    }
+    /**
+     * Generate an Iterator of DownloadDescriptors to be reported to caller. URLs and and
+     * errors found while generating URLs are included in the DownloadDescriptors.
+     * @param downloadRequest includes tuples with URIs to be translated to URLs
+     * @return Iterator with DownloadDescriptors
+     */
+    public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest downloadRequest) {
 
-    public static Iterator<DownloadDescriptor> iterateURLs(List<String> uris, Map<String, List<String>> params,
-                                                           final boolean removeDuplicates) {
-        final List<ParsedURI> parsed = parseURIs(uris);
         final Set<URL> urls = new HashSet<>();
         final MultiDownloadGenerator gen = new MultiDownloadGenerator();
-        gen.setParameters(params);
+
+        final Set<DownloadTuple> dt = downloadRequest.getTuples();
+        gen.setRunID(downloadRequest.runID);
 
         return new Iterator<DownloadDescriptor>() {
-            Iterator<ParsedURI> outer = parsed.iterator();
+            Iterator<DownloadTuple> outer = dt.iterator();
             Iterator<DownloadDescriptor> inner = null;
 
             public boolean hasNext() {
@@ -195,30 +197,33 @@ public class DownloadUtil {
                     if (!inner.hasNext()) {
                         inner = null;
                     }
-                    if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
-                        return next();
-                    }
+                    // TODO:urls is a Set now is this duplicates bit necessary?
+                    //if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
+                    //    return next();
+                    // }
                     if (dd.url != null) {
                         urls.add(dd.url);
                     }
                     return dd;
                 }
 
-                ParsedURI cur = outer.next();
-
-                if (cur.error != null) { // string -> URI fail
-                    return new DownloadDescriptor(cur.str, cur.error.toString());
-                }
+                DownloadTuple cur = outer.next();
+                // TODO: parsing errors will need to be handled. This is commented out
+                // while code rework for input validation is being done
+                // this might take in a download tuple instead of a uri?
+                //if (cur.parsingError != null) { // string -> URI fail
+                //    return new DownloadDescriptor(cur.tupleIDstr, (cur.parsingError.toString()));
+                //}
                 try {
-                    inner = gen.downloadIterator(cur.uri);
+                    inner = gen.downloadIterator(cur);
                     if (inner.hasNext()) {
                         return this.next(); // recursive
                     }
                     // inner was empty
                     inner = null;
-                    return new DownloadDescriptor(cur.uri.toString(), "no matching files");
+                    return new DownloadDescriptor(cur.getID().toString(), "no matching files");
                 } catch (Throwable t) {
-                    return new DownloadDescriptor(cur.uri.toString(), t.toString());
+                    return new DownloadDescriptor(cur.getID().toString(), t.toString());
                 }
             }
 
@@ -226,27 +231,6 @@ public class DownloadUtil {
                 throw new UnsupportedOperationException();
             }
         };
-
     }
 
-    private static List<ParsedURI> parseURIs(List<String> uris) {
-        List<ParsedURI> ret = new ArrayList<>();
-        for (final String s : uris) {
-            final ParsedURI pu = new ParsedURI();
-            pu.str = s;
-            try {
-                pu.uri = new URI(s);
-            } catch (Throwable t) {
-                pu.error = t;
-            }
-            ret.add(pu);
-        }
-        return ret;
-    }
-
-    public static class ParsedURI {
-        public String str;
-        public URI uri;
-        public Throwable error;
-    }
 }

@@ -1,9 +1,11 @@
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
 <!--
 ************************************************************************
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020                       (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,29 +76,43 @@
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+  // If calling program has provided values they should be here
+  String headerURL = SkinUtil.headerURL;
+  String skinURL = SkinUtil.skinURL;
+
+  if (!StringUtil.hasLength(headerURL)) {
+    if (!StringUtil.hasLength(skinURL)) {
+      skinURL = "http://localhost/cadc/skin/";
+    }
+
+    if (!skinURL.endsWith("/")) {
+      skinURL += "/";
+    }
+
+    if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+      if (!skinURL.startsWith("/")) {
+        skinURL = "/" + skinURL;
+      }
+      skinURL = "http://localhost" + skinURL;
+    }
+
+    headerURL = skinURL + "htmlHead";
+  }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
 </head>
 
 <body>
-<c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
 
-<h2>
-	You have not selected any datasets to download. Please go back to the
-	previous page and ensure you have marked the datasets you intend to
-	retrieve.
-</h2>
+<h2>No datasets found</h2>
+	<p> You have not selected any datasets to download, or there are validation errors such that no
+  valid datasets can be found.</br>
+    Please go back to the previous page and ensure you have marked the datasets you intend to
+	retrieve and have fixed any errors reported.
+</p>
 
 </body>
 </html>

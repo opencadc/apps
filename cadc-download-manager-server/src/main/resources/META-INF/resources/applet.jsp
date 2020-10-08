@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,34 +73,54 @@
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
-<%@ page import="java.net.URI" %>
-<%@ page import="java.util.List" %>
-<%
-    // we need these to offer the option to go back to the method choice page
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-    String fragment = (String) request.getAttribute("fragment");
-%>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="java.util.Set" %>
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+
+    // If calling program has provided values they should be here
+    String headerURL = SkinUtil.headerURL;
+    String footerURL = SkinUtil.footerURL;
+    String bodyHeaderURL = "";
+    String skinURL = SkinUtil.skinURL;
+
+    if (!StringUtil.hasLength(headerURL)) {
+        if (!StringUtil.hasLength(skinURL)) {
+            skinURL = "http://localhost/cadc/skin/";
+        }
+
+        if (!skinURL.endsWith("/")) {
+            skinURL += "/";
+        }
+
+        if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+            if (!skinURL.startsWith("/")) {
+                skinURL = "/" + skinURL;
+            }
+            skinURL = "http://localhost" + skinURL;
+        }
+
+        headerURL = skinURL + "htmlHead";
+        bodyHeaderURL = skinURL + "bodyHeader";
+        footerURL = skinURL + "bodyFooter";
+    }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
 </head>
 
 <body onResize="resize()">
     
-    <c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
+    <c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>
     
     <script language="JavaScript">
     function resize() {
@@ -129,19 +149,23 @@ String bodyFooter = skin + "bodyFooter";
     
 <div style="padding-left: 2em; padding-right: 2em">
     <form action="/downloadManager/download" method="POST">
-        <%      for (URI uri: uriList) {
-            String uriStr = uri.toString();
-        %>
-        <input type="hidden" name="uri" value="${uriStr}" />
-        <%
-            }
-        %>
-        <input type="hidden" name="fragment" value="<%= fragment %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
+
+        <c:forEach var="tuple" items="<%= tupleList %>">
+            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
+        </c:forEach>
+
+        <c:if test="<%= downloadReq.runID != null %>" >
+            <input type="hidden" name="runid" value="${downloadReq.runID}" />
+        </c:if>
+
+        <c:if test="<%= skinURL != null %>" >
+            <input type="hidden" name="skin" value="<%= skinURL %>" />
+        </c:if>
+
         <input type="submit" name="method" value="Chose one of the other download methods" />
     </form>
 </div
 
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
+<c:catch><c:import url="<%= footerURL%>" /></c:catch>
 </body>
 </html>

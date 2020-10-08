@@ -70,6 +70,8 @@
 package ca.nrc.cadc.dlm.client;
 
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.dlm.DownloadRequest;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpTransfer;
@@ -153,8 +155,19 @@ public class ConsoleUI implements UserInterface, TransferListener {
 
     }
 
-    public void add(List<String> uris, Map<String, List<String>> params) {
-        Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(uris, params);
+    public void add(DownloadRequest downloadReq) {
+
+        // Report any validation errors found to the log
+        if (downloadReq.getValidationErrors() != null) {
+            System.err.println("input validation errors found: ");
+            for (Throwable err: downloadReq.getValidationErrors()) {
+                System.err.println(err.getMessage());
+            }
+        }
+
+        System.out.println("continuing to process valid tuples from input.");
+
+        Iterator<DownloadDescriptor> i = DownloadUtil.iterateURLs(downloadReq);
         while (i.hasNext()) {
             DownloadDescriptor dd = i.next();
             if (dd.error == null) {

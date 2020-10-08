@@ -87,6 +87,9 @@ public class DownloadDescriptor {
     public String destination;
     public String error;
 
+    // TODO: Q: does 'uri' get replaced with 'DownloadTuple' across the
+    // board here?
+
     /**
      * Constructor.
      *

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2020.                            (c) 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,61 +66,66 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.dlm.handlers;
+package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.Shape;
+import java.net.URI;
+import org.apache.log4j.Logger;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+public class DownloadTuple {
+    private static Logger log = Logger.getLogger(DownloadTuple.class);
 
-import java.util.*;
+    private final URI id;
+    public final Shape cutout;
+    public final String label;
 
-
-public class DataLinkClientTest
-{
-    @Test
-    public void setParametersEmpty() throws Exception
-    {
-        final DataLinkClient testSubject = new DataLinkClient();
-        final Map<String, List<String>> params = new HashMap<>();
-
-        testSubject.setParameters(params);
-
-        assertNull("Cutout should be empty.", testSubject.cutout);
-        assertTrue("Download only should be true", testSubject.downloadOnly);
-        assertNull("requestFail should be empty.", testSubject.requestFail);
-        assertNull("runID should be empty.", testSubject.runID);
+    /**
+     * ctor
+     * @param id
+     */
+    public DownloadTuple(URI id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
+        this.id = id;
+        this.cutout = null;
+        this.label = null;
     }
 
-    @Test
-    public void setParameterSpectralCutouts() throws Exception
-    {
-        final DataLinkClient testSubject = new DataLinkClient();
-        final Map<String, List<String>> params = new HashMap<>();
-
-        params.put("cutout", Collections.singletonList("SpectralInterval 6.5E-7 6.6E-7 m"));
-
-        testSubject.setParameters(params);
-
-        assertEquals("Cutout should be BAND.", "BAND=6.5E-7+6.6E-7", testSubject.cutout);
-        assertFalse("Download only should be false", testSubject.downloadOnly);
-        assertNull("requestFail should be empty.", testSubject.requestFail);
-        assertNull("runID should be empty.", testSubject.runID);
+    /**
+     * ctor
+     * @param id
+     * @param cutout
+     */
+    public DownloadTuple(URI id, Shape cutout) {
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
+        this.id = id;
+        this.cutout = cutout;
+        this.label = null;
     }
 
-    @Test
-    public void setParameterSpatialCutouts() throws Exception
-    {
-        final DataLinkClient testSubject = new DataLinkClient();
-        final Map<String, List<String>> params = new HashMap<>();
-
-        params.put("cutout", Collections.singletonList("Circle ICRS 210.05 54.3 0.016666666666666666"));
-
-        testSubject.setParameters(params);
-
-        assertEquals("Cutout should be CIRCLE.", "CIRCLE=210.05+54.3+0.016666666666666666",
-                     testSubject.cutout);
-        assertFalse("Download only should be false", testSubject.downloadOnly);
-        assertNull("requestFail should be empty.", testSubject.requestFail);
-        assertNull("runID should be empty.", testSubject.runID);
+    /**
+     * ctor
+     * @param id
+     * @param cutout
+     * @param label
+     */
+    public DownloadTuple(URI id, Shape cutout, String label) {
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
+        if (label != null && cutout == null) {
+            throw new IllegalArgumentException("cutout can not be null if label is defined.");
+        }
+        this.id = id;
+        this.cutout = cutout;
+        this.label = label;
     }
+
+    public URI getID() {
+        return id;
+    }
+
 }

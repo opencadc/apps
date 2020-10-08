@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,12 +70,16 @@
 <%--
     Simple JSP page to write out the applet tag that launches the DownloadManager applet.
 --%>
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
-<%@ page import="java.net.URI" %>
-<%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="java.util.Set" %>
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
+
 <%
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-    String fragment = (String) request.getAttribute("fragment");
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
 %>
 
 <applet name="DownloadManager"
@@ -84,10 +88,13 @@
         archive="cadcDownloadManagerClient.jar,cadcUtil.jar,log4j.jar"
         width="600" height="600">
 
-    <c:forEach var="uri" items="<%= uriList %>">
-        <input type="hidden" name="uri" value="${uri}" />
+    <c:forEach var="tuple" items="<%= tupleList %>">
+        <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
     </c:forEach>
-    <param name="fragment" value="<%= fragment %>" />
+
+    <c:if test="<%= downloadReq.runID != null %>" >
+        <input type="hidden" name="runid" value="${downloadReq.runID}" />
+    </c:if>
 </applet>
 
     

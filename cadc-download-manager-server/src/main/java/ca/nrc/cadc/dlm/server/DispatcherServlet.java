@@ -71,14 +71,16 @@
 package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.dlm.DownloadRequest;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
 import java.io.IOException;
-import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -107,16 +109,18 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class DispatcherServlet extends HttpServlet {
-    private static final long serialVersionUID = 202007201400L;
+    private static final long serialVersionUID = 202008040800L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
+    private static int ONE_YEAR = 365 * 24 * 3600;
 
+    public static String INTERNAL_FORWARD_PARAMETER = "downloadRequest";
     public static String URLS = "URL List";
     public static String HTMLLIST = "HTML List";
     public static String WEBSTART = "Java Webstart";
 
-    private static int ONE_YEAR = 365 * 24 * 3600;
 
+    /// Used during JSP compilation
     public static String DEFAULT_CONFIG_FILE_PATH = System.getProperty("user.home") + "/config/org.opencadc.dlm-server.properties";
 
     /**
@@ -128,7 +132,7 @@ public class DispatcherServlet extends HttpServlet {
      * @return name of page to forward to, null if caller should offer choices to user
      */
     public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response) {
-        String method = request.getParameter(ServerUtil.PARAM_METHOD);
+        String method = request.getParameter(DLMInputHandler.PARAM_METHOD);
         Cookie ck = null;
 
         // get cookie
@@ -182,7 +186,6 @@ public class DispatcherServlet extends HttpServlet {
             }
         }
         log.debug("Determined method: " + method);
-
 
         if (request.getParameter("remember") != null) {
             // set/edit cookie
@@ -273,31 +276,29 @@ public class DispatcherServlet extends HttpServlet {
             this.response = response;
         }
 
-        public Object run()
-            throws Exception {
+        public Object run() throws Exception {
             // forward
-            List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-            if (uriList == null) {
+            DownloadRequest downloadReq = (DownloadRequest) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
+
+            // Set up input handling
+            DLMInputHandler inputHandler = new DLMInputHandler(request);
+
+            if (downloadReq == null) {
                 // external post
-                uriList = ServerUtil.getURIs(request);
-                if (uriList == null || uriList.isEmpty()) {
+                inputHandler.parseInput();
+
+                downloadReq = inputHandler.getDownloadRequest();
+                Set<DownloadTuple> tupleList = downloadReq.getTuples();
+                List<Exception> validationErrList = downloadReq.getValidationErrors();
+
+                if ((tupleList == null || tupleList.isEmpty()
+                    && (validationErrList == null || validationErrList.isEmpty()))) {
                     request.getRequestDispatcher("/emptySubmit.jsp").forward(request, response);
                     return null;
                 }
-                request.setAttribute("uriList", uriList);
+                // DownloadRequest will be set as the forwarded attribute going forward...
+                request.setAttribute(INTERNAL_FORWARD_PARAMETER, downloadReq);
             }
-
-            String params = (String) request.getAttribute("params");
-            if (params == null) {
-                Map<String, List<String>> paramMap = ServerUtil.getParameters(request);
-                if (paramMap != null && !paramMap.isEmpty()) {
-                    params = DownloadUtil.encodeParamMap(paramMap);
-                    request.setAttribute("params", params);
-                }
-            }
-
-            log.debug("uriList: " + uriList);
-            log.debug("params: " + params);
 
             // check for preferred/selected download method
             String target = getDownloadMethod(request, response);

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2011.                            (c) 2011.
+ *  (c) 2011, 2020                       (c) 2011, 2020
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,8 +75,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -85,7 +83,7 @@ import java.util.Map;
 public class TestStorageResolver implements DownloadGenerator, StorageResolver {
     private static final String SCHEME = "test";
 
-    private Map<String, List<String>> params;
+    private String runID;
 
     /**
      * Returns the scheme for the storage resolver.
@@ -97,31 +95,28 @@ public class TestStorageResolver implements DownloadGenerator, StorageResolver {
         return SCHEME;
     }
 
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
-        if (!"test".equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+    @Override
+    public void setRunID(String runid) {
+        this.runID = runid;
+    }
+
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
+        if (!"test".equals(dt.getID().getScheme())) {
+            throw new IllegalArgumentException("invalid scheme: " + dt.getID().getScheme());
         }
 
+        URI uri = dt.getID();
         StringBuilder sb = new StringBuilder();
         sb.append("http://");
         sb.append(uri.getHost());
         sb.append(uri.getPath());
 
-        if (params != null && params.size() > 0) {
-            String sep = "?";
-            for (Map.Entry<String, List<String>> me : params.entrySet()) {
-                String key = me.getKey();
-                for (String val : me.getValue()) {
-                    sb.append(sep).append(key).append("=").append(val);
-                    sep = "&";
-                }
-            }
-        }
-
+        // TODO: params used to be managed here in a way that would allow any iterator
+        // to be handled in a test. Not certain that will still work.
         String surl = sb.toString();
 
         try {
-            return new SingleDownloadIterator(uri, new URL(surl));
+            return new SingleDownloadIterator(dt, new URL(surl));
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG: invalid url: " + surl, ex);
         }
@@ -159,7 +154,4 @@ public class TestStorageResolver implements DownloadGenerator, StorageResolver {
         }
     }
 
-    public void setParameters(Map<String, List<String>> map) {
-        this.params = map;
-    }
 }

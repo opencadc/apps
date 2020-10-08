@@ -69,28 +69,49 @@
 
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
-<%@ page import="java.net.URI" %>
-<%@ page import="java.util.List" %>
-<%
-    List<URI> uriList = (List<URI>) request.getAttribute("uriList");
-    String fragment = (String) request.getAttribute("fragment");
-%>
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
+<jsp:useBean id="dtFormat" class="ca.nrc.cadc.dlm.DownloadTupleFormat"/>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+
+    // If calling program has provided values they should be here
+    String headerURL = SkinUtil.headerURL;
+    String footerURL = SkinUtil.footerURL;
+    String bodyHeaderURL = "";
+    String skinURL = SkinUtil.skinURL;
+
+    if (!StringUtil.hasLength(headerURL)) {
+        if (!StringUtil.hasLength(skinURL)) {
+            skinURL = "http://localhost/cadc/skin/";
+        }
+
+        if (!skinURL.endsWith("/")) {
+            skinURL += "/";
+        }
+
+        if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+            if (!skinURL.startsWith("/")) {
+                skinURL = "/" + skinURL;
+            }
+            skinURL = "http://localhost" + skinURL;
+        }
+
+        headerURL = skinURL + "htmlHead";
+        bodyHeaderURL = skinURL + "bodyHeader";
+        footerURL = skinURL + "bodyFooter";
+    }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
 <script type="text/javascript">
 	function closemyself()
 	{
@@ -101,7 +122,7 @@ String bodyFooter = skin + "bodyFooter";
 </head>
 
 <body onLoad="setTimeout('closemyself()', 10000);self.focus()" >
-<c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
+<c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>
 
 <br>
 <br>
@@ -120,20 +141,34 @@ String bodyFooter = skin + "bodyFooter";
 <br>
 <div style="padding-left: 2em; padding-right: 2em">
     <form name="dmsubmitform" action="/downloadManager/download" method="POST">
-        <c:forEach var="uri" items="<%= uriList %>">
-            <input type="hidden" name="uri" value="${uri}" />
+        <c:forEach var="tuple" items="<%= tupleList %>">
+            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
         </c:forEach>
-        <input type="hidden" name="fragment" value="<%= fragment %>" />
+
+        <c:if test="<%= downloadReq.runID != null %>" >
+            <input type="hidden" name="runid" value="${downloadReq.runID}" />
+        </c:if>
+
+        <c:if test="<%= skinURL != null %>" >
+            <input type="hidden" name="skin" value="<%= skinURL %>" />
+        </c:if>
+
         <input type="hidden" name="execute" value="Submit" />
-        <input type="hidden" name="skin" value="<%= skin %>" />
     </form>
     
     <form name="clear" action="/downloadManager/download" method="POST">
-        <c:forEach var="uri" items="<%= uriList %>">
-            <input type="hidden" name="uri" value="${uri}" />
+        <c:forEach var="tuple" items="<%= tupleList %>">
+            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
         </c:forEach>
-        <input type="hidden" name="fragment" value="<%= fragment %>" />
-        <input type="hidden" name="skin" value="<%= skin %>" /> 
+
+        <c:if test="<%= downloadReq.runID != null %>" >
+            <input type="hidden" name="runid" value="${downloadReq.runID}" />
+        </c:if>
+
+        <c:if test="<%= skinURL != null %>" >
+            <input type="hidden" name="skin" value="<%= skinURL %>" />
+        </c:if>
+
         <input type="submit" name="clearCookie" value="Chose one of the other download methods" />
         <input type="submit" OnClick="closemyself()" value="Close window" />
     </form>
@@ -141,7 +176,7 @@ String bodyFooter = skin + "bodyFooter";
 </td>
 </tr>    
 </table>
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
+<c:catch><c:import url="<%= footerURL%>" /></c:catch>
 <script type="text/javascript">
 	document.dmsubmitform.submit();
 </script>
