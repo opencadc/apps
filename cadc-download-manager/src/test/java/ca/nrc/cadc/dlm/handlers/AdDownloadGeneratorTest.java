@@ -171,54 +171,7 @@ public class AdDownloadGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
-//    @Test
-    public void testLogKeyValue()
-    {
-        // This test is commented out until logkey/logvalue are determined
-        // to still be needed as input parameters - Sept, 2020
-        // Currently are pruned out during move to using DownloadRequest
-        // & DownloadTuple as input
-        try
-        {
-//            Map<String,List<String>> params = new HashMap<String,List<String>>();
-//            List<String> ss = new ArrayList<String>();
-//            ss.add("FOO");
-//            params.put("logkey", ss);
-//            ss = new ArrayList<String>();
-//            ss.add("BAR");
-//            params.put("logvalue", ss);
-
-            AdDownloadGenerator gen = new AdDownloadGenerator();
-
-            URI uri = new URI("ad", "SomeArchive/SomeFileID", null);
-            DownloadTuple dt = new DownloadTuple(uri);
-            Iterator<DownloadDescriptor> iter = gen.downloadIterator(dt);
-
-            Assert.assertNotNull(iter);
-            Assert.assertTrue(iter.hasNext());
-
-            DownloadDescriptor dd = iter.next();
-            Assert.assertEquals(DownloadDescriptor.OK, dd.status);
-
-            Assert.assertEquals("uri", uri.toASCIIString(), dd.uri);
-
-            Assert.assertEquals("protocol", baseURL.getProtocol(), dd.url.getProtocol());
-            Assert.assertEquals("hostname", baseURL.getHost(), dd.url.getHost());
-            Assert.assertEquals("path", baseURL.getPath() + "/SomeArchive/SomeFileID", dd.url.getPath());
-
-            Assert.assertNotNull("query", dd.url.getQuery());
-            Assert.assertTrue("logKey", dd.url.getQuery().contains("logkey=FOO"));
-            Assert.assertTrue("logValue", dd.url.getQuery().contains("logvalue=BAR"));
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
+    
     private static String encodeString(String str)
     {
         try { return URLEncoder.encode(str, "UTF-8"); }
