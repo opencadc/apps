@@ -95,17 +95,6 @@ import org.apache.log4j.Logger;
 public class AdDownloadGenerator implements DownloadGenerator {
     private static final Logger log = Logger.getLogger(AdDownloadGenerator.class);
     private String runID;
-    //    private static final Set<String> PARAMS;
-    //
-    //    static {
-    //        PARAMS = new TreeSet<String>(new CaseInsensitiveStringComparator());
-    //        PARAMS.add("logkey");
-    //        PARAMS.add("logvalue");
-    //        PARAMS.add("cutout");
-    //        PARAMS.add("runid");
-    //    }
-    // TODO: #technical debt:
-    // Q: what happens with 'logkey' and 'logvalue' above?
 
     private AdSchemeHandler ad;
     private Map<String, String> queryParams = new HashMap<String, String>();

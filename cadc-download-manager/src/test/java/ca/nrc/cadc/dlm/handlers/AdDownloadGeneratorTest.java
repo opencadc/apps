@@ -171,7 +171,7 @@ public class AdDownloadGeneratorTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     private static String encodeString(String str)
     {
         try { return URLEncoder.encode(str, "UTF-8"); }
