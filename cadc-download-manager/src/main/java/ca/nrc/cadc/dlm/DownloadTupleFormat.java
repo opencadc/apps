@@ -85,6 +85,8 @@ public class DownloadTupleFormat {
     /**
      * Parse DownloadTuple from internal format string.
      * @param tupleStr String representing a tuple
+     * @return DownloadTuple populated with information from the input
+     * @throws DownloadTupleParsingException
      */
     public DownloadTuple parse(String tupleStr) throws DownloadTupleParsingException {
         log.debug("tuple string input: " + tupleStr);
@@ -105,7 +107,6 @@ public class DownloadTupleFormat {
 
         // Split out the tuple parts
         String [] tupleParts = tupleStr.split("\\{");
-        String tmpTupleID;
         String tmpLabel;
 
         if (tupleParts.length > 3) {
@@ -175,8 +176,7 @@ public class DownloadTupleFormat {
             // invalid format - has to at least be a single URI passed in
             throw new DownloadTupleParsingException("zero length id found: " + tupleStr);
         }
-
-
+        
         return new DownloadTuple(tmpURI, tmpShape, tmpLabel);
     }
 
@@ -194,8 +194,8 @@ public class DownloadTupleFormat {
 
     /**
      * Output DownloadTuple in internal format
-     * @param tuple
-     * @return
+     * @param tuple to format
+     * @return string representation of tuple
      */
     public String format(DownloadTuple tuple) {
         String tupleStr = tuple.getID().toString();
@@ -217,10 +217,10 @@ public class DownloadTupleFormat {
      * Note: this code can be used at the tail end of parsing JSON input, or other blob-type data
      * that is provided in String format. Use this function to leverage the validation code found
      * in parse(internal_format_string).
-     * @param part1
-     * @param part2
-     * @param part3
-     * @return
+     * @param part1 string representation of URI for download
+     * @param part2 (Optional) DALI string representation of cutout
+     * @param part3 (Optional) label to add to download request
+     * @return DownloadTuple populated with tuple information provided.
      * @throws DownloadTupleParsingException
      */
     public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
@@ -235,10 +235,10 @@ public class DownloadTupleFormat {
     }
 
     /**
-     * Create a DownloadTuple using a URI string and a cutout string that
-     * @param uriStr
-     * @param cutoutStr
-     * @return
+     * Create a DownloadTuple using a URI string and a cutout string.
+     * @param uriStr URI for download
+     * @param cutoutStr pixel cutout to apply to download
+     * @return DownloadTuple popuplated with URI and cutout.
      * @throws DownloadTupleParsingException
      */
     public DownloadTuple parsePixelStringTuple(String uriStr, String cutoutStr) throws DownloadTupleParsingException  {
