@@ -18,27 +18,39 @@ class DownloadTupleComparator implements Comparator<DownloadTuple> {
             return ret;
         }
 
-        // URIs are equal, move on to cutout - careful with null
-        if (lhs.cutout == null && rhs.cutout == null) {
+        // URIs are equal, move on to posCutout - careful with null
+        if (lhs.posCutout == null && rhs.posCutout == null) {
             ret = 0; // equal, continue to compare
         }
-        if (lhs.cutout == null && rhs.cutout != null) {
+        if (lhs.posCutout == null && rhs.posCutout != null) {
             return -1; // null before not null
         }
-        if (lhs.cutout != null && rhs.cutout == null) {
+        if (lhs.posCutout != null && rhs.posCutout == null) {
             return 1;
         }
-        if (lhs.cutout != null && rhs.cutout != null) {
+        if (lhs.posCutout != null && rhs.posCutout != null) {
             // both cutouts non-null: compare values
             ShapeFormat sf = new ShapeFormat();
-            String lhsCutout = sf.format(lhs.cutout);
-            String rhsCutout = sf.format(rhs.cutout);
+            String lhsCutout = sf.format(lhs.posCutout);
+            String rhsCutout = sf.format(rhs.posCutout);
 
             ret = lhsCutout.compareTo(rhsCutout);
             if (ret != 0) {
                 return ret;
             }
         }
+
+        // all else is equal, move on to pixelCutout - careful with null
+        if (lhs.pixelCutout == null && rhs.pixelCutout == null) {
+            ret = 0; // equal, continue to compare
+        }
+        if (lhs.pixelCutout == null && rhs.pixelCutout != null) {
+            return -1; // null before not null
+        }
+        if (lhs.pixelCutout != null && rhs.pixelCutout == null) {
+            return 1;
+        }
+
 
         // finally compare labels
         if (lhs.label == null && rhs.label == null) {

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -167,7 +167,7 @@ public class DataLinkClient implements DownloadGenerator {
             sb.append(NetUtil.encode(dt.getID().toASCIIString()));
 
             // download only request
-            if (dt.cutout == null) {
+            if (dt.posCutout == null) {
                 sb.append("&request=").append(DOWNLOAD_REQUEST); // custom
             }
 
@@ -235,7 +235,7 @@ public class DataLinkClient implements DownloadGenerator {
             VOTableTable links = res.getTable();
             this.downloadTuple = dt;
 
-            if (dt.cutout == null) {
+            if (dt.posCutout == null) {
                 downloadOnly = true;
             }
 
@@ -421,21 +421,21 @@ public class DataLinkClient implements DownloadGenerator {
                     } else if (CUTOUT.equals(sem)) {
                         String standardID = getServiceProperty(sdef, "standardID");
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
-                            if (downloadTuple.cutout != null) {
+                            if (downloadTuple.posCutout != null) {
                                 ShapeFormat sf = new ShapeFormat();
-                                curParams = "POS=" +  NetUtil.encode(sf.format(downloadTuple.cutout));
+                                curParams = "POS=" +  NetUtil.encode(sf.format(downloadTuple.posCutout));
                             }
                             if (downloadTuple.label != null) {
                                 curParams += "&LABEL=" + NetUtil.encode(downloadTuple.label);
                             }
-                            log.debug("pass: " + url + " semantics: " + sem + " cutout: " + downloadTuple.cutout);
+                            log.debug("pass: " + url + " semantics: " + sem + " cutout: " + downloadTuple.posCutout);
                         } else {
                             curRow = null;
-                            log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + downloadTuple.cutout);
+                            log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + downloadTuple.posCutout);
                         }
-                    } else if (downloadTuple.cutout != null) {
+                    } else if (downloadTuple.posCutout != null) {
                         curRow = null;
-                        log.debug("skip: " + url + " semantics: " + sem + " cutout: " + downloadTuple.cutout);
+                        log.debug("skip: " + url + " semantics: " + sem + " cutout: " + downloadTuple.posCutout);
                     } else {
                         log.debug("pass: " + url + " semantics: " + sem);
                     }

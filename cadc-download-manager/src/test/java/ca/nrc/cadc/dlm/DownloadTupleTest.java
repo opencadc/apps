@@ -98,7 +98,7 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
 
     @Test
     public void testURIOnly() throws Exception {
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null);
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR));
         log.debug("uri only: " + dt.getID());
         Assert.assertEquals("ctor didn't work", dt.getID(),expectedURI);
     }
@@ -107,14 +107,36 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
     public void testURIShape() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
+        Assert.assertEquals("ctor didn't work for posCutout", expectedCutout, dt.posCutout );
+        Assert.assertEquals("ctor didn't work for pixelCutout", null, dt.pixelCutout );
     }
 
     @Test
-    public void testAllParams() throws Exception {
+    public void testShapeCutoutTuple() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
-        Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", dt.cutout, expectedCutout);
-        Assert.assertEquals("ctor didn't work for label", dt.label, expectedLabel);
+        Assert.assertEquals("ctor didn't work for id", expectedURI, dt.getID());
+        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout );
+        Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
+    }
+
+    // Valid tests only for pixelCutout as it is not validated
+    @Test
+    public void testPixelCutoutFullTuple() throws Exception {
+        String expectedPixelCutout = "[2]";
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), "[2]", LABEL_STR);
+        Assert.assertEquals("ctor didn't work for id", expectedURI, dt.getID());
+        Assert.assertEquals("ctor didn't work for posCutout", null, dt.posCutout );
+        Assert.assertEquals("ctor didn't work for pixelCutout", expectedPixelCutout, dt.pixelCutout );
+        Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
+    }
+
+    @Test
+    public void testPixelCutoutTuple() throws Exception {
+        String expectedPixelCutout = "[2]";
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), "[2]");
+        Assert.assertEquals("ctor didn't work for id", expectedURI, dt.getID());
+        Assert.assertEquals("ctor didn't work for posCutout", null, dt.posCutout );
+        Assert.assertEquals("ctor didn't work for pixelCutout", expectedPixelCutout, dt.pixelCutout );
+        Assert.assertEquals("ctor didn't work for label", null, dt.label);
     }
 }
