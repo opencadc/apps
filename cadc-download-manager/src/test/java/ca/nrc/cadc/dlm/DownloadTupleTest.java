@@ -81,7 +81,7 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
     private static Logger log = Logger.getLogger(DownloadTupleTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     @Before

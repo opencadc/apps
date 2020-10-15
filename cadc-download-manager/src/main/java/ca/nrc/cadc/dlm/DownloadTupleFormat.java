@@ -86,7 +86,7 @@ public class DownloadTupleFormat {
      * Parse DownloadTuple from internal format string.
      * @param tupleStr String representing a tuple
      * @return DownloadTuple populated with information from the input
-     * @throws DownloadTupleParsingException
+     * @throws DownloadTupleParsingException if tuple is malformed or content is invalid
      */
     public DownloadTuple parse(String tupleStr) throws DownloadTupleParsingException {
         log.debug("tuple string input: " + tupleStr);
@@ -213,7 +213,7 @@ public class DownloadTupleFormat {
     }
 
     /**
-     * Put a set of strings into the internalformat before parsing into DownloadTuple.
+     * Put a set of strings into the internal format before parsing into DownloadTuple.
      * Note: this code can be used at the tail end of parsing JSON input, or other blob-type data
      * that is provided in String format. Use this function to leverage the validation code found
      * in parse(internal_format_string).
@@ -221,7 +221,7 @@ public class DownloadTupleFormat {
      * @param part2 (Optional) DALI string representation of cutout
      * @param part3 (Optional) label to add to download request
      * @return DownloadTuple populated with tuple information provided.
-     * @throws DownloadTupleParsingException
+     * @throws DownloadTupleParsingException if tuple is malformed or content is invalid
      */
     public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
         String tupleStr = part1;
@@ -239,7 +239,7 @@ public class DownloadTupleFormat {
      * @param uriStr URI for download
      * @param cutoutStr pixel cutout to apply to download
      * @return DownloadTuple popuplated with URI and cutout.
-     * @throws DownloadTupleParsingException
+     * @throws DownloadTupleParsingException if URI is invalid
      */
     public DownloadTuple parsePixelStringTuple(String uriStr, String cutoutStr) throws DownloadTupleParsingException  {
         try {
@@ -248,6 +248,47 @@ public class DownloadTupleFormat {
         } catch (URISyntaxException uriEx)  {
             throw new DownloadTupleParsingException("invalid id for tuple:" + uriEx);
         }
+    }
+
+
+    /**
+     * Convert a string to a format that can be used for subsequent web service calls.
+     * @param labelText String of label to be converted
+     * @return label converted to format acceptable for web service calls
+     */
+    public static String convertLabelText(String labelText) {
+        // Note: this works primarily
+        String convertedLabel = labelText;
+
+        if (StringUtil.hasLength(labelText)) {
+            log.debug("label to convert: " + convertedLabel);
+
+            // Rules from user story CADC-1245, subtask CADC 8244
+            // '/' added because SODA service (caom2ops) does not accept it.
+            // 1) ' -> arcmin
+            // 2) " -> arcsec
+            // 3) '+' -> 'p'
+            // 4) ':' and '/' -> '_'
+            // 5) all whitespaces replaced by underscores.
+
+            convertedLabel = convertedLabel.replaceAll("'", "arcmin");
+            log.debug("after arcmin substitution: " + convertedLabel);
+
+            convertedLabel = convertedLabel.replaceAll("\"", "arcsec");
+            log.debug("after arcsec substitution: " + convertedLabel);
+
+            // This section may get expanded as failures are discovered
+            // in the broader context of how this label is used.
+            convertedLabel = convertedLabel.replaceAll("\\:|\\/", "_");
+            convertedLabel = convertedLabel.replaceAll("\\+", "p");
+            log.debug("after : and + substitution: " + convertedLabel);
+
+            // put '_' in place of whitespace last
+            convertedLabel = convertedLabel.replaceAll("\\s+", "_");
+            log.debug("after whitespace substitution: " + convertedLabel);
+        }
+
+        return convertedLabel;
     }
 
 }

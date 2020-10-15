@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -77,7 +77,7 @@ import java.util.Iterator;
 public interface DownloadGenerator {
     /**
      * Value used globally on all query strings
-     * @param runID
+     * @param runID Corresponding to search job this download request is from
      */
     public void setRunID(String runID);
 

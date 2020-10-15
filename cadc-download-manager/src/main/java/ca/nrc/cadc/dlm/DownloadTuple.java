@@ -82,7 +82,7 @@ public class DownloadTuple {
 
     /**
      * ctor
-     * @param id
+     * @param id URI of download
      */
     public DownloadTuple(URI id) {
         if (id == null) {
@@ -96,8 +96,8 @@ public class DownloadTuple {
 
     /**
      * ctor
-     * @param id
-     * @param cutout
+     * @param id URI of download
+     * @param cutout (Optional) DALI Shape to be used for cutout
      */
     public DownloadTuple(URI id, Shape cutout) {
         if (id == null) {
@@ -111,8 +111,8 @@ public class DownloadTuple {
 
     /**
      * ctor
-     * @param id
-     * @param cutout
+     * @param id URI of download
+     * @param cutout (Optional) Pixel String to be used for cutout
      */
     public DownloadTuple(URI id, String cutout) {
         if (id == null) {
@@ -126,9 +126,9 @@ public class DownloadTuple {
 
     /**
      * ctor
-     * @param id
-     * @param cutout
-     * @param label
+     * @param id URI of download
+     * @param cutout (Optional) DALI Shape to be used for cutout
+     * @param label (Optional) sent as LABEL parameter to SODA calls
      */
     public DownloadTuple(URI id, Shape cutout, String label) {
         if (id == null) {
@@ -140,14 +140,16 @@ public class DownloadTuple {
         this.id = id;
         this.posCutout = cutout;
         this.pixelCutout = null;
-        this.label = label;
+
+        DownloadTupleFormat df = new DownloadTupleFormat();
+        this.label = df.convertLabelText(label);
     }
 
     /**
      * ctor
-     * @param id
-     * @param cutout
-     * @param label
+     * @param id URI of download
+     * @param cutout (Optional) DALI String to be used for cutout
+     * @param label (Optional) sent as LABEL parameter to SODA calls
      */
     public DownloadTuple(URI id, String cutout, String label) {
         if (id == null) {
@@ -159,7 +161,9 @@ public class DownloadTuple {
         this.id = id;
         this.posCutout = null;
         this.pixelCutout = cutout;
-        this.label = label;
+
+        DownloadTupleFormat df = new DownloadTupleFormat();
+        this.label = df.convertLabelText(label);
     }
 
     public URI getID() {
