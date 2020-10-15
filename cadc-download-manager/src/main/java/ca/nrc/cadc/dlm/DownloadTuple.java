@@ -140,9 +140,7 @@ public class DownloadTuple {
         this.id = id;
         this.posCutout = cutout;
         this.pixelCutout = null;
-
-        DownloadTupleFormat df = new DownloadTupleFormat();
-        this.label = df.convertLabelText(label);
+        this.label = label;
     }
 
     /**
@@ -161,9 +159,7 @@ public class DownloadTuple {
         this.id = id;
         this.posCutout = null;
         this.pixelCutout = cutout;
-
-        DownloadTupleFormat df = new DownloadTupleFormat();
-        this.label = df.convertLabelText(label);
+        this.label = label;
     }
 
     public URI getID() {

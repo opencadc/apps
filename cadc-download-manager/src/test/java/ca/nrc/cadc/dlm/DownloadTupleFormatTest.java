@@ -68,6 +68,7 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Logger;
@@ -145,6 +146,18 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
         Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
         Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
+    }
+
+    // Internal format string to DownloadTuple tests
+    @Test
+    public void testParseFullTupleLabelConverted() throws Exception {
+        DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 8.0 9.0 0.5}{02:24:07.5 +03:18:00 0.5}");
+        String exConvertedLabel = "02_24_07.5_p03_18_00_0.5";
+        Shape exCutout = sf.parse("circle 8.0 9.0 0.5");
+        URI exID = new URI("test://mysite.ca/path/1");
+        Assert.assertEquals("ctor didn't work for id", exID, dt.getID());
+        Assert.assertEquals("ctor didn't work for cutout", exCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for label", exConvertedLabel, dt.label);
     }
 
     @Test

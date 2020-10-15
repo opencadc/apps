@@ -123,7 +123,7 @@ public class DownloadTupleFormat {
                 // trim off trailing "}".
                 // guaranteed to be there due to
                 // check for equal occurrences of { and } above.
-                tmpLabel = l.substring(0, l.length() - 1);
+                tmpLabel = convertLabelText(l.substring(0, l.length() - 1));
             } else {
                 // invalid format
                 throw new DownloadTupleParsingException("invalid label format: " + tupleStr);
