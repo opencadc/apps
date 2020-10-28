@@ -78,7 +78,7 @@ import ca.nrc.cadc.dali.tables.votable.VOTableParam;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
-import ca.nrc.cadc.dali.util.DoubleArrayFormat;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
@@ -167,11 +167,11 @@ public class DataLinkClient implements DownloadGenerator {
             sb.append(NetUtil.encode(dt.getID().toASCIIString()));
 
             // download only request
-            if (dt.posCutout == null) {
+            if (noSODACutout(dt)) {
                 sb.append("&request=").append(DOWNLOAD_REQUEST); // custom
             }
 
-            if (runID != null) {
+            if (StringUtil.hasLength(runID)) {
                 sb.append("&runid=").append(NetUtil.encode(runID));
             }
 
@@ -213,6 +213,10 @@ public class DataLinkClient implements DownloadGenerator {
         return -1;
     }
 
+    public Boolean noSODACutout(DownloadTuple tuple) {
+        return tuple.posCutout == null && tuple.bandCutout == null;
+    }
+
     private class DownloadIterator implements Iterator<DownloadDescriptor> {
         private Iterator<List<Object>> rowIter;
         private int uriIndex;
@@ -235,7 +239,7 @@ public class DataLinkClient implements DownloadGenerator {
             VOTableTable links = res.getTable();
             this.downloadTuple = dt;
 
-            if (dt.posCutout == null) {
+            if (noSODACutout(dt)) {
                 downloadOnly = true;
             }
 
@@ -365,7 +369,7 @@ public class DataLinkClient implements DownloadGenerator {
                     return new DownloadDescriptor(uri, "failed to generate URL");
                 } else {
                     try {
-                        if (!url.toLowerCase().contains("runid=")) {
+                        if (!url.toLowerCase().contains("runid=") && StringUtil.hasLength(runID)) {
                             url = appendParam(url, "runid", runID);
                         }
                         url = appendParams(url, curParams);
@@ -423,12 +427,17 @@ public class DataLinkClient implements DownloadGenerator {
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
                             if (downloadTuple.posCutout != null) {
                                 ShapeFormat sf = new ShapeFormat();
-                                curParams = "POS=" +  NetUtil.encode(sf.format(downloadTuple.posCutout));
+                                curParams = addQueryParam(curParams, "POS", NetUtil.encode(sf.format(downloadTuple.posCutout)));
+                            }
+                            if (downloadTuple.bandCutout != null) {
+                                DoubleIntervalFormat dif = new DoubleIntervalFormat();
+                                curParams = addQueryParam(curParams, "BAND", NetUtil.encode(dif.format(downloadTuple.bandCutout)));
                             }
                             if (downloadTuple.label != null) {
-                                curParams += "&LABEL=" + NetUtil.encode(downloadTuple.label);
+                                curParams = addQueryParam(curParams, "LABEL", NetUtil.encode(downloadTuple.label));
                             }
-                            log.debug("pass: " + url + " semantics: " + sem + " cutout: " + downloadTuple.posCutout);
+
+                            log.debug("pass: " + url + " semantics: " + sem + " POS: " + downloadTuple.posCutout + " BAND: " + downloadTuple.bandCutout);
                         } else {
                             curRow = null;
                             log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + downloadTuple.posCutout);
@@ -471,6 +480,14 @@ public class DataLinkClient implements DownloadGenerator {
             }
             url += params;
             return url;
+        }
+
+        private String addQueryParam(String paramStr, String key, String newParam) {
+            String ret = "";
+            if (StringUtil.hasLength(paramStr)) {
+                ret += paramStr + "&";
+            }
+            return ret + key + "=" + newParam;
         }
 
         private boolean containsAny(List<String> productTypes, String[] values) {

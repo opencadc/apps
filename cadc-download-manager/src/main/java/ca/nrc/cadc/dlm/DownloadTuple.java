@@ -68,17 +68,20 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Shape;
 import java.net.URI;
-import org.apache.log4j.Logger;
 
 public class DownloadTuple {
-    private static Logger log = Logger.getLogger(DownloadTuple.class);
 
+    // Only value that is required is the id.
     private final URI id;
-    public final Shape posCutout;
-    public final String pixelCutout;
-    public final String label;
+
+    // These values can all be null
+    public Shape posCutout;
+    public DoubleInterval bandCutout;
+    public String pixelCutout;
+    public String label;
 
     /**
      * ctor
@@ -90,6 +93,7 @@ public class DownloadTuple {
         }
         this.id = id;
         this.posCutout = null;
+        this.bandCutout = null;
         this.pixelCutout = null;
         this.label = null;
     }
@@ -97,68 +101,22 @@ public class DownloadTuple {
     /**
      * ctor
      * @param id URI of download
-     * @param cutout (Optional) DALI Shape to be used for cutout
-     */
-    public DownloadTuple(URI id, Shape cutout) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        this.id = id;
-        this.posCutout = cutout;
-        this.pixelCutout = null;
-        this.label = null;
-    }
-
-    /**
-     * ctor
-     * @param id URI of download
-     * @param cutout (Optional) Pixel String to be used for cutout
-     */
-    public DownloadTuple(URI id, String cutout) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        this.id = id;
-        this.posCutout = null;
-        this.pixelCutout = cutout;
-        this.label = null;
-    }
-
-    /**
-     * ctor
-     * @param id URI of download
-     * @param cutout (Optional) DALI Shape to be used for cutout
+     * @param posCutout (Optional) DALI Shape to be used for position cutout (POS parameter)
+     * @param bandCutout (Optional) DoubleInterval to be used for band cutout (BAND parameter)
+     * @param pixelCutout (Optional) String to be used for pixel cutout (passed through without validation)
      * @param label (Optional) sent as LABEL parameter to SODA calls
      */
-    public DownloadTuple(URI id, Shape cutout, String label) {
+    public DownloadTuple(URI id, Shape posCutout, DoubleInterval bandCutout, String pixelCutout, String label) {
         if (id == null) {
             throw new IllegalArgumentException("id can not be null");
         }
-        if (label != null && cutout == null) {
+        if (label != null && posCutout == null) {
             throw new IllegalArgumentException("cutout can not be null if label is defined.");
         }
         this.id = id;
-        this.posCutout = cutout;
-        this.pixelCutout = null;
-        this.label = label;
-    }
-
-    /**
-     * ctor
-     * @param id URI of download
-     * @param cutout (Optional) DALI String to be used for cutout
-     * @param label (Optional) sent as LABEL parameter to SODA calls
-     */
-    public DownloadTuple(URI id, String cutout, String label) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        if (label != null && cutout == null) {
-            throw new IllegalArgumentException("cutout can not be null if label is defined.");
-        }
-        this.id = id;
-        this.posCutout = null;
-        this.pixelCutout = cutout;
+        this.posCutout = posCutout;
+        this.bandCutout = bandCutout;
+        this.pixelCutout = pixelCutout;
         this.label = label;
     }
 

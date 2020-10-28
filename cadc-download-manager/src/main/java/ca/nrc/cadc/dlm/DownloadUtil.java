@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import ca.nrc.cadc.util.StringUtil;
 
@@ -83,6 +84,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 
+import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -232,5 +234,7 @@ public class DownloadUtil {
             }
         };
     }
+
+
 
 }

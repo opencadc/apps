@@ -73,6 +73,8 @@ import ca.nrc.cadc.appkit.ui.Application;
 import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.DownloadTupleFormat;
@@ -99,6 +101,7 @@ import org.apache.log4j.Logger;
 public class Main {
     private static Logger log = Logger.getLogger(Main.class);
     private static UserInterface ui;
+    private static DownloadTupleFormat df = new DownloadTupleFormat();
 
     public static void main(final String[] args) {
         try {
@@ -155,7 +158,7 @@ public class Main {
 
             boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>() {
                 public Boolean run() {
-                    // TODO: Q: support 'uris' as input to this, when DownloadManager.jsp
+                    // TODO: support 'uris' as input to this, when DownloadManager.jsp
                     // hasn't been using it for a while?
                     //String uriStr = fixNull(am.getValue("uris"));
 
@@ -191,7 +194,6 @@ public class Main {
                         frame.getContentPane().add((Component) ui);
                         frame.setVisible(true);
                     }
-
 
                     // Input validation messages will be printed in this section
                     ui.add(downloadRequest);
@@ -243,11 +245,15 @@ public class Main {
 
         // Iterate through the positional arguments and attempt to construct tuples
         // URI{DALI position string}{label}
-
         List<String> positionalArgs = argMap.getPositionalArgs();
         for (String segment : positionalArgs) {
             log.debug("segment: " + segment);
 
+            if (!StringUtil.hasLength(segment)) {
+                // pass on extra whitespace that might
+                // be found on the command line
+                continue;
+            }
             boolean endOfTuple = false;
 
             if (segment.endsWith("}")) {
@@ -269,13 +275,14 @@ public class Main {
             }
             curTupleStr += segment;
             if (endOfTuple == true) {
+                log.debug("tuple string from args: " + curTupleStr);
                 try {
                     DownloadTupleFormat df = new DownloadTupleFormat();
                     DownloadTuple dt = df.parse(curTupleStr);
                     downloadRequest.getTuples().add(dt);
                 } catch (Exception e) {
-                    // df.parse will throw validation errors. Record
-                    // them and continue
+                    // df.parse and df.parseBandCutout will throw validation errors.
+                    // Record them and continue
                     downloadRequest.getValidationErrors().add(e);
                 }
                 curTupleStr = "";
@@ -288,11 +295,10 @@ public class Main {
 
     private static void usage() {
         System.out.println("cadc-download-manager -h || --help");
-        System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of URIs>");
+        System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of download tuples>");
         System.out.println("         [ --runid=<runid> ]");
         System.out.println("         [ --ssocookie=<cookie value to use in sso authentication> ]");
         System.out.println("         [ --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)> ]");
-        System.out.println("         [ --tuple=<URI{DALI position string}{label}> ]");
         System.out.println("         [ --headless ] : run in non-interactive (no GUI) mode");
         System.out.println();
         System.out.println("optional arguments to use with --headless:");

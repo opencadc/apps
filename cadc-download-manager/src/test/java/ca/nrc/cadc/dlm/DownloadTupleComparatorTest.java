@@ -101,19 +101,22 @@ public class DownloadTupleComparatorTest {
 
     @Before
     public void beforeTest() throws Exception {
-        d1 = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape), "circleLabel");
-        d2 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), "circleLabel2");
-        d3 = new DownloadTuple(new URI("test://uri/3"), sf.parse(polygonShape), "polygonLabel");
+        d1 = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape), null, null, "circleLabel");
+        d2 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2),null, null,  "circleLabel2");
+        d3 = new DownloadTuple(new URI("test://uri/3"), sf.parse(polygonShape),null, null,  "polygonLabel");
 
         d4 = new DownloadTuple(new URI("test://uri/1"));
-        d5 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), null);
+        d5 = new DownloadTuple(new URI("test://uri/2"), sf.parse(circleShape2), null, null, null);
     }
 
     @Test
     public void testDuplicates() throws Exception {
         // Add a duplicate, size of TreeSet should be one less than number of tuples
         testTreeSet = new TreeSet(new DownloadTupleComparator());
-        DownloadTuple dup = new DownloadTuple(new URI("test://uri/1"), sf.parse(circleShape), "circleLabel");
+        DownloadTuple dup = new DownloadTuple(new URI("test://uri/1"));
+        dup.posCutout = sf.parse(circleShape);
+        dup.label = "circleLabel";
+
         testTreeSet.add(d1);
         testTreeSet.add(d2);
         testTreeSet.add(dup);
