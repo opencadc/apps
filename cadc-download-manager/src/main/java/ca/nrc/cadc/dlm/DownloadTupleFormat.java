@@ -122,7 +122,7 @@ public class DownloadTupleFormat {
             try {
                 tmpURI = new URI(uriStr);
             } catch (URISyntaxException u) {
-                throw new DownloadTupleParsingException("id parsing error: " + u + ": " + tupleStr);
+                throw new DownloadTupleParsingException("id parsing error: " + tupleStr, u);
             }
         } else {
             // invalid format - has to at least be a single URI passed in
@@ -134,7 +134,7 @@ public class DownloadTupleFormat {
 
         if (openBraceCount == 3) {
             String tmpPosStr = tupleParts[1];
-            if (tmpPosStr.length() > 1) {
+            if (StringUtil.hasLength(tmpPosStr)) {
                 // trim off trailing "}"
                 String tmpShapeStr = tmpPosStr.substring(0, tmpPosStr.length() - 1);
                 log.debug("cutout string: " + tmpShapeStr);
@@ -145,16 +145,16 @@ public class DownloadTupleFormat {
                         log.debug("parsed cutout.");
                     } catch (IllegalArgumentException ill) {
                         log.debug("parsing error for cutout: " + tmpShapeStr);
-                        throw new DownloadTupleParsingException("pos cutout parsing error: " + ill + ": " + tmpPosStr);
+                        throw new DownloadTupleParsingException("pos cutout parsing error: " + tmpPosStr, ill);
                     } catch (Exception e) {
-                        log.debug("other error for parsing pos cutout:" + e);
-                        throw new DownloadTupleParsingException("BUG for pos cutout:" + e + ": " + tmpPosStr);
+                        log.debug("other error for parsing pos cutout:", e);
+                        throw new DownloadTupleParsingException("BUG for pos cutout:" + e + ": " + tmpPosStr, e);
                     }
                 }
             }
 
             String tmpBandStr = tupleParts[2];
-            if (tmpBandStr.length() > 1) {
+            if (StringUtil.hasLength(tmpBandStr)) {
                 // trim off trailing "}"
                 String tmpShapeStr = tmpBandStr.substring(0, tmpBandStr.length() - 1);
                 log.debug("cutout string: " + tmpShapeStr);
@@ -164,11 +164,11 @@ public class DownloadTupleFormat {
                         newTuple.bandCutout = dif.parse(tmpShapeStr);
                         log.debug("parsed band cutout.");
                     } catch (IllegalArgumentException ill) {
-                        log.debug("parsing error for band cutout: " + tmpBandStr);
-                        throw new DownloadTupleParsingException("band cutout parsing error: " + ill + ": " + tmpBandStr);
+                        log.debug("parsing error for band cutout: " + tmpBandStr, ill);
+                        throw new DownloadTupleParsingException("band cutout parsing error: " + tmpBandStr, ill);
                     } catch (Exception e) {
-                        log.debug("other error for parsing band cutout:" + e);
-                        throw new DownloadTupleParsingException("BUG for band cutout:" + e + ": " + tmpBandStr);
+                        log.debug("other error for parsing band cutout:", e);
+                        throw new DownloadTupleParsingException("BUG for band cutout:" + tmpBandStr, e);
                     }
                 }
             }
@@ -283,7 +283,7 @@ public class DownloadTupleFormat {
             newTuple.pixelCutout = pixelCutoutStr;
             return newTuple;
         } catch (URISyntaxException uriEx)  {
-            throw new DownloadTupleParsingException("invalid id for tuple:" + uriEx);
+            throw new DownloadTupleParsingException("invalid id for tuple:", uriEx);
         }
     }
 
@@ -300,7 +300,7 @@ public class DownloadTupleFormat {
                 DoubleInterval bandCutout = dif.parse(bandCutoutStr);
                 return bandCutout;
             } catch (IllegalArgumentException argEx) {
-                throw new DownloadTupleParsingException("invalid band cutout:" + bandCutoutStr);
+                throw new DownloadTupleParsingException("invalid band cutout:" + bandCutoutStr, argEx);
             }
         }
         return null;
@@ -319,7 +319,7 @@ public class DownloadTupleFormat {
                 Shape posCutout = sf.parse(posCutoutStr);
                 return posCutout;
             } catch (IllegalArgumentException argEx)  {
-                throw new DownloadTupleParsingException("invalid pos cutout:" + posCutoutStr);
+                throw new DownloadTupleParsingException("invalid pos cutout:" + posCutoutStr, argEx);
             }
         }
         return null;
