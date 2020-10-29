@@ -116,7 +116,8 @@ public class AdDownloadGeneratorTest
             gen.setRunID("testRunID");
 
             URI uri = new URI("ad", "SomeArchive/SomeFileID", null);
-            DownloadTuple dt = new DownloadTuple(uri, "[1]");
+            DownloadTuple dt = new DownloadTuple(uri);
+            dt.pixelCutout = "[1]";
             Iterator<DownloadDescriptor> iter = gen.downloadIterator(dt);
 
             Assert.assertNotNull(iter);

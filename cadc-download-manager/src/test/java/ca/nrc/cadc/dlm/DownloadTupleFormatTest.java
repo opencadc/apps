@@ -68,7 +68,10 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Logger;
@@ -79,14 +82,14 @@ import org.junit.Test;
 
 public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     private static Logger log = Logger.getLogger(DownloadTupleFormatTest.class);
-    private DownloadTupleFormat df = new DownloadTupleFormat();
+
     private DownloadTuple fullTestTuple;
 
     // test://mysite.ca/path/1{polygon 0 0 0 0 0 0}
-    private static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}";
+    private static String TUPLE_INTERNAL_SHAPE = URI_STR + "{" + SHAPE_STR + "}{}{}";
 
     // test://mysite.ca/path/1{polygon 0 0 0 0 0 0}{label}
-    private static String TUPLE_INTERNAL_FULL = TUPLE_INTERNAL_SHAPE + "{" + LABEL_STR + "}";
+    private static String TUPLE_INTERNAL_FULL = URI_STR + "{" + SHAPE_STR + "}{}{" + LABEL_STR + "}";
 
 
     static {
@@ -100,14 +103,15 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
             expectedURI = new URI(URI_STR);
             expectedCutout = sf.parse(SHAPE_STR);
             expectedLabel = LABEL_STR;
-            fullTestTuple = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
+            fullTestTuple = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null, null, LABEL_STR);
+            expectedIntervalCutout = dif.parse(BAND_CUTOUT_STR);
         } catch (Exception unexpectedSetupError) {
             log.error("DownalodTupleTest setup failed: " + unexpectedSetupError);
             Assert.fail("test setup failed.");
         }
     }
 
-    // DownloadTuple to internalt format tests
+    // DownloadTuple to internal format tests
     @Test
     public void testFormatURIOnly() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR));
@@ -117,7 +121,9 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
 
         String internalFormat = df.format(dt);
         log.debug("internal format, uri only: " + df.format(dt));
-        Assert.assertEquals("invalid internal tuple format", internalFormat, URI_STR);
+        // Since this is an internal format, and it's parts are positional, all parts
+        // are returned, regardless of whether they are populated or not
+        Assert.assertEquals("invalid internal tuple format", internalFormat, URI_STR + "{}{}{}");
     }
 
     @Test
@@ -129,7 +135,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
 
     @Test
     public void testFormatNoLabel() throws Exception {
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null, null, null);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
         Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
         Assert.assertEquals("ctor didn't work for label", null, dt.label);
@@ -142,16 +148,18 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     // Internal format string to DownloadTuple tests
     @Test
     public void testParseFullTuple() throws Exception {
-        DownloadTuple dt = df.parse(TUPLE_INTERNAL_FULL);
+        String fullTuple =  URI_STR + "{" + SHAPE_STR + "}{" + BAND_CUTOUT_STR + "}{" + LABEL_STR + "}";
+        DownloadTuple dt = df.parse(fullTuple);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for pos cutout", expectedCutout, dt.posCutout);
+        Assert.assertEquals("ctor didn't work for band cutout", expectedIntervalCutout, dt.bandCutout);
         Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
     }
 
     // Internal format string to DownloadTuple tests
     @Test
     public void testParseFullTupleLabelConverted() throws Exception {
-        DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 8.0 9.0 0.5}{02:24:07.5 +03:18:00 0.5}");
+        DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 8.0 9.0 0.5}{}{02:24:07.5 +03:18:00 0.5}");
         String exConvertedLabel = "02_24_07.5_p03_18_00_0.5";
         Shape exCutout = sf.parse("circle 8.0 9.0 0.5");
         URI exID = new URI("test://mysite.ca/path/1");
@@ -164,7 +172,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     public void testParseFullTupleFromStrings() throws Exception {
         // This function can be used in InputHandler classes to leverage validation
         // provided in df.parse
-        DownloadTuple dt = df.parseUsingInternalFormat(URI_STR, SHAPE_STR, LABEL_STR);
+        DownloadTuple dt = df.parseUsingInternalFormat(URI_STR, SHAPE_STR, null, LABEL_STR);
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
         Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout);
         Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
@@ -192,7 +200,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     @Test
     public void testParseInvalidURI() {
         try {
-            DownloadTuple dt = df.parse("bad uri1{circle 0.0 0.0 0.0}{label}");
+            DownloadTuple dt = df.parse("bad uri1{circle 0.0 0.0 0.0}{}{label}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -211,7 +219,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     @Test
     public void testParseBadShapeCutout() {
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{bad_polygon}{label}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{bad_polygon}{}{label}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -227,7 +235,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         }
 
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{}{}{}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -238,7 +246,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     @Test
     public void testParseBadFormatBraceMismatch() {
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1 circle 0.0 0.0 0.0}{label}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1 circle 0.0 0.0 0.0}{}{label}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -246,7 +254,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         }
 
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}label}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}{}label}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -254,7 +262,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         }
 
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}{label");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{circle 0.0 0.0 0.0}{}{label");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -266,7 +274,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     @Test
     public void testParseMissingBracePair() {
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0 label}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0}{label}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -274,7 +282,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         }
 
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1 polygon 0 0 0 0 0 0}{label");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1 polygon 0 0 0 0 0 0}{}{label");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -285,7 +293,7 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
     @Test
     public void testParseTooManyBraces() {
         try {
-            DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0}{label}{extraLabel}");
+            DownloadTuple dt = df.parse("test://mysite.ca/path/1{polygon 0 0 0 0 0 0}{BAND}{Label}{extraLabel}");
         } catch (DownloadTupleParsingException parseError) {
             log.info("expected parsing error: " + parseError);
         } catch (Exception unexpected) {
@@ -352,6 +360,89 @@ public class DownloadTupleFormatTest extends DownloadTupleTestBase {
         String expectedConvertedLabel = "02_24_07.5_p03_18_00_0.5";
         String actualConvertedLabel = df.convertLabelText(label);
         Assert.assertEquals("conversion failed", expectedConvertedLabel, actualConvertedLabel);
+    }
+
+
+    @Test
+    public void testValidParseBandCutout() throws Exception {
+        try {
+            String bandCutoutString = "1.0 2.0";
+            DoubleIntervalFormat diFormat = new DoubleIntervalFormat();
+            DoubleInterval expected = diFormat.parse(bandCutoutString);
+            DoubleInterval testCutout = df.parseBandCutout(bandCutoutString);
+            Assert.assertEquals("Parsing band cutout didn't work", expected, testCutout);
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("unexpected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidBandCutoutTooLong() throws Exception {
+        try {
+            String bandCutoutString = "1.0 2.0 4.0";
+            DoubleInterval testCutout = df.parseBandCutout(bandCutoutString);
+            Assert.fail("parsing band cutout should have failed");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidBandCutoutTooShort() throws Exception {
+        try {
+            String bandCutoutString = "1.0";
+            DoubleInterval testCutout = df.parseBandCutout(bandCutoutString);
+            Assert.fail("parsing band cutout should have failed");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidBandCutoutJustWrong() throws Exception {
+        try {
+            String bandCutoutString = "bad cutout";
+            DoubleInterval testCutout = df.parseBandCutout(bandCutoutString);
+            Assert.fail("parsing band cutout should have failed");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testValidParsePosCutout() throws Exception {
+        try {
+            String posCutoutString = "circle 9.0 8.0 0.05";
+            ShapeFormat sFromat = new ShapeFormat();
+            Shape expected = sFromat.parse(posCutoutString);
+            Shape testCutout = df.parsePosCutout(posCutoutString);
+            Assert.assertEquals("Parsing pos cutout didn't work", expected, testCutout);
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("unexpected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidPosCutout() throws Exception {
+        try {
+            String badCutoutString = "1.0 2.0 4.0";
+            Shape testCutout = df.parsePosCutout(badCutoutString);
+            Assert.fail("parsing pos cutout should have failed");
+        } catch (DownloadTupleParsingException parseError) {
+            log.info("expected parsing error: " + parseError);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected error: " + unexpected);
+        }
     }
 
 }

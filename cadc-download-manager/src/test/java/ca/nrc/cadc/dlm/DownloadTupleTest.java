@@ -69,6 +69,9 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Level;
@@ -88,8 +91,6 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
     public void testSetup() {
         try {
             expectedURI = new URI(URI_STR);
-            expectedCutout = sf.parse(SHAPE_STR);
-            expectedLabel = LABEL_STR;
         } catch (Exception unexpectedSetupError) {
             log.error("DownalodTupleTest setup failed: " + unexpectedSetupError);
             Assert.fail("test setup failed.");
@@ -100,43 +101,42 @@ public class DownloadTupleTest extends DownloadTupleTestBase {
     public void testURIOnly() throws Exception {
         DownloadTuple dt = new DownloadTuple(new URI(URI_STR));
         log.debug("uri only: " + dt.getID());
-        Assert.assertEquals("ctor didn't work", dt.getID(),expectedURI);
+        Assert.assertEquals("ctor for URI didn't work", dt.getID(),expectedURI);
     }
 
     @Test
-    public void testURIShape() throws Exception {
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), null);
+    public void testFull() throws Exception {
+        String bandCutoutStr = "1.0 2.0";
+        DoubleIntervalFormat dif = new DoubleIntervalFormat();
+        DoubleInterval bandCutout = dif.parse(bandCutoutStr);
+        Shape posCutout = sf.parse(SHAPE_STR);
+        String pixelCutout = "[5]";
+
+        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), posCutout, bandCutout, pixelCutout, "testLabel");
         Assert.assertEquals("ctor didn't work for id", dt.getID(), expectedURI);
-        Assert.assertEquals("ctor didn't work for posCutout", expectedCutout, dt.posCutout );
-        Assert.assertEquals("ctor didn't work for pixelCutout", null, dt.pixelCutout );
+        Assert.assertEquals("ctor didn't work for posCutout", posCutout, dt.posCutout );
+        Assert.assertEquals("ctor didn't work for bandCutout", bandCutout, dt.bandCutout );
+        Assert.assertEquals("ctor didn't work for pixelCutout", pixelCutout, dt.pixelCutout );
+        Assert.assertEquals("ctor didn't work for label", "testLabel", dt.label );
     }
 
     @Test
-    public void testShapeCutoutTuple() throws Exception {
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), sf.parse(SHAPE_STR), LABEL_STR);
-        Assert.assertEquals("ctor didn't work for id", expectedURI, dt.getID());
-        Assert.assertEquals("ctor didn't work for cutout", expectedCutout, dt.posCutout );
-        Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
-    }
-
-    // Valid tests only for pixelCutout as it is not validated
-    @Test
-    public void testPixelCutoutFullTuple() throws Exception {
-        String expectedPixelCutout = "[2]";
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), "[2]", LABEL_STR);
-        Assert.assertEquals("ctor didn't work for id", expectedURI, dt.getID());
-        Assert.assertEquals("ctor didn't work for posCutout", null, dt.posCutout );
-        Assert.assertEquals("ctor didn't work for pixelCutout", expectedPixelCutout, dt.pixelCutout );
-        Assert.assertEquals("ctor didn't work for label", expectedLabel, dt.label);
+    public void testInvalidLabelNoShape() throws Exception {
+        try {
+            DownloadTuple dt = new DownloadTuple(new URI(URI_STR), null, null, null, "testLabel");
+            Assert.fail("ctor should have failed");
+        } catch (IllegalArgumentException expected) {
+            log.info("expected parsing error: " + expected);
+        }
     }
 
     @Test
-    public void testPixelCutoutTuple() throws Exception {
-        String expectedPixelCutout = "[2]";
-        DownloadTuple dt = new DownloadTuple(new URI(URI_STR), "[2]");
-        Assert.assertEquals("ctor didn't work for id", expectedURI, dt.getID());
-        Assert.assertEquals("ctor didn't work for posCutout", null, dt.posCutout );
-        Assert.assertEquals("ctor didn't work for pixelCutout", expectedPixelCutout, dt.pixelCutout );
-        Assert.assertEquals("ctor didn't work for label", null, dt.label);
+    public void testInvalidNoURI() throws Exception {
+        try {
+            DownloadTuple dt = new DownloadTuple(null, sf.parse(SHAPE_STR), null, null, "testLabel");
+            Assert.fail("ctor should have failed");
+        } catch (IllegalArgumentException expected) {
+            log.info("expected parsing error: " + expected);
+        }
     }
 }

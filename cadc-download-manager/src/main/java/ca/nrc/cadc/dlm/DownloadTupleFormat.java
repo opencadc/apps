@@ -68,7 +68,9 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.StringUtil;
 import java.net.URI;
@@ -90,6 +92,10 @@ public class DownloadTupleFormat {
      */
     public DownloadTuple parse(String tupleStr) throws DownloadTupleParsingException {
         log.debug("tuple string input: " + tupleStr);
+        // format is either:
+        // uri (no braces)
+        // uri{optional position string}{optional band string}{optional label string}
+
         // Do a rough match of number of '{' to '}'
         // This doesn't check for order or overall format
         int openBraceCount = getCount(tupleStr, "\\{");
@@ -101,67 +107,13 @@ public class DownloadTupleFormat {
             throw new DownloadTupleParsingException("invalid tuple format: mismatched braces ': " + tupleStr);
         }
 
-        if (openBraceCount > 2) {
-            throw new DownloadTupleParsingException("invalid tuple format: too many braces ': " + tupleStr);
+        // either all or nothing
+        if (openBraceCount != 0 && openBraceCount != 3) {
+            throw new DownloadTupleParsingException("invalid tuple format: " + tupleStr);
         }
 
         // Split out the tuple parts
-        String [] tupleParts = tupleStr.split("\\{");
-        String tmpLabel;
-
-        if (tupleParts.length > 3) {
-            throw new DownloadTupleParsingException("tuple has too many parts. expected max 3 and found "
-                + tupleParts.length + ": " + tupleStr);
-        }
-        log.debug("tuple parts count: " + tupleParts.length);
-
-        // Get any label that might be there
-        if (tupleParts.length == 3) {
-            // grab optional third [2] parameter as label
-            String l = tupleParts[2];
-            if (l.length() > 1) {
-                // trim off trailing "}".
-                // guaranteed to be there due to
-                // check for equal occurrences of { and } above.
-                tmpLabel = convertLabelText(l.substring(0, l.length() - 1));
-            } else {
-                // invalid format
-                throw new DownloadTupleParsingException("invalid label format: " + tupleStr);
-            }
-        } else {
-            tmpLabel = null;
-        }
-
-        // Get any cutout that might be there
-        Shape tmpShape = null;
-        if (tupleParts.length > 1) {
-            String sd = tupleParts[1];
-            if (sd.length() > 1) {
-                // trim off trailing "}"
-                // guaranteed to be there due to
-                // check for equal occurrences of { and } above.
-                String tmpShapeStr = sd.substring(0, sd.length() - 1);
-                // put off parsing until id is parsed
-                log.debug("cutout string: " + tmpShapeStr);
-                if (StringUtil.hasLength(tmpShapeStr)) {
-                    try {
-                        ShapeFormat sf = new ShapeFormat();
-                        tmpShape = sf.parse(tmpShapeStr);
-                        log.debug("parsed cutout.");
-                    } catch (IllegalArgumentException ill) {
-                        log.debug("parsing error for cutout: " + tmpShapeStr);
-                        throw new DownloadTupleParsingException("cutout parsing error: " + ill + ": " + tupleStr);
-                    } catch (Exception e) {
-                        log.debug("other error for parsing cutout:" + e);
-                        throw new DownloadTupleParsingException("BUG for cutout:" + e + ": " + tupleStr);
-                    }
-                }
-            } else {
-                // invalid format
-                throw new DownloadTupleParsingException("invalid cutout: " + tupleStr);
-            }
-        }
-
+        String[] tupleParts = tupleStr.split("\\{");
         // Get tuple URI - should at least have this.
         URI tmpURI = null;
         String uriStr = tupleParts[0];
@@ -170,14 +122,73 @@ public class DownloadTupleFormat {
             try {
                 tmpURI = new URI(uriStr);
             } catch (URISyntaxException u) {
-                throw new DownloadTupleParsingException("id parsing error: " + u + ": " + tupleStr);
+                throw new DownloadTupleParsingException("id parsing error: " + tupleStr, u);
             }
         } else {
             // invalid format - has to at least be a single URI passed in
             throw new DownloadTupleParsingException("zero length id found: " + tupleStr);
         }
-        
-        return new DownloadTuple(tmpURI, tmpShape, tmpLabel);
+
+        // Create new DownloadTuple
+        DownloadTuple newTuple = new DownloadTuple(tmpURI);
+
+        if (openBraceCount == 3) {
+            String tmpPosStr = tupleParts[1];
+            if (StringUtil.hasLength(tmpPosStr)) {
+                // trim off trailing "}"
+                String tmpShapeStr = tmpPosStr.substring(0, tmpPosStr.length() - 1);
+                log.debug("cutout string: " + tmpShapeStr);
+                if (StringUtil.hasLength(tmpShapeStr)) {
+                    try {
+                        ShapeFormat sf = new ShapeFormat();
+                        newTuple.posCutout = sf.parse(tmpShapeStr);
+                        log.debug("parsed cutout.");
+                    } catch (IllegalArgumentException ill) {
+                        log.debug("parsing error for cutout: " + tmpShapeStr);
+                        throw new DownloadTupleParsingException("pos cutout parsing error: " + tmpPosStr, ill);
+                    } catch (Exception e) {
+                        log.debug("other error for parsing pos cutout:", e);
+                        throw new DownloadTupleParsingException("BUG for pos cutout:" + e + ": " + tmpPosStr, e);
+                    }
+                }
+            }
+
+            String tmpBandStr = tupleParts[2];
+            if (StringUtil.hasLength(tmpBandStr)) {
+                // trim off trailing "}"
+                String tmpShapeStr = tmpBandStr.substring(0, tmpBandStr.length() - 1);
+                log.debug("cutout string: " + tmpShapeStr);
+                if (StringUtil.hasLength(tmpShapeStr)) {
+                    try {
+                        DoubleIntervalFormat dif = new DoubleIntervalFormat();
+                        newTuple.bandCutout = dif.parse(tmpShapeStr);
+                        log.debug("parsed band cutout.");
+                    } catch (IllegalArgumentException ill) {
+                        log.debug("parsing error for band cutout: " + tmpBandStr, ill);
+                        throw new DownloadTupleParsingException("band cutout parsing error: " + tmpBandStr, ill);
+                    } catch (Exception e) {
+                        log.debug("other error for parsing band cutout:", e);
+                        throw new DownloadTupleParsingException("BUG for band cutout:" + tmpBandStr, e);
+                    }
+                }
+            }
+
+            // grab optional third [2] parameter as label
+            String l = tupleParts[3];
+            if (l.length() > 1) {
+                if (newTuple.posCutout == null) {
+                    throw new DownloadTupleParsingException("no cutout defined with label");
+                }
+                // trim off trailing "}".
+                String tmpLabel = l.substring(0, l.length() - 1);
+                if (StringUtil.hasLength(tmpLabel)) {
+                    newTuple.label = convertLabelText(tmpLabel);
+                }
+
+            }
+        }
+
+        return newTuple;
     }
 
     private int getCount(final String input, final String regexp) {
@@ -198,18 +209,26 @@ public class DownloadTupleFormat {
      * @return string representation of tuple
      */
     public String format(DownloadTuple tuple) {
-        String tupleStr = tuple.getID().toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append(tuple.getID().toString());
 
+        sb.append("{");
         if (tuple.posCutout != null) {
             ShapeFormat sf = new ShapeFormat();
-            tupleStr += "{" + sf.format(tuple.posCutout) + "}";
+            sb.append(sf.format(tuple.posCutout));
         }
-
+        sb.append("}{");
+        if (tuple.bandCutout != null) {
+            DoubleIntervalFormat dif = new DoubleIntervalFormat();
+            sb.append(dif.format(tuple.bandCutout));
+        }
+        sb.append("}{");
         if (StringUtil.hasLength(tuple.label)) {
-            tupleStr += "{" + tuple.label + "}";
+            sb.append(tuple.label);
         }
+        sb.append("}");
 
-        return tupleStr;
+        return sb.toString();
     }
 
     /**
@@ -217,39 +236,94 @@ public class DownloadTupleFormat {
      * Note: this code can be used at the tail end of parsing JSON input, or other blob-type data
      * that is provided in String format. Use this function to leverage the validation code found
      * in parse(internal_format_string).
-     * @param part1 string representation of URI for download
-     * @param part2 (Optional) DALI string representation of cutout
-     * @param part3 (Optional) label to add to download request
+     * @param uriStr string representation of URI for download
+     * @param posCutoutStr (Optional) DALI string representation of cutout
+     * @param bandCutoutStr (Optional) label to add to download request
+     * @param labelStr (Optional) label to add to download request
      * @return DownloadTuple populated with tuple information provided.
      * @throws DownloadTupleParsingException if tuple is malformed or content is invalid
      */
-    public DownloadTuple parseUsingInternalFormat(String part1, String part2, String part3) throws DownloadTupleParsingException {
-        String tupleStr = part1;
-        if (StringUtil.hasLength(part2)) {
-            tupleStr += "{" + part2 + "}";
+    public DownloadTuple parseUsingInternalFormat(String uriStr, String posCutoutStr,
+                                                  String bandCutoutStr, String labelStr)
+        throws DownloadTupleParsingException {
+        // build up a full tuple of format:
+        // URI{pos DALI string}{band DALI string}{SODA filename label}
+        // where only the URI is required
+        // ie: uri{}{}{} is a possible output
+        StringBuilder sb = new StringBuilder();
+        sb.append(uriStr);
+        sb.append("{");
+
+        if (StringUtil.hasLength(posCutoutStr)) {
+            sb.append(posCutoutStr);
         }
-        if (StringUtil.hasLength(part3)) {
-            tupleStr += "{" + part3 + "}";
+        sb.append("}{");
+        if (StringUtil.hasLength(bandCutoutStr)) {
+            sb.append(bandCutoutStr);
         }
-        return parse(tupleStr);
+        sb.append("}{");
+        if (StringUtil.hasLength(labelStr)) {
+            sb.append(labelStr);
+        }
+        sb.append("}");
+        return parse(sb.toString());
     }
 
     /**
      * Create a DownloadTuple using a URI string and a cutout string.
      * @param uriStr URI for download
-     * @param cutoutStr pixel cutout to apply to download
-     * @return DownloadTuple popuplated with URI and cutout.
+     * @param pixelCutoutStr pixel cutout to apply to download
+     * @return DownloadTuple populated with URI and cutout.
      * @throws DownloadTupleParsingException if URI is invalid
      */
-    public DownloadTuple parsePixelStringTuple(String uriStr, String cutoutStr) throws DownloadTupleParsingException  {
+    public DownloadTuple parsePixelStringTuple(String uriStr, String pixelCutoutStr) throws DownloadTupleParsingException  {
         try {
             URI tmpURI = new URI(uriStr);
-            return new DownloadTuple(tmpURI, cutoutStr);
+            DownloadTuple newTuple = new DownloadTuple(tmpURI);
+            newTuple.pixelCutout = pixelCutoutStr;
+            return newTuple;
         } catch (URISyntaxException uriEx)  {
-            throw new DownloadTupleParsingException("invalid id for tuple:" + uriEx);
+            throw new DownloadTupleParsingException("invalid id for tuple:", uriEx);
         }
     }
 
+    /**
+     * Validate a band (interval) cutout string. To be used in setting DownloadTuple bandCutout.
+     * @param bandCutoutStr DALI DoubleInterval string
+     * @return DoubleInterval populated with doubles from input string
+     * @throws DownloadTupleParsingException if DoubleInterval is invalid
+     */
+    public DoubleInterval parseBandCutout(String bandCutoutStr) throws DownloadTupleParsingException  {
+        if (StringUtil.hasLength(bandCutoutStr)) {
+            try {
+                DoubleIntervalFormat dif = new DoubleIntervalFormat();
+                DoubleInterval bandCutout = dif.parse(bandCutoutStr);
+                return bandCutout;
+            } catch (IllegalArgumentException argEx) {
+                throw new DownloadTupleParsingException("invalid band cutout:" + bandCutoutStr, argEx);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Validate a position cutout string. To be used in setting DownloadTuple posCutout.
+     * @param posCutoutStr DALI Shape string
+     * @return Shape populated with values from input string
+     * @throws DownloadTupleParsingException if Shape is invalid
+     */
+    public Shape parsePosCutout(String posCutoutStr) throws DownloadTupleParsingException  {
+        if (StringUtil.hasLength(posCutoutStr)) {
+            try {
+                ShapeFormat sf = new ShapeFormat();
+                Shape posCutout = sf.parse(posCutoutStr);
+                return posCutout;
+            } catch (IllegalArgumentException argEx)  {
+                throw new DownloadTupleParsingException("invalid pos cutout:" + posCutoutStr, argEx);
+            }
+        }
+        return null;
+    }
 
     /**
      * Convert a string to a format that can be used for subsequent web service calls.

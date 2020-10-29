@@ -98,6 +98,7 @@ import org.jdom2.Namespace;
  */
 public class DLMInputHandler {
     // public API for DownloadManager is to accept and interpret these
+    static final String PARAM_BAND_CUTOUT = "band";
     static final String PARAM_METHOD = "method";
     static final String PARAM_PARAMLIST = "params";
     static final String PARAM_PIXEL_CUTOUT = "cutout";
@@ -115,6 +116,7 @@ public class DLMInputHandler {
     static {
         INTERNAL_PARAMS.add(PARAM_URI);
         INTERNAL_PARAMS.add(PARAM_TUPLE);
+        INTERNAL_PARAMS.add(PARAM_BAND_CUTOUT);
         INTERNAL_PARAMS.add(PARAM_PIXEL_CUTOUT);
         INTERNAL_PARAMS.add(PARAM_POS_CUTOUT);
         INTERNAL_PARAMS.add(PARAM_PARAMLIST);
@@ -217,6 +219,9 @@ public class DLMInputHandler {
         // Parse input from the following sources:
         //  - PARAM_TUPLE (used as an internal forward parameter)
         //  - PARAM_URI (from external post)
+        //  - PARAM_POS_CUTOUT
+        //  - PARAM_BAND_CUTOUT
+        //  - PARAM_PIXEL_CUTOUT
         //  - JSON payload information (from external post)
         // Merge resulting tuple lists from all sources
 
@@ -238,7 +243,6 @@ public class DLMInputHandler {
         // This format is how the .jsp files pass tuple information in to DLM
         List<String> tupleStrList = si.getParameters(PARAM_TUPLE);
         if ((tupleStrList != null) && (tupleStrList.size() > 0)) {
-
             for (String u : tupleStrList) {
                 if (StringUtil.hasText(u)) {
                     try {
@@ -272,7 +276,7 @@ public class DLMInputHandler {
             }
         }
 
-        // Check to see if a POS or CUTOUT parameter is provided
+        // Check to see if POS, BAND or CUTOUT parameters provided
 
         List<String> posCutoutParams = si.getParameters(PARAM_POS_CUTOUT);
         String posCutoutStr = null;
@@ -292,23 +296,33 @@ public class DLMInputHandler {
             pixelCutout = pixelCutoutParams.get(0);
         }
 
+        List<String> bandCutoutParams = si.getParameters(PARAM_BAND_CUTOUT);
+        String bandCutoutStr = null;
+        if (bandCutoutParams != null) {
+            if (bandCutoutParams.size() > 1) {
+                throw new IllegalArgumentException("only one BAND parameter allowed.");
+            }
+            bandCutoutStr = bandCutoutParams.get(0);
+        }
+
         // Check to see if any PARAM_URI entries are provided
-        // If there is one, it will be added to any URI parameters
         List<String> uriList = si.getParameters(PARAM_URI);
 
-        // Validate and add to list of tuples if possible.
-        // add to ist of errors if not
+        // validate and add to list of tuples if possible.
+        // otherwise add to ist of errors.
         if (uriList != null) {
             for (String u : uriList) {
                 if (StringUtil.hasText(u)) {
                     try {
-                        DownloadTuple dt = null;
+                        DownloadTuple dt = downloadTupleFormat.parse(u);
                         if (StringUtil.hasLength(posCutoutStr)) {
-                            dt = downloadTupleFormat.parseUsingInternalFormat(u, posCutoutStr, null);
-                        } else if (StringUtil.hasLength(pixelCutout)) {
-                            dt = downloadTupleFormat.parsePixelStringTuple(u, pixelCutout);
-                        } else {
-                            dt = downloadTupleFormat.parse(u);
+                            dt.posCutout = downloadTupleFormat.parsePosCutout(posCutoutStr);
+                        }
+                        if (StringUtil.hasLength(bandCutoutStr)) {
+                            dt.bandCutout = downloadTupleFormat.parseBandCutout(bandCutoutStr);
+                        }
+                        if (StringUtil.hasLength(pixelCutout)) {
+                            dt.label = downloadTupleFormat.convertLabelText(pixelCutout);
                         }
                         dr.getTuples().add(dt);
                     } catch (DownloadTupleParsingException parseEx) {
@@ -318,8 +332,7 @@ public class DLMInputHandler {
             }
         }
 
-        // In case nothing is passed in as 'uri' or 'uris,' check for
-        // deprecated parameters
+        // check for & attempt to process deprecated parameters
         handleDeprecatedAPI(dr);
 
         return dr;
@@ -448,7 +461,7 @@ public class DLMInputHandler {
                 String label = labelEl.getText();
 
                 try {
-                    DownloadTuple dt = downloadTupleFormat.parseUsingInternalFormat(tupleID, shape, label);
+                    DownloadTuple dt = downloadTupleFormat.parseUsingInternalFormat(tupleID, shape, null, label);
                     downloadReq.getTuples().add(dt);
                 } catch (DownloadTupleParsingException parsingException) {
                     downloadReq.getValidationErrors().add(parsingException);

@@ -68,7 +68,9 @@
 
 package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -82,15 +84,19 @@ public abstract class DownloadTupleTestBase {
     // Knowing this doesn't make sense as a polygon, it adheres to the format needed
     // by cadc-dali PolygonFormat
     protected static String SHAPE_STR = "polygon 0.0 0.0 0.0 0.0 0.0 0.0";
+    protected static String BAND_CUTOUT_STR = "2.0 3.0";
     protected static String LABEL_STR = "label";
+    protected DownloadTupleFormat df = new DownloadTupleFormat();
+    protected DoubleIntervalFormat dif = new DoubleIntervalFormat();
     protected ShapeFormat sf = new ShapeFormat();
 
     protected URI expectedURI;
     protected Shape expectedCutout;
+    protected DoubleInterval expectedIntervalCutout;
     protected String expectedLabel;
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
     @Before

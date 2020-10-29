@@ -70,7 +70,9 @@ package ca.nrc.cadc.dlm.client;
 
 import static org.junit.Assert.assertEquals;
 
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
@@ -84,9 +86,10 @@ import org.junit.Test;
 
 public class MainArgParsingTest {
     private ShapeFormat sf = new ShapeFormat();
+    private DoubleIntervalFormat dif = new DoubleIntervalFormat();
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.DEBUG);
     }
 
     // This test suite is testing the parsing code in Main, focusing on parsing tuples from a
@@ -97,9 +100,10 @@ public class MainArgParsingTest {
 
     @Test
     public void testArgParsingSingleTuple() throws Exception {
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.166667}{testLabel_1011} ";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.166667}{2.0 3.0}{testLabel_1011} ";
         String[] args =   testArgStr.split(" ");
         Shape expectedCutout = sf.parse("circle 10.0 11.0 0.166667");
+        DoubleInterval expectedInterval = dif.parse("2.0 3.0");
 
         ArgumentMap am = new ArgumentMap(args);
 
@@ -112,9 +116,38 @@ public class MainArgParsingTest {
             assertEquals("Should be no invalid tuples found. (found " + dr.getValidationErrors().size() + ")", 0, dr.getValidationErrors().size());
 
             for (DownloadTuple dt: tupleList) {
-                assertEquals("tupleID didn't parse correctly", testURI, dt.getID());
-                assertEquals("shapeDescriptor didn't parse correctly", expectedCutout, dt.posCutout);
-                assertEquals("tupleID didn't parse correctly", "testLabel_1011", dt.label);
+                assertEquals("id didn't parse correctly", testURI, dt.getID());
+                assertEquals("pos cutout didn't parse correctly", expectedCutout, dt.posCutout);
+                assertEquals("band cutout didn't parse correctly", expectedInterval, dt.bandCutout);
+                assertEquals("label didn't parse correctly", "testLabel_1011", dt.label);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Unexpected exception");
+        }
+    }
+
+    @Test
+    public void testArgParsingBandCutout() throws Exception {
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{}{2.0 3.0}{} ";
+        String[] args = testArgStr.split(" ");
+        DoubleInterval expectedInterval = dif.parse("2.0 3.0");
+
+        ArgumentMap am = new ArgumentMap(args);
+
+        try {
+            URI testURI = new URI("test://cadc.nrc.ca/TEST/testDevice1");
+            DownloadRequest dr = Main.getDownloadRequest(am);
+            Set<DownloadTuple> tupleList = dr.getTuples();
+
+            assertEquals("Should be 1 valid tuple found. (found " + tupleList.size() + ")", 1, tupleList.size());
+            assertEquals("Should be no invalid tuples found. (found " + dr.getValidationErrors().size() + ")", 0, dr.getValidationErrors().size());
+
+            for (DownloadTuple dt: tupleList) {
+                assertEquals("id didn't parse correctly", testURI, dt.getID());
+                assertEquals("band cutout didn't parse correctly", expectedInterval, dt.bandCutout);
+                assertEquals("pos cutout didn't parse correctly", null, dt.posCutout);
+                assertEquals("label didn't parse correctly", null, dt.label);
             }
 
         } catch (Exception e) {
@@ -124,8 +157,8 @@ public class MainArgParsingTest {
 
     @Test
     public void testArgParsingMultipleTuples() {
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{testLabel_1011} "
-            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{testLabel_98}";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{}{testLabel_1011} "
+            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{}{testLabel_98}";
         Shape expectedCutout1 = sf.parse("circle 10.0 11.0 0.5");
         Shape expectedCutout2 = sf.parse("circle 9.0 8.0 0.5");
 
@@ -155,11 +188,12 @@ public class MainArgParsingTest {
         }
     }
 
+    @Test
     public void testArgParsingInvalidSpacingMultipleTuples() {
         // 'Invalid' refers to no space between the tuples, so there's no distinct
         // end to the tuples in the input
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{testLabel_1011}"
-            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{testLabel_98}";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{}{testLabel_1011}"
+            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{}{testLabel_98}";
 
         String[] args =   testArgStr.split(" ");
         ArgumentMap am = new ArgumentMap(args);
@@ -174,8 +208,8 @@ public class MainArgParsingTest {
             System.out.println("Unexpected exception");
         }
 
-        testArgStr = "test://cadc.nrc.ca/TEST/testDevice1   {circle 10.0 11.0 0.5}{testLabel_1011}"
-            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{testLabel_98}";
+        testArgStr = "test://cadc.nrc.ca/TEST/testDevice1   {circle 10.0 11.0 0.5}{}{testLabel_1011}"
+            + " test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{}{testLabel_98}";
 
         args =   testArgStr.split(" ");
         am = new ArgumentMap(args);
@@ -183,8 +217,8 @@ public class MainArgParsingTest {
         try {
             DownloadRequest dr = Main.getDownloadRequest(am);
             Set<DownloadTuple> tupleList = dr.getTuples();
-            assertEquals("Should be 1 valid tuple found. (found " + tupleList.size() + ")", 1, tupleList.size());
-            assertEquals("Should be no 1 tuple found. (found " + dr.getValidationErrors().size() + ")", 1, dr.getValidationErrors().size());
+            assertEquals("Should be 2 valid tuples found. (found " + tupleList.size() + ")", 2, tupleList.size());
+            assertEquals("Should be 1 invalid found. (found " + dr.getValidationErrors().size() + ")", 1, dr.getValidationErrors().size());
 
         } catch (Exception e) {
             System.out.println("Unexpected exception");
@@ -194,8 +228,8 @@ public class MainArgParsingTest {
 
     @Test
     public void testInvalidArgNoURI() {
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{testLabel_1011} "
-            + "{circle 9.0 8.0 0.5}{testLabel_98}";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{}{testLabel_1011} "
+            + "{circle 9.0 8.0 0.5}{}{testLabel_98}";
 
         String[] args =   testArgStr.split(" ");
         ArgumentMap am = new ArgumentMap(args);
@@ -273,7 +307,7 @@ public class MainArgParsingTest {
 
     @Test
     public void testArgParsingNoLabel() {
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{}{}";
         String[] args =   testArgStr.split(" ");
         ArgumentMap am = new ArgumentMap(args);
 
@@ -298,8 +332,8 @@ public class MainArgParsingTest {
 
     @Test
     public void testArgParsingMultipleNoLabel() {
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{testLabel_1011} "
-            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{circle 10.0 11.0 0.5}{}{testLabel_1011} "
+            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{}{}";
         Shape expectedCutout1 = sf.parse("circle 10.0 11.0 0.5");
         Shape expectedCutout2 = sf.parse("circle 9.0 8.0 0.5");
 
@@ -331,8 +365,8 @@ public class MainArgParsingTest {
 
     @Test
     public void testArgParsingMultipleNoLabelMissingShape() {
-        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{testLabel_1011} "
-            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{testLabel_98}";
+        String testArgStr = "test://cadc.nrc.ca/TEST/testDevice1{}{}{testLabel_1011} "
+            + "test://cadc.nrc.ca/TEST/testDevice2{circle 9.0 8.0 0.5}{}{testLabel_98}";
 
         String[] args =   testArgStr.split(" ");
         ArgumentMap am = new ArgumentMap(args);
