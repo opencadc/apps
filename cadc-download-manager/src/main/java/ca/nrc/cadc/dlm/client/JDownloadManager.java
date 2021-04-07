@@ -439,6 +439,7 @@ public class JDownloadManager extends JPanel implements ChangeListener, Transfer
         repaint();
     }
 
+    // TODO: this might have changes if the DownloadDescriptor item changes...
     public void add(Iterator<DownloadDescriptor> downloads) {
         while (downloads.hasNext()) {
             DownloadDescriptor dd = downloads.next();

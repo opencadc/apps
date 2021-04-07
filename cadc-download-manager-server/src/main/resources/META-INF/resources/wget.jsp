@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,34 +69,52 @@
 
 <%@ taglib uri="WEB-INF/c.tld" prefix="c"%>
 
-<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+
 <%@ page import="ca.nrc.cadc.dlm.DownloadDescriptor" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.util.StringUtil" %>
+<%@ page import="ca.nrc.cadc.dlm.server.SkinUtil" %>
 <%@ page import="java.util.Iterator" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
 
 <%
-    String uris = (String) request.getAttribute("uris");
-    String params = (String) request.getAttribute("params");
-
-    List<String> uriList = DownloadUtil.decodeListURI(uris);
-    Map<String,List<String>> paramMap = DownloadUtil.decodeParamMap(params);
+    DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
 %>
 
 <%
-String skin = (String) request.getParameter("skin");
-if (skin == null)
-    skin = "http://localhost/cadc/skin/";
-if (!skin.endsWith("/"))
-    skin += "/";
-String htmlHead = skin + "htmlHead";
-String bodyHeader = skin + "bodyHeader";
-String bodyFooter = skin + "bodyFooter";
+    // If calling program has provided values they should be here
+    String headerURL = SkinUtil.headerURL;
+    String footerURL = SkinUtil.footerURL;
+    String bodyHeaderURL = "";
+    String skinURL = SkinUtil.skinURL;
+
+    if (!StringUtil.hasLength(headerURL)) {
+        String skin = (String) request.getParameter("skin");
+        if (!StringUtil.hasLength(skinURL)) {
+            skinURL = "http://localhost/cadc/skin/";
+        }
+
+        if (!skinURL.endsWith("/")) {
+            skinURL += "/";
+        }
+
+        if (!(skinURL.startsWith("http://") || skinURL.startsWith("https://"))) {
+            if (!skinURL.startsWith("/")) {
+                skinURL = "/" + skinURL;
+            }
+            skinURL = "http://localhost" + skinURL;
+        }
+
+        headerURL = skin + "htmlHead";
+        bodyHeaderURL = skin + "bodyHeader";
+        footerURL = skin + "bodyFooter";
+    }
 %>
 
 <html>
 <head>
-    <c:catch><c:import url="<%= htmlHead %>" /></c:catch>
+    <c:catch><c:import url="<%= headerURL %>" /></c:catch>
     <script type="text/javascript">
 	function closemyself()
 	{
@@ -107,11 +125,11 @@ String bodyFooter = skin + "bodyFooter";
 </head>
 
 <body>
-<c:catch><c:import url="<%= bodyHeader %>" /></c:catch>
+<c:catch><c:import url="<%= bodyHeaderURL %>" /></c:catch>
 
 <p>
 <%
-    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(uriList, paramMap, true);
+    Iterator<DownloadDescriptor> iter = DownloadUtil.iterateURLs(downloadReq);
     while ( iter.hasNext() )
     {
         DownloadDescriptor dd = iter.next();
@@ -133,6 +151,6 @@ String bodyFooter = skin + "bodyFooter";
 %>
 </p>
 
-<c:catch><c:import url="<%= bodyFooter%>" /></c:catch>
+<c:catch><c:import url="<%= footerURL%>" /></c:catch>
 </body>
 </html>

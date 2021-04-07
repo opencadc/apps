@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -78,9 +78,11 @@ import ca.nrc.cadc.dali.tables.votable.VOTableParam;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
-import ca.nrc.cadc.dali.util.DoubleArrayFormat;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.dlm.DownloadGenerator;
+import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.FailIterator;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.NetUtil;
@@ -124,10 +126,9 @@ public class DataLinkClient implements DownloadGenerator {
     private static final String COL_NAME_SEMANTICS = "semantics";
     private final RegistryClient regClient;
     private final DataLinkServiceResolver resolver;
+
     // Package private for tests.
     String runID;
-    String cutout;
-    boolean downloadOnly = false;
     String requestFail;
     
     private final List<String> skipSemantics = new ArrayList<>();
@@ -140,75 +141,37 @@ public class DataLinkClient implements DownloadGenerator {
         skipSemantics.add(PKG);
     }
 
-    @Override
-    public void setParameters(Map<String, List<String>> params) {
-        List<String> val;
-
-        val = params.get("runid");
-        if (val != null && !val.isEmpty()) {
-            this.runID = val.get(0);
-        }
-
-        val = params.get("cutout");
-        if (val != null && !val.isEmpty()) {
-            // transform to SODA CIRCLE or POLYGON param
-            String str = val.get(0); // first only
-
-            // strip off old STC-S pre amble and just get the numeric values
-            String[] tokens = str.split(" ");
-            List<Double> dvals = new ArrayList<>();
-            for (String t : tokens) {
-                try {
-                    Double d = new Double(t);
-                    dvals.add(d);
-                } catch (NumberFormatException ex) {
-                    log.debug("ignoring token in cutout: " + t);
-                }
-            }
-            DoubleArrayFormat daf = new DoubleArrayFormat();
-            if (dvals.size() == 3) {
-                this.cutout = "CIRCLE=" + NetUtil.encode(daf.format(dvals.iterator()));
-            } else if (dvals.size() >= 6) {
-                this.cutout = "POLYGON=" + NetUtil.encode(daf.format(dvals.iterator()));
-            } else if ("spectralinterval".equalsIgnoreCase(tokens[0])) {
-                this.cutout = "BAND=" + NetUtil.encode(daf.format(dvals.iterator()));
-            } else {
-                this.requestFail = "invalid parameter: cutout=" + str;
-            }
-        }
-
-
-        if (cutout == null) {
-            this.downloadOnly = true;
-        }
+    public void setRunID(String runID) {
+        this.runID = runID;
     }
 
     @Override
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri) {
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt) {
         if (requestFail != null) {
-            return new FailIterator(uri, requestFail);
+            return new FailIterator(dt, requestFail);
         }
 
         try { // query datalink with uri and (for now) filters
-            URI resourceID = resolver.getResourceID(uri);
+            URI resourceID = resolver.getResourceID(dt.getID());
             AuthMethod am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
             if (am == null) {
                 am = AuthMethod.ANON;
             }
             URL serviceURL = regClient.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, am);
             if (serviceURL == null) {
-                return new FailIterator(uri, "failed to resolve URI: cannot find DataLink service " + resourceID);
+                return new FailIterator(dt, "failed to resolve URI: cannot find DataLink service " + resourceID);
             }
 
             StringBuilder sb = new StringBuilder(serviceURL.toExternalForm());
             sb.append("?id=");
-            sb.append(NetUtil.encode(uri.toASCIIString()));
+            sb.append(NetUtil.encode(dt.getID().toASCIIString()));
 
-            if (downloadOnly) {
+            // download only request
+            if (noSODACutout(dt)) {
                 sb.append("&request=").append(DOWNLOAD_REQUEST); // custom
             }
 
-            if (runID != null) {
+            if (StringUtil.hasLength(runID)) {
                 sb.append("&runid=").append(NetUtil.encode(runID));
             }
 
@@ -218,7 +181,7 @@ public class DataLinkClient implements DownloadGenerator {
             HttpGet get = new HttpGet(url, bos);
             get.run();
             if (get.getThrowable() != null) {
-                return new FailIterator(uri, "failed to resolve URI: " + get.getThrowable().getMessage());
+                return new FailIterator(dt, "failed to resolve URI: " + get.getThrowable().getMessage());
             }
 
             try {
@@ -227,7 +190,7 @@ public class DataLinkClient implements DownloadGenerator {
 
                 VOTableReader r = new VOTableReader();
                 VOTableDocument doc = r.read(responseContent);
-                Iterator<DownloadDescriptor> ret = new DownloadIterator(doc);
+                Iterator<DownloadDescriptor> ret = new DownloadIterator(doc, dt);
                 return ret;
             } catch (Exception ex) {
                 log.debug("failed to read DataLink result table", ex);
@@ -250,6 +213,10 @@ public class DataLinkClient implements DownloadGenerator {
         return -1;
     }
 
+    public Boolean noSODACutout(DownloadTuple tuple) {
+        return tuple.posCutout == null && tuple.bandCutout == null;
+    }
+
     private class DownloadIterator implements Iterator<DownloadDescriptor> {
         private Iterator<List<Object>> rowIter;
         private int uriIndex;
@@ -258,6 +225,8 @@ public class DataLinkClient implements DownloadGenerator {
         private int errIndex;
         private int semIndex;
         private int ptIndex;
+        private DownloadTuple downloadTuple;
+        private boolean downloadOnly = false;
 
         private List<Object> curRow;
         private String curParams;
@@ -265,9 +234,14 @@ public class DataLinkClient implements DownloadGenerator {
         private Map<String, VOTableResource> serviceDefinitions;
         private Map<String, Integer> inputColumns;
 
-        public DownloadIterator(VOTableDocument doc) {
+        public DownloadIterator(VOTableDocument doc, DownloadTuple dt) {
             VOTableResource res = doc.getResourceByType("results");
             VOTableTable links = res.getTable();
+            this.downloadTuple = dt;
+
+            if (noSODACutout(dt)) {
+                downloadOnly = true;
+            }
 
             this.uriIndex = getColumnByName(COL_NAME_URI, links);
             this.urlIndex = getColumnByName(COL_NAME_URL, links);
@@ -395,7 +369,7 @@ public class DataLinkClient implements DownloadGenerator {
                     return new DownloadDescriptor(uri, "failed to generate URL");
                 } else {
                     try {
-                        if (!url.toLowerCase().contains("runid=")) {
+                        if (!url.toLowerCase().contains("runid=") && StringUtil.hasLength(runID)) {
                             url = appendParam(url, "runid", runID);
                         }
                         url = appendParams(url, curParams);
@@ -451,15 +425,26 @@ public class DataLinkClient implements DownloadGenerator {
                     } else if (CUTOUT.equals(sem)) {
                         String standardID = getServiceProperty(sdef, "standardID");
                         if (Standards.SODA_SYNC_10.toString().equals(standardID)) {
-                            curParams = cutout;
-                            log.debug("pass: " + url + " semantics: " + sem + " cutout: " + cutout);
+                            if (downloadTuple.posCutout != null) {
+                                ShapeFormat sf = new ShapeFormat();
+                                curParams = addQueryParam(curParams, "POS", NetUtil.encode(sf.format(downloadTuple.posCutout)));
+                            }
+                            if (downloadTuple.bandCutout != null) {
+                                DoubleIntervalFormat dif = new DoubleIntervalFormat();
+                                curParams = addQueryParam(curParams, "BAND", NetUtil.encode(dif.format(downloadTuple.bandCutout)));
+                            }
+                            if (downloadTuple.label != null) {
+                                curParams = addQueryParam(curParams, "LABEL", NetUtil.encode(downloadTuple.label));
+                            }
+
+                            log.debug("pass: " + url + " semantics: " + sem + " POS: " + downloadTuple.posCutout + " BAND: " + downloadTuple.bandCutout);
                         } else {
                             curRow = null;
-                            log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + cutout);
+                            log.debug("skip: " + url + " standardID: " + standardID + " cutout: " + downloadTuple.posCutout);
                         }
-                    } else if (cutout != null) {
+                    } else if (downloadTuple.posCutout != null) {
                         curRow = null;
-                        log.debug("skip: " + url + " semantics: " + sem + " cutout: " + cutout);
+                        log.debug("skip: " + url + " semantics: " + sem + " cutout: " + downloadTuple.posCutout);
                     } else {
                         log.debug("pass: " + url + " semantics: " + sem);
                     }
@@ -495,6 +480,14 @@ public class DataLinkClient implements DownloadGenerator {
             }
             url += params;
             return url;
+        }
+
+        private String addQueryParam(String paramStr, String key, String newParam) {
+            String ret = "";
+            if (StringUtil.hasLength(paramStr)) {
+                ret += paramStr + "&";
+            }
+            return ret + key + "=" + newParam;
         }
 
         private boolean containsAny(List<String> productTypes, String[] values) {

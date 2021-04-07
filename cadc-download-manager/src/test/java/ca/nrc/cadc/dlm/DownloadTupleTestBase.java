@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2020.                            (c) 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,61 +66,39 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.dlm.handlers;
+package ca.nrc.cadc.dlm;
 
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Before;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+public abstract class DownloadTupleTestBase {
+    private static Logger log = Logger.getLogger(DownloadTupleTestBase.class);
+    protected static String URI_STR = "ivo://mysite.ca/path/1";
+    // Knowing this doesn't make sense as a polygon, it adheres to the format needed
+    // by cadc-dali PolygonFormat
+    protected static String SHAPE_STR = "polygon 0.0 0.0 0.0 0.0 0.0 0.0";
+    protected static String BAND_CUTOUT_STR = "2.0 3.0";
+    protected static String LABEL_STR = "label";
+    protected DownloadTupleFormat df = new DownloadTupleFormat();
+    protected DoubleIntervalFormat dif = new DoubleIntervalFormat();
+    protected ShapeFormat sf = new ShapeFormat();
 
-import java.util.*;
+    protected URI expectedURI;
+    protected Shape expectedCutout;
+    protected DoubleInterval expectedIntervalCutout;
+    protected String expectedLabel;
 
-
-public class DataLinkClientTest
-{
-    @Test
-    public void setParametersEmpty() throws Exception
-    {
-        final DataLinkClient testSubject = new DataLinkClient();
-        final Map<String, List<String>> params = new HashMap<>();
-
-        testSubject.setParameters(params);
-
-        assertNull("Cutout should be empty.", testSubject.cutout);
-        assertTrue("Download only should be true", testSubject.downloadOnly);
-        assertNull("requestFail should be empty.", testSubject.requestFail);
-        assertNull("runID should be empty.", testSubject.runID);
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    @Test
-    public void setParameterSpectralCutouts() throws Exception
-    {
-        final DataLinkClient testSubject = new DataLinkClient();
-        final Map<String, List<String>> params = new HashMap<>();
-
-        params.put("cutout", Collections.singletonList("SpectralInterval 6.5E-7 6.6E-7 m"));
-
-        testSubject.setParameters(params);
-
-        assertEquals("Cutout should be BAND.", "BAND=6.5E-7+6.6E-7", testSubject.cutout);
-        assertFalse("Download only should be false", testSubject.downloadOnly);
-        assertNull("requestFail should be empty.", testSubject.requestFail);
-        assertNull("runID should be empty.", testSubject.runID);
-    }
-
-    @Test
-    public void setParameterSpatialCutouts() throws Exception
-    {
-        final DataLinkClient testSubject = new DataLinkClient();
-        final Map<String, List<String>> params = new HashMap<>();
-
-        params.put("cutout", Collections.singletonList("Circle ICRS 210.05 54.3 0.016666666666666666"));
-
-        testSubject.setParameters(params);
-
-        assertEquals("Cutout should be CIRCLE.", "CIRCLE=210.05+54.3+0.016666666666666666",
-                     testSubject.cutout);
-        assertFalse("Download only should be false", testSubject.downloadOnly);
-        assertNull("requestFail should be empty.", testSubject.requestFail);
-        assertNull("runID should be empty.", testSubject.runID);
-    }
+    @Before
+    public void testSetup() {}
 }

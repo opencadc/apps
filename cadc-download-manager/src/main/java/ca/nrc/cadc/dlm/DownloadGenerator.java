@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,27 +69,24 @@
 
 package ca.nrc.cadc.dlm;
 
-import java.net.URI;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author pdowler
  */
 public interface DownloadGenerator {
     /**
-     * Set a list of optional parameters for the resolver.
-     *
-     * @param params map containing optional parameters
+     * Value used globally on all query strings
+     * @param runID Corresponding to search job this download request is from
      */
-    public void setParameters(Map<String, List<String>> params);
+    public void setRunID(String runID);
 
     /**
      * Return a stream of download descriptors for the specified URI.
      *
-     * @param uri the URi to resolve into one or more downloads
+     * @param dt the DownloadTuple to resolve into one or more downloads
      * @return iterator with one or more download descriptors
      */
-    public Iterator<DownloadDescriptor> downloadIterator(URI uri);
+    public Iterator<DownloadDescriptor> downloadIterator(DownloadTuple dt);
+
 }

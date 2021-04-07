@@ -11,7 +11,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,11 +75,17 @@
 ************************************************************************
 -->
 <%@ page import="ca.nrc.cadc.reg.client.RegistryClient" %>
+<%@ page import="java.net.URI" %>
+<%@ page import="java.util.List" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTuple" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadRequest" %>
+<%@ page import="ca.nrc.cadc.dlm.server.DispatcherServlet" %>
+<%@ page import="ca.nrc.cadc.dlm.DownloadTupleFormat" %>
+<%@ page import="java.util.Set" %>
 
-<%
-
-    String uris = (String) request.getAttribute("uris");
-    String params = (String) request.getAttribute("params");
+<%   DownloadRequest downloadReq = (DownloadRequest)request.getAttribute(DispatcherServlet.INTERNAL_FORWARD_PARAMETER);
+    Set<DownloadTuple> tupleList = downloadReq.getTuples();
+    DownloadTupleFormat df = new DownloadTupleFormat();
     String codebase = (String) request.getAttribute("codebase");
     String ssocookieArg = "";
     String ssocookiedomainArg = "";
@@ -138,9 +144,17 @@
 
     <application-desc main-class="ca.nrc.cadc.dlm.client.Main">
         <argument>--verbose</argument>
-        <argument><%= uris %></argument>
-        <argument>--params=<%= params %></argument>
+<%      for (DownloadTuple tuple: tupleList) {
+          String tupleStr = df.format(tuple);
+%>
+          <argument><%= tupleStr %></argument>
 <%
+        }
+
+    if (downloadReq.runID != null) {
+%>
+        <argument>--runid=<%= downloadReq.runID %></argument>
+<%  }
     if (!ssocookieArg.isEmpty())
     {
 %>

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2009, 2020.                      (c) 2009, 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,9 +73,16 @@ import ca.nrc.cadc.appkit.ui.Application;
 import ca.nrc.cadc.appkit.ui.ApplicationFrame;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.SSOCookieCredential;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.dlm.DownloadRequest;
+import ca.nrc.cadc.dlm.DownloadTuple;
+import ca.nrc.cadc.dlm.DownloadTupleFormat;
+import ca.nrc.cadc.dlm.DownloadTupleParsingException;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.thread.ConditionVar;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.StringUtil;
 import java.awt.Component;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -83,6 +90,7 @@ import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
  * TODO
@@ -91,8 +99,9 @@ import org.apache.log4j.Level;
  * @version $Version$
  */
 public class Main {
-    //private static Logger log = Logger.getLogger(Main.class);
+    private static Logger log = Logger.getLogger(Main.class);
     private static UserInterface ui;
+    private static DownloadTupleFormat df = new DownloadTupleFormat();
 
     public static void main(final String[] args) {
         try {
@@ -147,30 +156,22 @@ public class Main {
 
             final ConditionVar downloadCompleteCond = new ConditionVar();
 
-
             boolean result = Subject.doAs(subject, new PrivilegedAction<Boolean>() {
                 public Boolean run() {
+                    // TODO: support 'uris' as input to this, when DownloadManager.jsp
+                    // hasn't been using it for a while?
                     //String uriStr = fixNull(am.getValue("uris"));
-                    String paramStr = fixNull(am.getValue("params"));
-                    //List<String> uris = DownloadUtil.decodeListURI(uriStr);
-                    Map<String, List<String>> params = DownloadUtil.decodeParamMap(paramStr);
 
-                    List<String> uris = new ArrayList<>();
-                    for (String arg : args) {
-                        if (!arg.startsWith("-")) {
-                            // take care in case environment keeps all space seperated args
-                            // as a single arg, eg single <argument> element in JNLP
-                            String[] sas = arg.split(" ");
-                            for (String a : sas) {
-                                uris.add(a);
-                            }
-                        }
-                    }
-                    if (forceAuthMethod != null) {
-                        List<String> am = new ArrayList<>();
-                        am.add(forceAuthMethod);
-                        params.put("auth", am);
-                    }
+                    DownloadRequest downloadRequest = getDownloadRequest(am);
+                    String runIDStr = fixNull(am.getValue("runid"));
+                    downloadRequest.runID = runIDStr;
+
+                    // TODO: 'auth' needs to be handled in the new paradigm soon...
+                    //                    if (forceAuthMethod != null) {
+                    //                        List<String> am = new ArrayList<>();
+                    //                        am.add(forceAuthMethod);
+                    //                        params.put("auth", am);
+                    //                    }
                     if (headless) {
                         boolean decompress = am.isSet("decompress");
                         boolean overwrite = am.isSet("overwrite");
@@ -194,8 +195,13 @@ public class Main {
                         frame.setVisible(true);
                     }
 
-                    ui.add(uris, params);
-                    ui.start();
+                    // Input validation messages will be printed in this section
+                    ui.add(downloadRequest);
+                    if (downloadRequest.getTuples().isEmpty()) {
+                        log.info("no tuples to work on, quitting...");
+                    } else {
+                        ui.start();
+                    }
                     return true;
                 }
             });
@@ -232,14 +238,68 @@ public class Main {
         }
         return s;
     }
+    
+    public static DownloadRequest getDownloadRequest(ArgumentMap argMap) {
+        DownloadRequest downloadRequest = new DownloadRequest();
+        String curTupleStr = "";
+
+        // Iterate through the positional arguments and attempt to construct tuples
+        // URI{DALI position string}{label}
+        List<String> positionalArgs = argMap.getPositionalArgs();
+        for (String segment : positionalArgs) {
+            log.debug("segment: " + segment);
+
+            if (!StringUtil.hasLength(segment)) {
+                // pass on extra whitespace that might
+                // be found on the command line
+                continue;
+            }
+            boolean endOfTuple = false;
+
+            if (segment.endsWith("}")) {
+                endOfTuple = true;
+            } else if (segment.contains("{")) {
+                // pass
+                endOfTuple = false;
+            } else {
+                if (StringUtil.hasLength(curTupleStr)) {
+                    endOfTuple = false;
+                } else {
+                    endOfTuple = true;
+                }
+            }
+
+            // concatenate a into curTupleStr & continue
+            if (StringUtil.hasLength(curTupleStr)) {
+                curTupleStr += " ";
+            }
+            curTupleStr += segment;
+            if (endOfTuple == true) {
+                log.debug("tuple string from args: " + curTupleStr);
+                try {
+                    DownloadTupleFormat df = new DownloadTupleFormat();
+                    DownloadTuple dt = df.parse(curTupleStr);
+                    downloadRequest.getTuples().add(dt);
+                } catch (Exception e) {
+                    // df.parse and df.parseBandCutout will throw validation errors.
+                    // Record them and continue
+                    downloadRequest.getValidationErrors().add(e);
+                }
+                curTupleStr = "";
+                endOfTuple = false;
+            }
+        }
+
+        return downloadRequest;
+    }
 
     private static void usage() {
         System.out.println("cadc-download-manager -h || --help");
-        System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of URIs>");
-        System.out.println("         [ --fragment=<common fragment to append to all URIs> ]");
+        System.out.println("cadc-download-manager [-v|--verbose | -d|--debug | -q|--quiet ] [options] <space separated list of download tuples>");
+        System.out.println("         [ --runid=<runid> ]");
         System.out.println("         [ --ssocookie=<cookie value to use in sso authentication> ]");
         System.out.println("         [ --ssocookiedomain=<domain cookie is valid in (required with ssocookie arg)> ]");
-        System.out.println("         [--headless] : run in non-interactive (no GUI) mode");
+        System.out.println("         [ --headless ] : run in non-interactive (no GUI) mode");
         System.out.println();
         System.out.println("optional arguments to use with --headless:");
         System.out.println("        --dest=<directory> : directory must exist and be writable by the user");

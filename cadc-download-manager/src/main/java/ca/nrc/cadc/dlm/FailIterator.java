@@ -69,30 +69,29 @@
 
 package ca.nrc.cadc.dlm;
 
-import java.net.URI;
 import java.util.Iterator;
 
 /**
- * Convenience class to return an error state download descritpor.
+ * Convenience class to return an error state download descriptor.
  *
  * @author pdowler
  */
 public class FailIterator implements Iterator<DownloadDescriptor> {
-    URI uri;
+    DownloadTuple dt;
     String msg;
 
-    public FailIterator(URI uri, String msg) {
-        this.uri = uri;
+    public FailIterator(DownloadTuple dt, String msg) {
+        this.dt = dt;
         this.msg = msg;
     }
 
     public boolean hasNext() {
-        return (uri != null);
+        return (dt != null);
     }
 
     public DownloadDescriptor next() {
-        DownloadDescriptor ret = new DownloadDescriptor(uri.toASCIIString(), msg);
-        uri = null;
+        DownloadDescriptor ret = new DownloadDescriptor(dt.getID().toASCIIString(), msg);
+        dt = null;
         msg = null;
         return ret;
     }
