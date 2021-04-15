@@ -17,13 +17,13 @@ jobs:
         java-version: 1.8
     
     - name: build and test cadc-app-kit
-      run: cd cadc-app-kit && gradle --info clean build javadoc checkstyleMain install
+      run: cd cadc-app-kit && ../gradlew --info clean build javadoc checkstyleMain install
     
     - name: build and test cadc-download-manager
-      run: cd cadc-download-manager && gradle --info clean build javadoc checkstyleMain install
+      run: cd cadc-download-manager && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test cadc-upload-manager
-      run: cd cadc-upload-manager && gradle --info clean build javadoc checkstyleMain install
+      run: cd cadc-upload-manager && ../gradlew --info clean build javadoc checkstyleMain install
       
     - name: build and test cadc-download-manager-server
-      run: cd cadc-download-manager-server && gradle --info clean build javadoc checkstyleMain install 
+      run: cd cadc-download-manager-server && ../gradlew --info clean build javadoc checkstyleMain install 
