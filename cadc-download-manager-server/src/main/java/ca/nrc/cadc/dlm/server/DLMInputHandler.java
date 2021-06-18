@@ -75,6 +75,8 @@ import ca.nrc.cadc.dlm.DownloadTupleFormat;
 import ca.nrc.cadc.dlm.DownloadTupleParsingException;
 import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.net.TransientException;
+
 import ca.nrc.cadc.rest.SyncInput;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
@@ -131,7 +133,7 @@ public class DLMInputHandler {
         try {
             si = new SyncInput(servletRequest, new DLMInlineContentHandler());
             si.init();
-        } catch (IOException | ResourceNotFoundException ioe) {
+        } catch (IOException | ResourceNotFoundException | TransientException ioe) {
             // TODO: make this more sanely split out & informative
             throw new DLMParsingException("couldn't parse request");
         }
