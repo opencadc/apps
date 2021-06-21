@@ -149,10 +149,10 @@ public class VOSDownloadGenerator implements DownloadGenerator {
 
             // VOSPACE_NODES_20 doesn't support AuthMethod.COOKIE
             URI resourceID = vos.getServiceURI();
-            URL serviceUrl = regClient.getServiceURL(
+            URL serviceURL = regClient.getServiceURL(
                 resourceID, Standards.VOSPACE_NODES_20, AuthMethod.COOKIE);
 
-            URL url = new URL(serviceUrl.toExternalForm() + sb.toString());
+            URL url = new URL(serviceURL.toExternalForm() + sb.toString());
             log.debug("resolved URL: " + url + " auth: " + AuthMethod.COOKIE);
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -163,17 +163,22 @@ public class VOSDownloadGenerator implements DownloadGenerator {
             if (get.getThrowable() != null) {
                 if (get.getResponseCode() == 401 // no cookie or cookie invalid
                     || get.getResponseCode() == 403) { // no cookie and private node
-                    // this will only actually work in the webstart application since
-                    // it can prompt for a password
-                    serviceUrl = regClient.getServiceURL(
+
+                    serviceURL = regClient.getServiceURL(
                         resourceID, Standards.VOSPACE_NODES_20, AuthMethod.PASSWORD);
-                    url = new URL(serviceUrl.toExternalForm() + sb.toString());
-                    log.debug("resolved URL: " + url + " auth: " + AuthMethod.PASSWORD);
-                    bos = new ByteArrayOutputStream();
-                    get = new HttpDownload(url, bos);
-                    get.run();
-                    if (get.getThrowable() == null) {
-                        t1 = null; // recovered from previous fail
+                    // Not all VOSpace services will support AuthMethod.PASSWORD.
+                    // Still need DLM to function gracefully if method not available.
+                    // This will only actually work in the webstart application since
+                    // it can prompt for a password
+                    if (serviceURL != null) {
+                        url = new URL(serviceURL.toExternalForm() + sb.toString());
+                        log.debug("resolved URL: " + url + " auth: " + AuthMethod.PASSWORD);
+                        bos = new ByteArrayOutputStream();
+                        get = new HttpDownload(url, bos);
+                        get.run();
+                        if (get.getThrowable() == null) {
+                            t1 = null; // recovered from previous fail
+                        }
                     }
                 }
             }
