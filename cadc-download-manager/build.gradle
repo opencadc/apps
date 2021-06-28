@@ -11,7 +11,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.4.1'
+version = '1.4.2'
 group = 'org.opencadc'
 sourceCompatibility = 1.8
 
@@ -23,7 +23,7 @@ mainClassName = 'ca.nrc.cadc.dlm.client.Main'
 dependencies {
     compile 'log4j:log4j:[1.2,)'
 
-    compile 'org.opencadc:cadc-util:[1.3,)'
+    compile 'org.opencadc:cadc-util:[1.4.2,)'
     compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-registry:[1.1.1,)'
     compile 'org.opencadc:cadc-app-kit:[1.0,)'
