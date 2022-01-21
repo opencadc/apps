@@ -48,7 +48,7 @@ import org.apache.log4j.Level;
 
 public class Main {
     private static final URI VOSPACE_SERVICE_URI =
-        URI.create("ivo://cadc.nrc.ca/vospace");
+        URI.create("ivo://cadc.nrc.ca/vault");
 
 
     public static void main(final String[] args) {

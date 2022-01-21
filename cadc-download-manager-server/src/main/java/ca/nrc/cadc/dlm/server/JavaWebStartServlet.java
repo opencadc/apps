@@ -171,7 +171,7 @@ public class JavaWebStartServlet extends HttpServlet {
     private void setRegistryClientProps(HttpServletRequest request) {
         String local = System.getProperty(RegistryClient.class.getName() + ".local");
         String host = System.getProperty(RegistryClient.class.getName() + ".host");
-        if (local != null && "true".equals(local)) {
+        if ("true".equals(local)) {
             host = NetUtil.getServerName(JavaWebStartServlet.class);
         }
         if (host != null) {
