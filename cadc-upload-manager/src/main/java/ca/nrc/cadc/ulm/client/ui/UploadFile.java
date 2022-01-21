@@ -136,13 +136,6 @@ public class UploadFile implements VOSpaceCommand {
         // upload the file through a transfer
         log.debug("Uploading file: " + file.getName() + " to " + dataNode.getUri());
 
-        final List<Protocol> protocols = new ArrayList<>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
-
-        if (AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject()) == AuthMethod.CERT) {
-            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        }
-
         Transfer transfer = new Transfer(dataNode.getUri().getURI(), Direction.pushToVoSpace);
         ClientTransfer clientTransfer = vospaceClient.createTransfer(transfer);
 
