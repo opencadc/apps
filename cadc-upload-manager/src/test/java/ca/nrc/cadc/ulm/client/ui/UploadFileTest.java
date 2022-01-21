@@ -218,7 +218,11 @@ public class UploadFileTest
                                            VOSpaceClient mockClient)
             throws Exception
     {
-        Transfer transfer = new Transfer(dataNode.getUri().getURI(), Direction.pushToVoSpace)
+        List<Protocol> protocols = new ArrayList<>();
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
+        Transfer transfer = new Transfer(dataNode.getUri().getURI(),
+                                         Direction.pushToVoSpace, null,
+                                         protocols)
         {
             @Override
             public boolean equals(Object t)

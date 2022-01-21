@@ -79,12 +79,10 @@ import ca.nrc.cadc.vos.NodeNotFoundException;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
-import ca.nrc.cadc.vos.View;
 import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import ca.nrc.cadc.vos.client.VOSpaceTransferListener;
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -143,9 +141,9 @@ public class UploadFile implements VOSpaceCommand {
             protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
         }
 
-        Transfer transfer = new Transfer(dataNode.getUri().getURI(), Direction.pushToVoSpace);
-        transfer.getProtocols().addAll(protocols);
-        transfer.setView(new View(URI.create(VOS.VIEW_DEFAULT)));
+        Transfer transfer = new Transfer(dataNode.getUri().getURI(),
+            Direction.pushToVoSpace, null,
+            protocols);
         ClientTransfer clientTransfer = vospaceClient.createTransfer(transfer);
 
         clientTransfer.setMaxRetries(Integer.MAX_VALUE);
