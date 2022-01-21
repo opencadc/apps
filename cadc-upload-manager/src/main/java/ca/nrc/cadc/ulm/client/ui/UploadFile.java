@@ -136,10 +136,7 @@ public class UploadFile implements VOSpaceCommand {
 
         final List<Protocol> protocols = new ArrayList<>();
         protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
-
-        if (AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject()) == AuthMethod.CERT) {
-            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-        }
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
 
         Transfer transfer = new Transfer(dataNode.getUri().getURI(),
             Direction.pushToVoSpace, null,
