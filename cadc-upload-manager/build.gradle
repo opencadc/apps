@@ -10,7 +10,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.0.12'
+version = '1.0.13'
 group = 'org.opencadc'
 sourceCompatibility = 1.8
 
@@ -24,7 +24,7 @@ dependencies {
     compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-util:[1.5.7,2.0)'
     compile 'org.opencadc:cadc-uws:[1.0,)'
-    compile 'org.opencadc:cadc-vos:[1.1.8,)'
+    compile 'org.opencadc:cadc-vos:[1.1.8,1.2.0)'
     compile 'org.opencadc:cadc-registry:[1.5,)'
     compile 'org.opencadc:cadc-app-kit:[1.0,)'
 
