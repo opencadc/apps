@@ -118,19 +118,18 @@
 
     <resources> 
         <j2se version="1.5+" initial-heap-size="64m" max-heap-size="256m" />
-        <jar href="cadc-util.jar"/>
-        <jar href="cadc-registry.jar"/>
-        <jar href="cadc-log.jar" />
-        <jar href="cadc-vos.jar" />
-        <jar href="cadc-app-kit.jar"/>
-        <jar href="cadc-download-manager.jar"/>
-        <jar href="log4j.jar"/>
+        <jar href="codebase/cadc-util.jar"/>
+        <jar href="codebase/cadc-registry.jar"/>
+        <jar href="codebase/cadc-vos.jar" />
+        <jar href="codebase/cadc-app-kit.jar"/>
+        <jar href="codebase/cadc-download-manager.jar"/>
+        <jar href="codebase/log4j.jar"/>
 
         <!-- needed by prototype DataLink client -->
-        <jar href="cadc-dali.jar"/>
-        <jar href="jdom2.jar"/>
-        <jar href="xml-apis.jar"/>
-        <jar href="xercesImpl.jar"/>
+        <jar href="codebase/cadc-dali.jar"/>
+        <jar href="codebase/jdom2.jar"/>
+        <jar href="codebase/xml-apis.jar"/>
+        <jar href="codebase/xercesImpl.jar"/>
         
 <%
     if (rcHost != null)
