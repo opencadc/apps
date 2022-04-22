@@ -100,6 +100,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import org.apache.log4j.Logger;
+import org.opencadc.datalink.DataLink;
 
 /**
  * Wrapper to interface a DataLink web service with DownloadManager. This implementation
@@ -112,9 +113,9 @@ public class DataLinkClient implements DownloadGenerator {
     public static final String RESOURCE_ID_PROP = DataLinkClient.class.getName() + ".resourceID";
     public static final String CUTOUT = "#cutout";
     
-    public static final String PKG = "http://www.opencadc.org/caom2#pkg";
-    public static final String PREVIEW = "#preview";
-    public static final String THUMB = "http://www.opencadc.org/caom2#thumbnail";
+    public static final String PKG = DataLink.Term.PACKAGE.getValue();
+    public static final String PREVIEW = DataLink.Term.PREVIEW.getValue();
+    public static final String THUMB = DataLink.Term.THUMBNAIL.getValue();
     
     private static final Logger log = Logger.getLogger(DataLinkClient.class);
     private static final String DOWNLOAD_REQUEST = "downloads-only";
