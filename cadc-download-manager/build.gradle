@@ -27,13 +27,8 @@ dependencies {
     implementation 'org.opencadc:cadc-registry:[1.1.1,)'
     implementation 'org.opencadc:cadc-app-kit:[1.0,)'
     implementation 'org.opencadc:cadc-vos:[1.0,)'
-
-    // Acceptable dependency addition?  It helps future proof DataLink semantics rather than duplicating Strings.
-    // jenkinsd 2022.04.22
-    //
-    implementation 'org.opencadc:cadc-datalink-server:[1.1.0,)'
-
     implementation 'org.opencadc:cadc-dali:[1.0,)'
+    implementation 'org.opencadc:cadc-datalink:[1.0.0,1.1.0)'
 
     testImplementation 'junit:junit:[4.13,)'
     testImplementation 'org.easymock:easymock:[3.0,)'
