@@ -10,7 +10,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.4.2'
+version = '1.4.3'
 group = 'org.opencadc'
 sourceCompatibility = 1.8
 
@@ -20,7 +20,6 @@ def git_url = 'https://github.com/opencadc/apps'
 
 
 dependencies {
-    implementation 'log4j:log4j:[1.2,)'
     implementation 'javax.servlet:javax.servlet-api:[3.1,)'
 
     implementation 'org.opencadc:cadc-app-kit:[1.0,)'
@@ -29,7 +28,7 @@ dependencies {
     implementation 'org.opencadc:cadc-log:[1.0,)'
     implementation 'org.opencadc:cadc-registry:[1.0,)'
     implementation 'org.opencadc:cadc-rest:[1.3.3,)'
-    implementation 'org.opencadc:cadc-util:[1.4.2,)'
+    implementation 'org.opencadc:cadc-util:[1.6,)'
     implementation 'org.opencadc:cadc-web-util:[1.2.10,)'
     implementation 'commons-io:commons-io:[2.7,)'
 

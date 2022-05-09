@@ -11,7 +11,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.5.0'
+version = '1.5.1'
 group = 'org.opencadc'
 sourceCompatibility = 1.8
 
@@ -21,9 +21,7 @@ def git_url = 'https://github.com/opencadc/apps'
 mainClassName = 'ca.nrc.cadc.dlm.client.Main'
 
 dependencies {
-    implementation 'log4j:log4j:[1.2,)'
-
-    implementation 'org.opencadc:cadc-util:[1.4.2,)'
+    implementation 'org.opencadc:cadc-util:[1.6,)'
     implementation 'org.opencadc:cadc-registry:[1.1.1,)'
     implementation 'org.opencadc:cadc-app-kit:[1.0,)'
     implementation 'org.opencadc:cadc-vos:[1.0,)'
