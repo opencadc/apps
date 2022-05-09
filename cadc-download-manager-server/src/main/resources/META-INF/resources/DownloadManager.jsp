@@ -126,6 +126,7 @@
         <jar href="codebase/log4j.jar"/>
 
         <!-- needed by prototype DataLink client -->
+        <jar href="codebase/cadc-datalink.jar"/>
         <jar href="codebase/cadc-dali.jar"/>
         <jar href="codebase/jdom2.jar"/>
         <jar href="codebase/xml-apis.jar"/>
