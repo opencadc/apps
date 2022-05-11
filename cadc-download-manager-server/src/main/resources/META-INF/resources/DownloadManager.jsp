@@ -123,7 +123,6 @@
         <jar href="codebase/cadc-vos.jar" />
         <jar href="codebase/cadc-app-kit.jar"/>
         <jar href="codebase/cadc-download-manager.jar"/>
-        <jar href="codebase/log4j.jar"/>
         <jar href="codebase/log4j-1.2-api.jar"/>
         <jar href="codebase/log4j-api.jar"/>
         <jar href="codebase/log4j-core.jar"/>
