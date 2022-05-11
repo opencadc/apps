@@ -10,7 +10,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.4.3'
+version = '1.4.4'
 group = 'org.opencadc'
 sourceCompatibility = 1.8
 
