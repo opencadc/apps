@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.ulm.client.ui;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.vos.DataNode;
@@ -83,8 +81,6 @@ import ca.nrc.cadc.vos.client.ClientTransfer;
 import ca.nrc.cadc.vos.client.VOSpaceClient;
 import ca.nrc.cadc.vos.client.VOSpaceTransferListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Logger;
 
 
@@ -96,8 +92,8 @@ import org.apache.log4j.Logger;
 public class UploadFile implements VOSpaceCommand {
     protected static final Logger log = Logger.getLogger(UploadFile.class);
 
-    private DataNode dataNode;
-    private File file;
+    private final DataNode dataNode;
+    private final File file;
 
 
     public UploadFile(DataNode dataNode, File file) {
@@ -134,13 +130,9 @@ public class UploadFile implements VOSpaceCommand {
         // upload the file through a transfer
         log.debug("Uploading file: " + file.getName() + " to " + dataNode.getUri());
 
-        final List<Protocol> protocols = new ArrayList<>();
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-
-        Transfer transfer = new Transfer(dataNode.getUri().getURI(),
-            Direction.pushToVoSpace, null,
-            protocols);
+        Transfer transfer = new Transfer(dataNode.getUri().getURI(), Direction.pushToVoSpace);
+        transfer.getProtocols().add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        transfer.getProtocols().add(new Protocol(VOS.PROTOCOL_HTTP_PUT));
         ClientTransfer clientTransfer = vospaceClient.createTransfer(transfer);
 
         clientTransfer.setMaxRetries(Integer.MAX_VALUE);
