@@ -68,6 +68,7 @@
 
 package ca.nrc.cadc.dlm.server;
 
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
 import ca.nrc.cadc.util.FileUtil;
 import org.junit.Assert;
@@ -130,7 +131,7 @@ public class ScriptGeneratorTest {
         final File expectedScript =
                 FileUtil.getFileFromResource("cadc-download-expected-auth.sh", ScriptGeneratorTest.class);
         final String expectedScriptString = new String(FileUtil.readFile(expectedScript));
-        final Calendar calendar = Calendar.getInstance();
+        final Calendar calendar = Calendar.getInstance(DateUtil.UTC);
         calendar.set(1977, Calendar.NOVEMBER, 25, 1, 15, 0);
 
         final List<DownloadDescriptor> urls = new ArrayList<>();
