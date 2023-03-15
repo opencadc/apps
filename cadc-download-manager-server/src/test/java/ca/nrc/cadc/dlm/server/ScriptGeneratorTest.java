@@ -81,6 +81,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class ScriptGeneratorTest {
@@ -103,6 +104,15 @@ public class ScriptGeneratorTest {
             Assert.assertEquals("Wrong error message.", "The Expiry Date is required when the token is supplied.",
                                 illegalArgumentException.getMessage());
         }
+
+        try {
+            new ScriptGenerator(Collections.emptyIterator(), "TOKEN", new Date());
+            Assert.fail("Should throw IllegalArgumentException.");
+        } catch (IllegalArgumentException illegalArgumentException) {
+            // Good
+            Assert.assertEquals("Wrong error message.", "The DownloadDescriptor iterator is required.",
+                                illegalArgumentException.getMessage());
+        }
     }
 
     @Test
@@ -112,10 +122,11 @@ public class ScriptGeneratorTest {
         final String expectedScriptString = new String(FileUtil.readFile(expectedScript));
 
         final List<DownloadDescriptor> urls = new ArrayList<>();
-        urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/file1.fits")));
-        urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/file2.fits")));
-        urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/file3.fits")));
-        urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/file4.fits")));
+        urls.add(new DownloadDescriptor("test:/file1", new URL("https://mysite.com/download/file1.fits")));
+        urls.add(new DownloadDescriptor("test:/file2", new URL("https://mysite.com/download/file2.fits")));
+        urls.add(new DownloadDescriptor("test:/broken", "No such file."));
+        urls.add(new DownloadDescriptor("test:/file3", new URL("https://mysite.com/download/file3.fits")));
+        urls.add(new DownloadDescriptor("test:/file4", new URL("https://mysite.com/download/file4.fits")));
         final ScriptGenerator scriptGenerator = new ScriptGenerator(urls.iterator());
 
         try (final Writer writer = new StringWriter()) {
@@ -139,7 +150,8 @@ public class ScriptGeneratorTest {
         urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/proprietary-2.fits")));
         urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/proprietary-3.fits")));
         urls.add(new DownloadDescriptor(new URL("https://mysite.com/download/proprietary-4.fits")));
-        final ScriptGenerator scriptGenerator = new ScriptGenerator(urls.iterator(), "SUPERTOKEN", calendar.getTime());
+        final ScriptGenerator scriptGenerator = new ScriptGenerator(urls.iterator(), "SUPERTOKEN",
+                                                                    calendar.getTime());
 
         try (final Writer writer = new StringWriter()) {
             scriptGenerator.generate(writer);

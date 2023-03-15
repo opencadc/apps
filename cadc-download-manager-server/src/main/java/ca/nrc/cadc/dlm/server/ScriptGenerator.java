@@ -81,26 +81,28 @@ import java.util.Iterator;
 /**
  * Generate a Bash script with the Download URLs.
  */
-public class ScriptGenerator {
+class ScriptGenerator {
     private static final String SCRIPT_HEADER = "#!/bin/bash";
     private static final String NEWLINE = "\n";
     private static final String TOKEN_EXPIRY_WARNING =
             "Warning!  The token provided in the cURL commands will expire on %s.";
-    private static final String ANON_CURL_COMMAND_PREFIX = "curl -LJO --progress-bar ";
+    private static final String ANON_CURL_COMMAND_PREFIX = "curl --location --remote-name --remote-header-name --progress-bar ";
     private static final String AUTH_CURL_COMMAND_PREFIX =
             ScriptGenerator.ANON_CURL_COMMAND_PREFIX + "-H \"authorization: bearer %s\" ";
-    private static final String TOKEN_EXPIRY_WARNING_COMMAND = "echo \"" + ScriptGenerator.TOKEN_EXPIRY_WARNING + "\"";
+    private static final String ECHO = "echo ";
+    private static final String TOKEN_EXPIRY_WARNING_COMMAND = ScriptGenerator.ECHO + "\""
+                                                               + ScriptGenerator.TOKEN_EXPIRY_WARNING + "\"";
 
     private final Iterator<DownloadDescriptor> downloadDescriptors;
     private final String authToken;
     private final Date expiryDate;
 
 
-    public ScriptGenerator(final Iterator<DownloadDescriptor> downloadDescriptors) {
+    ScriptGenerator(final Iterator<DownloadDescriptor> downloadDescriptors) {
         this(downloadDescriptors, null, null);
     }
 
-    public ScriptGenerator(final Iterator<DownloadDescriptor> downloadDescriptors, final String authToken,
+    ScriptGenerator(final Iterator<DownloadDescriptor> downloadDescriptors, final String authToken,
                            final Date expiryDate) {
         this.downloadDescriptors = downloadDescriptors;
         this.authToken = authToken;
@@ -109,7 +111,7 @@ public class ScriptGenerator {
         // If the auth token was provided, the expiry date should be provided as well.
         if (this.expiryDate == null && StringUtil.hasLength(this.authToken)) {
             throw new IllegalArgumentException("The Expiry Date is required when the token is supplied.");
-        } else if (this.downloadDescriptors == null) {
+        } else if (this.downloadDescriptors == null || !this.downloadDescriptors.hasNext()) {
             throw new IllegalArgumentException("The DownloadDescriptor iterator is required.");
         }
     }
@@ -118,15 +120,14 @@ public class ScriptGenerator {
     void generate(final Writer writer) throws IOException {
         writer.write(ScriptGenerator.SCRIPT_HEADER);
         writer.write(ScriptGenerator.NEWLINE);
-        writer.write(ScriptGenerator.NEWLINE);
 
         final String curlCommandPrefix;
         if (StringUtil.hasLength(this.authToken)) {
+            writer.write(ScriptGenerator.NEWLINE);
             curlCommandPrefix = String.format(ScriptGenerator.AUTH_CURL_COMMAND_PREFIX, this.authToken);
             writer.write(String.format(TOKEN_EXPIRY_WARNING_COMMAND,
                                        DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_LOCAL, DateUtil.UTC)
                                                .format(this.expiryDate)));
-            writer.write(ScriptGenerator.NEWLINE);
             writer.write(ScriptGenerator.NEWLINE);
         } else {
             curlCommandPrefix = ScriptGenerator.ANON_CURL_COMMAND_PREFIX;
@@ -134,13 +135,16 @@ public class ScriptGenerator {
 
         while (this.downloadDescriptors.hasNext()) {
             final DownloadDescriptor downloadDescriptor = this.downloadDescriptors.next();
+            writer.write(ScriptGenerator.NEWLINE);
             if (downloadDescriptor.url != null) {
-                writer.write(curlCommandPrefix + "\"" + downloadDescriptor.url + "\"");
+                writer.write(ScriptGenerator.ECHO + "\"" + downloadDescriptor.url + "\"");
                 writer.write(ScriptGenerator.NEWLINE);
+                writer.write(curlCommandPrefix + "\"" + downloadDescriptor.url + "\"");
             } else {
-                throw new IllegalArgumentException("URL for " + downloadDescriptor.uri + " is null. ERROR: "
-                                                   + downloadDescriptor.error);
+                writer.write(ScriptGenerator.ECHO + "\"ERROR trying resolve " + downloadDescriptor.uri + ": "
+                             + downloadDescriptor.error + "\"");
             }
+            writer.write(ScriptGenerator.NEWLINE);
         }
     }
 }
