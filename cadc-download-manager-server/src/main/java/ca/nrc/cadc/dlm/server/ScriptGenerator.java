@@ -86,9 +86,10 @@ class ScriptGenerator {
     private static final String NEWLINE = "\n";
     private static final String TOKEN_EXPIRY_WARNING =
             "Warning!  The token provided in the cURL commands will expire on %s.";
+    private static final String TOKEN_SCRIPT_VARIABLE = "TOKEN=\"%s\"";
     private static final String ANON_CURL_COMMAND_PREFIX = "curl --location --remote-name --remote-header-name --progress-bar ";
     private static final String AUTH_CURL_COMMAND_PREFIX =
-            ScriptGenerator.ANON_CURL_COMMAND_PREFIX + "-H \"authorization: bearer %s\" ";
+            ScriptGenerator.ANON_CURL_COMMAND_PREFIX + "-H \"authorization: bearer ${TOKEN}\" ";
     private static final String ECHO = "echo ";
     private static final String TOKEN_EXPIRY_WARNING_COMMAND = ScriptGenerator.ECHO + "\""
                                                                + ScriptGenerator.TOKEN_EXPIRY_WARNING + "\"";
@@ -124,10 +125,13 @@ class ScriptGenerator {
         final String curlCommandPrefix;
         if (StringUtil.hasLength(this.authToken)) {
             writer.write(ScriptGenerator.NEWLINE);
-            curlCommandPrefix = String.format(ScriptGenerator.AUTH_CURL_COMMAND_PREFIX, this.authToken);
+            curlCommandPrefix = ScriptGenerator.AUTH_CURL_COMMAND_PREFIX;
             writer.write(String.format(TOKEN_EXPIRY_WARNING_COMMAND,
                                        DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_LOCAL, DateUtil.UTC)
                                                .format(this.expiryDate)));
+            writer.write(ScriptGenerator.NEWLINE);
+            writer.write(ScriptGenerator.NEWLINE);
+            writer.write(String.format(ScriptGenerator.TOKEN_SCRIPT_VARIABLE, this.authToken));
             writer.write(ScriptGenerator.NEWLINE);
         } else {
             curlCommandPrefix = ScriptGenerator.ANON_CURL_COMMAND_PREFIX;
