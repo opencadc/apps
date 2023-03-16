@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009, 2020.                      (c) 2009, 2020.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -198,6 +198,15 @@ var="langBundle" scope="request"/>
                 <br/>
             </c:if>
             <div class="span-4">
+                <button class="button font-medium" name="method" value="<%= DispatcherServlet.SHELL_SCRIPT %>" type="submit"><fmt:message key="SHELL_SCRIPT_BUTTON" bundle="${langBundle}"/></button>
+            </div>
+            <div class="span-6">
+                <fmt:message key="SHELL_SCRIPT_DESCRIPTION" bundle="${langBundle}"/>
+            </div>
+            <div class="span-2"></div>
+            <div class="clear"></div>
+            <br/>
+            <div class="span-4">
                 <button class="button font-medium" name="method" value="<%= DispatcherServlet.URLS %>" type="submit"><fmt:message key="URL_LIST_BUTTON" bundle="${langBundle}"/></button>
             </div>
             <div class="span-6">
@@ -215,22 +224,6 @@ var="langBundle" scope="request"/>
             <div class="span-2"></div>
             <div class="clear"></div>
             <br/>
-
-            <label class="form-checkbox" for="remember">
-                <input type="checkbox" id="remember" name="remember" value="true"/>
-                <fmt:message key="REMEMBER_CHECKBOX_LABEL" bundle="${langBundle}"/>
-                <fmt:message key="REMEMBER_CHECKBOX_TEXT" bundle="${langBundle}"/>
-            </label>
-
-            <div class="span-1"></div>
-            <div class="span-10">
-                <p class="color-attention">
-                    <fmt:message key="REMEMBER_TEXT" bundle="${langBundle}"/>
-                </p>
-            </div>
-            <div class="span-1"></div>
-            <div class="clear"></div>
-
         </div>
         <div class="clear"></div>
     </form>
