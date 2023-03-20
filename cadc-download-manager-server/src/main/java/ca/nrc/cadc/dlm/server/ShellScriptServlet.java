@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.dlm.server;
 
-import ca.nrc.cadc.ac.server.oidc.OIDCUtil;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
@@ -113,6 +112,9 @@ public class ShellScriptServlet extends HttpServlet {
     private static final long serialVersionUID = 202303151015L;
     public static final String SCRIPT_TARGET = "/shellScript";
 
+    // Two (2) weeks in minutes
+    private static final int MINUTES_TO_EXPIRY = 60 * 24 * 7 * 2;
+
     private static final DateFormat DATE_FORMAT = DateUtil.getDateFormat("yyyyMMddHHmmss", DateUtil.UTC);
 
     /**
@@ -143,7 +145,7 @@ public class ShellScriptServlet extends HttpServlet {
                 final Calendar calendar = Calendar.getInstance(DateUtil.UTC);
 
                 // Expiry is current time plus the set expiry minutes.
-                calendar.add(Calendar.MINUTE, OIDCUtil.ID_TOKEN_EXPIRY_MINUTES);
+                calendar.add(Calendar.MINUTE, ShellScriptServlet.MINUTES_TO_EXPIRY);
                 scriptGenerator = new ScriptGenerator(downloadDescriptorIterator, authToken, calendar.getTime());
             } else {
                 scriptGenerator = new ScriptGenerator(downloadDescriptorIterator);
