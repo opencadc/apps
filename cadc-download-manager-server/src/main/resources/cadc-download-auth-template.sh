@@ -1,18 +1,15 @@
 #!/bin/bash
 
-echo "Warning!  The token provided in the cURL commands will expire on 1977-11-25T01:15:00."
+echo "Warning!  The token provided in the cURL commands will expire on %%%EXPIRY%%%."
 
-TOKEN="SUPERTOKEN"
+TOKEN="%%%TOKEN%%%"
 
 ERROR_URIS=(
-
+%%%ERRORURIS%%%
 )
 
 URLS=(
-"https://mysite.com/download/proprietary-1.fits"
-"https://mysite.com/download/proprietary-2.fits"
-"https://mysite.com/download/proprietary-3.fits"
-"https://mysite.com/download/proprietary-4.fits"
+%%%URLS%%%
 )
 
 for URI_ERROR in "${ERROR_URIS[@]}"; do

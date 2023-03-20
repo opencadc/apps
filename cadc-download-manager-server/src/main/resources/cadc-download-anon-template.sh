@@ -1,14 +1,11 @@
 #!/bin/bash
 
 ERROR_URIS=(
-"test:/broken|||No such file."
+%%%ERRORURIS%%%
 )
 
 URLS=(
-"https://mysite.com/download/file1.fits"
-"https://mysite.com/download/file2.fits"
-"https://mysite.com/download/file3.fits"
-"https://mysite.com/download/file4.fits"
+%%%URLS%%%
 )
 
 for URI_ERROR in "${ERROR_URIS[@]}"; do

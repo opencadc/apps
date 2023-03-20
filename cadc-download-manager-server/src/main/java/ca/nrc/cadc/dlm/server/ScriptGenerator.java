@@ -70,29 +70,37 @@ package ca.nrc.cadc.dlm.server;
 
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.StringUtil;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 
 /**
  * Generate a Bash script with the Download URLs.
  */
 class ScriptGenerator {
-    private static final String SCRIPT_HEADER = "#!/bin/bash";
     private static final String NEWLINE = "\n";
-    private static final String TOKEN_EXPIRY_WARNING =
-            "Warning!  The token provided in the cURL commands will expire on %s.";
-    private static final String TOKEN_SCRIPT_VARIABLE = "TOKEN=\"%s\"";
-    private static final String ANON_CURL_COMMAND_PREFIX = "curl --location --remote-name --remote-header-name --progress-bar ";
-    private static final String AUTH_CURL_COMMAND_PREFIX =
-            ScriptGenerator.ANON_CURL_COMMAND_PREFIX + "-H \"authorization: bearer ${TOKEN}\" ";
-    private static final String ECHO = "echo ";
-    private static final String TOKEN_EXPIRY_WARNING_COMMAND = ScriptGenerator.ECHO + "\""
-                                                               + ScriptGenerator.TOKEN_EXPIRY_WARNING + "\"";
+    private static final String AUTH_SCRIPT_TEMPLATE_FILENAME = "cadc-download-auth-template.sh";
+    private static final String ANON_SCRIPT_TEMPLATE_FILENAME = "cadc-download-anon-template.sh";
+    private static final String VARIABLE_REPLACE = "%%%";
+    private static final String VARIABLE_EXPIRY_REPLACE =
+            ScriptGenerator.VARIABLE_REPLACE + "EXPIRY" + ScriptGenerator.VARIABLE_REPLACE;
+    private static final String VARIABLE_TOKEN_REPLACE =
+            ScriptGenerator.VARIABLE_REPLACE + "TOKEN" + ScriptGenerator.VARIABLE_REPLACE;
+    private static final String VARIABLE_URLS_REPLACE =
+            ScriptGenerator.VARIABLE_REPLACE + "URLS" + ScriptGenerator.VARIABLE_REPLACE;
+
+    private static final String VARIABLE_ERROR_URIS_REPLACE =
+            ScriptGenerator.VARIABLE_REPLACE + "ERRORURIS" + ScriptGenerator.VARIABLE_REPLACE;
+    private static final String ERROR_URI_MESSAGE_DELIMINATOR = "|||";
 
     private final Iterator<DownloadDescriptor> downloadDescriptors;
     private final String authToken;
@@ -104,7 +112,7 @@ class ScriptGenerator {
     }
 
     ScriptGenerator(final Iterator<DownloadDescriptor> downloadDescriptors, final String authToken,
-                           final Date expiryDate) {
+                    final Date expiryDate) {
         this.downloadDescriptors = downloadDescriptors;
         this.authToken = authToken;
         this.expiryDate = expiryDate;
@@ -117,38 +125,64 @@ class ScriptGenerator {
         }
     }
 
-
+    /**
+     * Determine the appropriate template script file, and write out the string template variable values.
+     * @param writer        The Writer to send data to.
+     * @throws IOException  If any I/O problems occur.
+     */
     void generate(final Writer writer) throws IOException {
-        writer.write(ScriptGenerator.SCRIPT_HEADER);
-        writer.write(ScriptGenerator.NEWLINE);
+        final String templateFile = StringUtil.hasLength(this.authToken)
+                                    ? ScriptGenerator.AUTH_SCRIPT_TEMPLATE_FILENAME
+                                    : ScriptGenerator.ANON_SCRIPT_TEMPLATE_FILENAME;
+        final FileReader fileReader = new FileReader(FileUtil.getFileFromResource(templateFile, ScriptGenerator.class));
+        final BufferedReader bufferedReader = new BufferedReader(fileReader);
+        final List<DownloadDescriptor> errorDownloadDescriptors = new ArrayList<>();
+        final List<DownloadDescriptor> successDownloadDescriptors = new ArrayList<>();
 
-        final String curlCommandPrefix;
-        if (StringUtil.hasLength(this.authToken)) {
-            writer.write(ScriptGenerator.NEWLINE);
-            curlCommandPrefix = ScriptGenerator.AUTH_CURL_COMMAND_PREFIX;
-            writer.write(String.format(TOKEN_EXPIRY_WARNING_COMMAND,
-                                       DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_LOCAL, DateUtil.UTC)
-                                               .format(this.expiryDate)));
-            writer.write(ScriptGenerator.NEWLINE);
-            writer.write(ScriptGenerator.NEWLINE);
-            writer.write(String.format(ScriptGenerator.TOKEN_SCRIPT_VARIABLE, this.authToken));
-            writer.write(ScriptGenerator.NEWLINE);
-        } else {
-            curlCommandPrefix = ScriptGenerator.ANON_CURL_COMMAND_PREFIX;
-        }
-
-        while (this.downloadDescriptors.hasNext()) {
-            final DownloadDescriptor downloadDescriptor = this.downloadDescriptors.next();
-            writer.write(ScriptGenerator.NEWLINE);
-            if (downloadDescriptor.url != null) {
-                writer.write(ScriptGenerator.ECHO + "\"" + downloadDescriptor.url + "\"");
-                writer.write(ScriptGenerator.NEWLINE);
-                writer.write(curlCommandPrefix + "\"" + downloadDescriptor.url + "\"");
+        // Separate the successful Downloads from the errors.
+        this.downloadDescriptors.forEachRemaining(downloadDescriptor -> {
+            if (downloadDescriptor.url == null) {
+                errorDownloadDescriptors.add(downloadDescriptor);
             } else {
-                writer.write(ScriptGenerator.ECHO + "\"ERROR trying resolve " + downloadDescriptor.uri + ": "
-                             + downloadDescriptor.error + "\"");
+                successDownloadDescriptors.add(downloadDescriptor);
             }
-            writer.write(ScriptGenerator.NEWLINE);
+        });
+
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            if (line.contains(ScriptGenerator.VARIABLE_REPLACE)) {
+                if (line.contains(ScriptGenerator.VARIABLE_EXPIRY_REPLACE)) {
+                    writer.write(line.replace(ScriptGenerator.VARIABLE_EXPIRY_REPLACE,
+                                              DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_LOCAL, DateUtil.UTC)
+                                                      .format(this.expiryDate)));
+                } else if (line.contains(ScriptGenerator.VARIABLE_TOKEN_REPLACE)) {
+                    writer.write(line.replace(ScriptGenerator.VARIABLE_TOKEN_REPLACE, this.authToken));
+                } else if (line.contains(ScriptGenerator.VARIABLE_URLS_REPLACE)) {
+                    for (final Iterator<DownloadDescriptor> downloadDescriptorIterator
+                         = successDownloadDescriptors.iterator(); downloadDescriptorIterator.hasNext();) {
+                        final DownloadDescriptor downloadDescriptor = downloadDescriptorIterator.next();
+                        writer.write("\"" + downloadDescriptor.url + "\"");
+                        if (downloadDescriptorIterator.hasNext()) {
+                            writer.write(ScriptGenerator.NEWLINE);
+                        }
+                    }
+                } else if (line.contains(ScriptGenerator.VARIABLE_ERROR_URIS_REPLACE)) {
+                    // Error URIs are written as the URI|||Error Message.
+                    for (final Iterator<DownloadDescriptor> downloadDescriptorIterator
+                         = errorDownloadDescriptors.iterator(); downloadDescriptorIterator.hasNext();) {
+                        final DownloadDescriptor downloadDescriptor = downloadDescriptorIterator.next();
+                        writer.write("\"" + downloadDescriptor.uri + ScriptGenerator.ERROR_URI_MESSAGE_DELIMINATOR
+                                     + downloadDescriptor.error + "\"");
+                        if (downloadDescriptorIterator.hasNext()) {
+                            writer.write(ScriptGenerator.NEWLINE);
+                        }
+                    }
+                }
+                writer.write(ScriptGenerator.NEWLINE);
+            } else {
+                writer.write(line);
+                writer.write(ScriptGenerator.NEWLINE);
+            }
         }
     }
 }
