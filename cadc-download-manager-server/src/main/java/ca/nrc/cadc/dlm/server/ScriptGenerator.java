@@ -74,9 +74,12 @@ import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.StringUtil;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.Writer;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -134,54 +137,57 @@ class ScriptGenerator {
         final String templateFile = StringUtil.hasLength(this.authToken)
                                     ? ScriptGenerator.AUTH_SCRIPT_TEMPLATE_FILENAME
                                     : ScriptGenerator.ANON_SCRIPT_TEMPLATE_FILENAME;
-        final FileReader fileReader = new FileReader(FileUtil.getFileFromResource(templateFile, ScriptGenerator.class));
-        final BufferedReader bufferedReader = new BufferedReader(fileReader);
-        final List<DownloadDescriptor> errorDownloadDescriptors = new ArrayList<>();
-        final List<DownloadDescriptor> successDownloadDescriptors = new ArrayList<>();
+        final URL templateFileURL = FileUtil.getURLFromResource(templateFile, ScriptGenerator.class);
+        try (final InputStream inputStream = templateFileURL.openStream()) {
+            final Reader inputStreamReader = new InputStreamReader(inputStream);
+            final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            final List<DownloadDescriptor> errorDownloadDescriptors = new ArrayList<>();
+            final List<DownloadDescriptor> successDownloadDescriptors = new ArrayList<>();
 
-        // Separate the successful Downloads from the errors.
-        this.downloadDescriptors.forEachRemaining(downloadDescriptor -> {
-            if (downloadDescriptor.url == null) {
-                errorDownloadDescriptors.add(downloadDescriptor);
-            } else {
-                successDownloadDescriptors.add(downloadDescriptor);
-            }
-        });
-
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            if (line.contains(ScriptGenerator.VARIABLE_REPLACE)) {
-                if (line.contains(ScriptGenerator.VARIABLE_EXPIRY_REPLACE)) {
-                    writer.write(line.replace(ScriptGenerator.VARIABLE_EXPIRY_REPLACE,
-                                              DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_LOCAL, DateUtil.UTC)
-                                                      .format(this.expiryDate)));
-                } else if (line.contains(ScriptGenerator.VARIABLE_TOKEN_REPLACE)) {
-                    writer.write(line.replace(ScriptGenerator.VARIABLE_TOKEN_REPLACE, this.authToken));
-                } else if (line.contains(ScriptGenerator.VARIABLE_URLS_REPLACE)) {
-                    for (final Iterator<DownloadDescriptor> downloadDescriptorIterator
-                         = successDownloadDescriptors.iterator(); downloadDescriptorIterator.hasNext();) {
-                        final DownloadDescriptor downloadDescriptor = downloadDescriptorIterator.next();
-                        writer.write("\"" + downloadDescriptor.url + "\"");
-                        if (downloadDescriptorIterator.hasNext()) {
-                            writer.write(ScriptGenerator.NEWLINE);
-                        }
-                    }
-                } else if (line.contains(ScriptGenerator.VARIABLE_ERROR_URIS_REPLACE)) {
-                    // Error URIs are written as the URI|||Error Message.
-                    for (final Iterator<DownloadDescriptor> downloadDescriptorIterator
-                         = errorDownloadDescriptors.iterator(); downloadDescriptorIterator.hasNext();) {
-                        final DownloadDescriptor downloadDescriptor = downloadDescriptorIterator.next();
-                        writer.write("\"" + downloadDescriptor.uri + ScriptGenerator.ERROR_URI_MESSAGE_DELIMINATOR
-                                     + downloadDescriptor.error + "\"");
-                        if (downloadDescriptorIterator.hasNext()) {
-                            writer.write(ScriptGenerator.NEWLINE);
-                        }
-                    }
+            // Separate the successful Downloads from the errors.
+            this.downloadDescriptors.forEachRemaining(downloadDescriptor -> {
+                if (downloadDescriptor.url == null) {
+                    errorDownloadDescriptors.add(downloadDescriptor);
+                } else {
+                    successDownloadDescriptors.add(downloadDescriptor);
                 }
-                writer.write(ScriptGenerator.NEWLINE);
-            } else {
-                writer.write(line);
-                writer.write(ScriptGenerator.NEWLINE);
+            });
+
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                if (line.contains(ScriptGenerator.VARIABLE_REPLACE)) {
+                    if (line.contains(ScriptGenerator.VARIABLE_EXPIRY_REPLACE)) {
+                        writer.write(line.replace(ScriptGenerator.VARIABLE_EXPIRY_REPLACE,
+                                                  DateUtil.getDateFormat(DateUtil.ISO8601_DATE_FORMAT_LOCAL, DateUtil.UTC)
+                                                          .format(this.expiryDate)));
+                    } else if (line.contains(ScriptGenerator.VARIABLE_TOKEN_REPLACE)) {
+                        writer.write(line.replace(ScriptGenerator.VARIABLE_TOKEN_REPLACE, this.authToken));
+                    } else if (line.contains(ScriptGenerator.VARIABLE_URLS_REPLACE)) {
+                        for (final Iterator<DownloadDescriptor> downloadDescriptorIterator
+                             = successDownloadDescriptors.iterator(); downloadDescriptorIterator.hasNext(); ) {
+                            final DownloadDescriptor downloadDescriptor = downloadDescriptorIterator.next();
+                            writer.write("\"" + downloadDescriptor.url + "\"");
+                            if (downloadDescriptorIterator.hasNext()) {
+                                writer.write(ScriptGenerator.NEWLINE);
+                            }
+                        }
+                    } else if (line.contains(ScriptGenerator.VARIABLE_ERROR_URIS_REPLACE)) {
+                        // Error URIs are written as the URI|||Error Message.
+                        for (final Iterator<DownloadDescriptor> downloadDescriptorIterator
+                             = errorDownloadDescriptors.iterator(); downloadDescriptorIterator.hasNext(); ) {
+                            final DownloadDescriptor downloadDescriptor = downloadDescriptorIterator.next();
+                            writer.write("\"" + downloadDescriptor.uri + ScriptGenerator.ERROR_URI_MESSAGE_DELIMINATOR
+                                         + downloadDescriptor.error + "\"");
+                            if (downloadDescriptorIterator.hasNext()) {
+                                writer.write(ScriptGenerator.NEWLINE);
+                            }
+                        }
+                    }
+                    writer.write(ScriptGenerator.NEWLINE);
+                } else {
+                    writer.write(line);
+                    writer.write(ScriptGenerator.NEWLINE);
+                }
             }
         }
     }
