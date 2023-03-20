@@ -2,6 +2,7 @@
 
 ERROR_URIS=(
 "test:/broken|||No such file."
+"test:/broken2|||No such path."
 )
 
 URLS=(

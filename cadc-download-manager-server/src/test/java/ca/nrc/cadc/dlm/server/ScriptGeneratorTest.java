@@ -126,6 +126,7 @@ public class ScriptGeneratorTest {
         urls.add(new DownloadDescriptor("test:/file2", new URL("https://mysite.com/download/file2.fits")));
         urls.add(new DownloadDescriptor("test:/broken", "No such file."));
         urls.add(new DownloadDescriptor("test:/file3", new URL("https://mysite.com/download/file3.fits")));
+        urls.add(new DownloadDescriptor("test:/broken2", "No such path."));
         urls.add(new DownloadDescriptor("test:/file4", new URL("https://mysite.com/download/file4.fits")));
         final ScriptGenerator scriptGenerator = new ScriptGenerator(urls.iterator());
 
