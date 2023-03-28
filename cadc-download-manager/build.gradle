@@ -11,7 +11,7 @@ repositories {
     mavenLocal()
 }
 
-version = '1.5.1'
+version = '1.5.2'
 group = 'org.opencadc'
 sourceCompatibility = 1.8
 
@@ -27,6 +27,7 @@ dependencies {
     implementation 'org.opencadc:cadc-vos:[1.0,)'
     implementation 'org.opencadc:cadc-dali:[1.2.15,)'
     implementation 'org.opencadc:cadc-datalink:[1.0.0,1.1.0)'
+    implementation 'org.opencadc:caom2-artifact-resolvers:[1.2.10,1.3.0)'
 
     testImplementation 'junit:junit:[4.13,)'
     testImplementation 'org.easymock:easymock:[3.0,)'

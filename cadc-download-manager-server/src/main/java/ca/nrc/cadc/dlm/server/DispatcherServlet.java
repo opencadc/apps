@@ -73,18 +73,15 @@ package ca.nrc.cadc.dlm.server;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.dlm.DownloadTuple;
-import ca.nrc.cadc.dlm.DownloadUtil;
 import ca.nrc.cadc.log.ServletLogInfo;
 import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -112,12 +109,11 @@ public class DispatcherServlet extends HttpServlet {
     private static final long serialVersionUID = 202008040800L;
 
     private static final Logger log = Logger.getLogger(DispatcherServlet.class);
-    private static int ONE_YEAR = 365 * 24 * 3600;
-
     public static String INTERNAL_FORWARD_PARAMETER = "downloadRequest";
     public static String URLS = "URL List";
     public static String HTMLLIST = "HTML List";
     public static String WEBSTART = "Java Webstart";
+    public static String SHELL_SCRIPT = "Shell Script";
 
 
     /// Used during JSP compilation
@@ -128,88 +124,30 @@ public class DispatcherServlet extends HttpServlet {
      * to save setting for future use.
      *
      * @param request  The HTTP Request.
-     * @param response The HTTP Response.
      * @return name of page to forward to, null if caller should offer choices to user
      */
-    public static String getDownloadMethod(HttpServletRequest request, HttpServletResponse response) {
+    public static String getDownloadMethod(HttpServletRequest request) {
         String method = request.getParameter(DLMInputHandler.PARAM_METHOD);
-        Cookie ck = null;
+        final String target;
 
-        // get cookie
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("DownloadMethod")) {
-                    ck = cookie;
-                }
-            }
-        }
-
-        String target = null;
-        if ((method == null) && (ck != null) && (ck.getValue() != null)) {
-            method = ck.getValue();
-            if ((URLS.equals(method) || WEBSTART.equals(method))
-                && (request.getParameter("execute") == null)) {
-                target = "/clearChoice.jsp";
-                if (URLS.equals(method)) {
-                    request.setAttribute("Description",
-                        "urlListDescription.html");
-                } else {
-                    request.setAttribute("Description",
-                        "javaWebStartDescription.html");
-                }
+        if (method != null) {
+            if (URLS.equals(method)) {
+                target = UrlListServlet.FILE_LIST_TARGET;
+            } else if (WEBSTART.equals(method)) {
+                target = "/javaWebstart";
             } else if (HTMLLIST.equals(method)) {
                 target = "/wget.jsp";
-            }
-        }
-
-        if (target == null) {
-            if (method != null) {
-                if (URLS.equals(method)) {
-                    target = UrlListServlet.FILE_LIST_TARGET;
-                } else if (WEBSTART.equals(method)) {
-                    target = "/javaWebstart";
-                } else if (HTMLLIST.equals(method)) {
-                    target = "/wget.jsp";
-                } else {
-                    return null;
-                }
+            } else if (SHELL_SCRIPT.equals(method)) {
+                target = ShellScriptServlet.SCRIPT_TARGET;
             } else {
-                // invalid method, tell page we did not forward
-                if (ck != null) {
-                    // delete cookie on client
-                    ck.setValue(null);
-                    ck.setMaxAge(0); // delete
-                    response.addCookie(ck);
-                }
                 return null;
             }
-        }
-        log.debug("Determined method: " + method);
-
-        if (request.getParameter("remember") != null) {
-            // set/edit cookie
-            if (ck == null) { // new
-                ck = new Cookie("DownloadMethod", method);
-                ck.setPath(request.getContextPath());
-                ck.setMaxAge(ONE_YEAR);
-                response.addCookie(ck);
-            } else if (!method.equals(ck.getValue())) { // changed
-                ck.setValue(method);
-                ck.setPath(request.getContextPath());
-                ck.setMaxAge(ONE_YEAR);
-                response.addCookie(ck);
-            }
         } else {
-            if ((request.getParameter("clearCookie") != null)
-                && (ck != null)) {
-                // remove cookie
-                log.debug("Delete cookie!!!");
-                ck.setPath(request.getContextPath());
-                ck.setMaxAge(0);
-                response.addCookie(ck);
-            }
+            // invalid method, tell page we did not forward
+            return null;
         }
+
+        log.debug("Determined method: " + method);
         return target;
     }
 
@@ -301,7 +239,7 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             // check for preferred/selected download method
-            String target = getDownloadMethod(request, response);
+            String target = getDownloadMethod(request);
             log.debug("Target: " + target);
             if (target == null) {
                 target = "/chooser.jsp";

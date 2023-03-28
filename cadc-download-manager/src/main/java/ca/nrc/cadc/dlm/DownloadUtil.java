@@ -69,14 +69,11 @@
 
 package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import ca.nrc.cadc.util.StringUtil;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +81,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 
-import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -168,21 +164,20 @@ public class DownloadUtil {
     }
 
     /**
-     * Generate an Iterator of DownloadDescriptors to be reported to caller. URLs and and
+     * Generate an Iterator of DownloadDescriptors to be reported to caller. URLs and
      * errors found while generating URLs are included in the DownloadDescriptors.
      * @param downloadRequest includes tuples with URIs to be translated to URLs
      * @return Iterator with DownloadDescriptors
      */
     public static Iterator<DownloadDescriptor> iterateURLs(DownloadRequest downloadRequest) {
 
-        final Set<URL> urls = new HashSet<>();
         final MultiDownloadGenerator gen = new MultiDownloadGenerator();
 
         final Set<DownloadTuple> dt = downloadRequest.getTuples();
         gen.setRunID(downloadRequest.runID);
 
         return new Iterator<DownloadDescriptor>() {
-            Iterator<DownloadTuple> outer = dt.iterator();
+            final Iterator<DownloadTuple> outer = dt.iterator();
             Iterator<DownloadDescriptor> inner = null;
 
             public boolean hasNext() {
@@ -198,13 +193,6 @@ public class DownloadUtil {
                     DownloadDescriptor dd = inner.next();
                     if (!inner.hasNext()) {
                         inner = null;
-                    }
-                    // TODO:urls is a Set now is this duplicates bit necessary?
-                    //if (removeDuplicates && dd.url != null && urls.contains(dd.url)) {
-                    //    return next();
-                    // }
-                    if (dd.url != null) {
-                        urls.add(dd.url);
                     }
                     return dd;
                 }
@@ -234,7 +222,4 @@ public class DownloadUtil {
             }
         };
     }
-
-
-
 }
