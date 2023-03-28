@@ -169,7 +169,7 @@ public class ShellScriptServlet extends HttpServlet {
         final RegistryClient registryClient = new RegistryClient();
         final URL baseOAuthServiceURL = registryClient.getServiceURL(oAuthServiceURI, Standards.SECURITY_METHOD_OPENID,
                                                                      AuthMethod.COOKIE);
-        final URL oAuthServiceURL = new URL(baseOAuthServiceURL.toString() + "?response_type=token");
+        final URL oAuthServiceURL = new URL(baseOAuthServiceURL.toString() + "/authorize?response_type=token");
 
         try {
             return Subject.doAs(subject, (PrivilegedExceptionAction<String>) () -> {
