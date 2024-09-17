@@ -10,14 +10,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.security.auth.Subject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 
 public class PackageServlet extends HttpServlet {
     private static final String PACKAGE_SERVICE_RESOURCE_ID_KEY = "org.opencadc.dlm.package-download.service.id";
@@ -39,10 +39,9 @@ public class PackageServlet extends HttpServlet {
      *
      * @param request  The HTTP Request
      * @param response The HTTP Response
-     * @throws IOException if stream processing fails
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
         final URI packageServiceURI = this.configuration.lookupServiceURI(PackageServlet.PACKAGE_SERVICE_RESOURCE_ID_KEY, null);
         if (packageServiceURI == null) {
             throw new IllegalStateException("No service configured to perform Package Downloads");
@@ -80,12 +79,25 @@ public class PackageServlet extends HttpServlet {
     }
 
     private Map<String, Object> getPayload(final HttpServletRequest request) {
-        final Map<String, Object> payload = request.getParameterMap().entrySet().stream()
-                      .filter(entry -> entry.getKey().equals(PackageServlet.REQUEST_PARAM_URI_KEY))
-                      .collect(Collectors.toMap(entry -> PackageServlet.ID_PAYLOAD_KEY, Map.Entry::getValue));
+        final Map<String, Object> payload = new HashMap<>();
 
-        payload.put(PackageServlet.RESPONSE_FORMAT_PAYLOAD_KEY,
-                    PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.get(request.getParameter(PackageServlet.REQUEST_PARAM_METHOD_KEY)));
+        final String[] publisherIDs = request.getParameterValues(PackageServlet.REQUEST_PARAM_URI_KEY);
+        if (publisherIDs == null || publisherIDs.length == 0) {
+            throw new IllegalArgumentException("Nothing specified to download.  Use tuple=<URI>.");
+        }
+
+        payload.put(PackageServlet.ID_PAYLOAD_KEY, Arrays.asList(publisherIDs));
+
+        final String requestedDeliveryMethod = request.getParameter(PackageServlet.REQUEST_PARAM_METHOD_KEY);
+
+        if (requestedDeliveryMethod == null) {
+            throw new IllegalArgumentException("Delivery method is mandatory.  Use method=<TAR,ZIP>");
+        } else if (!PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.containsKey(requestedDeliveryMethod.toUpperCase())) {
+            throw new IllegalArgumentException("Unknown method " + requestedDeliveryMethod + ". Use "
+                                               + Arrays.toString(PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.keySet().toArray(new String[0])));
+        }
+
+        payload.put(PackageServlet.RESPONSE_FORMAT_PAYLOAD_KEY, PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.get(requestedDeliveryMethod.toUpperCase()));
 
         return payload;
     }
@@ -95,6 +107,4 @@ public class PackageServlet extends HttpServlet {
         final AuthMethod authMethod = currentSubject == null ? AuthMethod.ANON : AuthenticationUtil.getAuthMethod(currentSubject);
         return registryClient.getServiceURL(packageServiceURI, Standards.PKG_10, authMethod);
     }
-
-
 }
