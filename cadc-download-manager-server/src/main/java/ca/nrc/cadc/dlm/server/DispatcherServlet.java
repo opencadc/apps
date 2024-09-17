@@ -114,6 +114,8 @@ public class DispatcherServlet extends HttpServlet {
     public static String HTMLLIST = "HTML List";
     public static String WEBSTART = "Java Webstart";
     public static String SHELL_SCRIPT = "Shell Script";
+    public static String TAR_PACKAGE = "TAR";
+    public static String ZIP_PACKAGE = "ZIP";
 
 
     /// Used during JSP compilation
@@ -205,7 +207,7 @@ public class DispatcherServlet extends HttpServlet {
     }
 
 
-    private class DownloadAction implements PrivilegedExceptionAction<Object> {
+    private static class DownloadAction implements PrivilegedExceptionAction<Object> {
         HttpServletRequest request;
         HttpServletResponse response;
 
@@ -218,14 +220,14 @@ public class DispatcherServlet extends HttpServlet {
             // forward
             DownloadRequest downloadReq = (DownloadRequest) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
 
-            // Set up input handling
-            DLMInputHandler inputHandler = new DLMInputHandler(request);
-
             if (downloadReq == null) {
+                // Set up input handling
+                DLMInputHandler inputHandler = new DLMInputHandler(request);
+
                 // external post
                 inputHandler.parseInput();
 
-                downloadReq = inputHandler.getDownloadRequest();
+                downloadReq = DLMInputHandler.getDownloadRequest();
                 Set<DownloadTuple> tupleList = downloadReq.getTuples();
                 List<Exception> validationErrList = downloadReq.getValidationErrors();
 
