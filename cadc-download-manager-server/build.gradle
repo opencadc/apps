@@ -33,7 +33,6 @@ dependencies {
     implementation 'commons-io:commons-io:[2.7,)'
 
     testImplementation 'junit:junit:4.13'
-    testImplementation 'org.easymock:easymock:3.6'
 }
 
 apply from: '../opencadc.gradle'
