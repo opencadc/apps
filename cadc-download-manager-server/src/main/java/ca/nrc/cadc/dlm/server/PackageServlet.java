@@ -13,6 +13,7 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import javax.security.auth.Subject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -81,24 +82,34 @@ public class PackageServlet extends HttpServlet {
 
     private Map<String, Object> getPayload(final HttpServletRequest request) {
         final Map<String, Object> payload = new HashMap<>();
+        final Map<String, String[]> requestParameters = request.getParameterMap();
 
-        final String[] publisherIDs = request.getParameterValues(PackageServlet.REQUEST_PARAM_URI_KEY);
+        final String[] publisherIDs = requestParameters.get(PackageServlet.REQUEST_PARAM_URI_KEY);
         if (publisherIDs == null || publisherIDs.length == 0) {
             throw new IllegalArgumentException("Nothing specified to download.  Use tuple=<URI>.");
         }
 
         payload.put(PackageServlet.ID_PAYLOAD_KEY, Arrays.asList(publisherIDs));
 
-        final String requestedDeliveryMethod = request.getParameter(PackageServlet.REQUEST_PARAM_METHOD_KEY);
+        final String[] requestedDeliveryMethodValues = requestParameters.get(PackageServlet.REQUEST_PARAM_METHOD_KEY);
+        final String requestedDeliveryMethod;
 
-        if (requestedDeliveryMethod == null) {
+        if (requestedDeliveryMethodValues == null || requestedDeliveryMethodValues.length != 1) {
             throw new IllegalArgumentException("Delivery method is mandatory.  Use method=<TAR,ZIP>");
-        } else if (!PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.containsKey(requestedDeliveryMethod.toUpperCase())) {
-            throw new IllegalArgumentException("Unknown method " + requestedDeliveryMethod + ". Use "
-                                               + Arrays.toString(PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.keySet().toArray(new String[0])));
+        } else {
+            requestedDeliveryMethod = requestedDeliveryMethodValues[0];
+            if (!PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.containsKey(requestedDeliveryMethod.toUpperCase())) {
+                throw new IllegalArgumentException("Unknown method " + requestedDeliveryMethod + ". Use "
+                                                   + Arrays.toString(PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.keySet().toArray(new String[0])));
+            }
         }
 
         payload.put(PackageServlet.RESPONSE_FORMAT_PAYLOAD_KEY, PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.get(requestedDeliveryMethod.toUpperCase()));
+
+        // Add whatever is leftover.
+        requestParameters.keySet().stream()
+                         .filter(key -> !Arrays.asList(PackageServlet.REQUEST_PARAM_METHOD_KEY, PackageServlet.REQUEST_PARAM_URI_KEY).contains(key))
+                         .forEach(key -> payload.put(key, requestParameters.get(key)));
 
         return payload;
     }
