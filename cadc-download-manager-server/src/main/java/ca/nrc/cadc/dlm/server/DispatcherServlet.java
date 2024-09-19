@@ -141,6 +141,10 @@ public class DispatcherServlet extends HttpServlet {
                 target = "/wget.jsp";
             } else if (SHELL_SCRIPT.equals(method)) {
                 target = ShellScriptServlet.SCRIPT_TARGET;
+            } else if (DispatcherServlet.TAR_PACKAGE.equals(method)) {
+                target = TARPackageServlet.TAR_PACKAGE_TARGET;
+            } else if (DispatcherServlet.ZIP_PACKAGE.equals(method)) {
+                target = ZIPPackageServlet.ZIP_PACKAGE_TARGET;
             } else {
                 return null;
             }
@@ -196,8 +200,7 @@ public class DispatcherServlet extends HttpServlet {
             throw ex;
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
-                RuntimeException rex = (RuntimeException) e;
-                throw rex;
+                throw (RuntimeException) e;
             }
         } finally {
             Long dt = System.currentTimeMillis() - start;

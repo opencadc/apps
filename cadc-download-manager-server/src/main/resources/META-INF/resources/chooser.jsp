@@ -173,8 +173,7 @@ var="langBundle" scope="request"/>
 <% }
 %>
 
-    <h3>CAOM-2 download options</h3>
-    <form action="<fmt:message key="CAOM_PACKAGE_ENDPOINT" bundle="${langBundle}"/>" method="POST">
+    <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
         <c:forEach var="tuple" items="<%= tupleList %>">
             <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
         </c:forEach>
@@ -202,22 +201,6 @@ var="langBundle" scope="request"/>
             <div class="span-2"></div>
             <div class="clear"></div>
             <br/>
-            </div>
-        <div class="clear"></div>
-    </form>
-
-    <h3>General download options</h3>
-    <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
-
-        <c:forEach var="tuple" items="<%= tupleList %>">
-            <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
-        </c:forEach>
-
-        <c:if test="<%= downloadReq.runID != null %>" >
-            <input type="hidden" name="runid" value="${downloadReq.runID}" />
-        </c:if>
-
-        <div class="grid-12">
             <c:if test="<%=enableWebstart%>" >
                 <div class="span-4">
                     <button class="button font-medium" name="method" value="<%= DispatcherServlet.WEBSTART %>" type="submit"><%= DispatcherServlet.WEBSTART %></button>

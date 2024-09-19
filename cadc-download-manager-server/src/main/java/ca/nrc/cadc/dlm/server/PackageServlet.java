@@ -3,37 +3,32 @@ package ca.nrc.cadc.dlm.server;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.config.ApplicationConfiguration;
+import ca.nrc.cadc.dlm.DownloadRequest;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedAction;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 
-public class PackageServlet extends HttpServlet {
+public abstract class PackageServlet extends HttpServlet {
     private static final String PACKAGE_SERVICE_RESOURCE_ID_KEY = "org.opencadc.dlm.package-download.service.id";
     private static final String RESPONSE_FORMAT_PAYLOAD_KEY = "RESPONSEFORMAT";
     private static final String ID_PAYLOAD_KEY = "ID";
-    private static final String REQUEST_PARAM_URI_KEY = "tuple";
-    private static final String REQUEST_PARAM_METHOD_KEY = "method";
-    private static final Map<String, String> METHOD_TO_CONTENT_TYPE_MAP = new HashMap<>();
+    private static final String RUN_ID_PAYLOAD_KEY = "runid";
 
-    private final ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
-
-    static {
-        PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.put(DispatcherServlet.TAR_PACKAGE, "application/x-tar");
-        PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.put(DispatcherServlet.ZIP_PACKAGE, "application/zip");
-    }
+    final ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
 
 
     /**
@@ -52,6 +47,12 @@ public class PackageServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handle creating a payload and obtaining a redirect URL from the main service.
+     * @param request               The HTTP Request.
+     * @param response              The HTTP Response.
+     * @param packageServiceURI     The URI of the configured
+     */
     void doRedirect(final HttpServletRequest request, final HttpServletResponse response, final URI packageServiceURI) {
         final Subject currentSubject = AuthenticationUtil.getCurrentSubject();
         final URL packageServiceURL = lookupServiceURL(packageServiceURI, currentSubject);
@@ -81,35 +82,29 @@ public class PackageServlet extends HttpServlet {
     }
 
     private Map<String, Object> getPayload(final HttpServletRequest request) {
-        final Map<String, Object> payload = new HashMap<>();
-        final Map<String, String[]> requestParameters = request.getParameterMap();
+        final DownloadRequest downloadRequest = getDownloadRequest(request);
 
-        final String[] publisherIDs = requestParameters.get(PackageServlet.REQUEST_PARAM_URI_KEY);
-        if (publisherIDs == null || publisherIDs.length == 0) {
+        final Map<String, Object> payload = new HashMap<>();
+
+        final List<String> publisherIDs =
+            downloadRequest.getTuples().stream().map(downloadTuple -> downloadTuple.getID().toString()).collect(Collectors.toList());
+
+        if (publisherIDs.isEmpty()) {
             throw new IllegalArgumentException("Nothing specified to download.  Use tuple=<URI>.");
         }
 
-        payload.put(PackageServlet.ID_PAYLOAD_KEY, Arrays.asList(publisherIDs));
+        payload.put(PackageServlet.ID_PAYLOAD_KEY, publisherIDs);
 
-        final String[] requestedDeliveryMethodValues = requestParameters.get(PackageServlet.REQUEST_PARAM_METHOD_KEY);
-        final String requestedDeliveryMethod;
-
-        if (requestedDeliveryMethodValues == null || requestedDeliveryMethodValues.length != 1) {
-            throw new IllegalArgumentException("Delivery method is mandatory.  Use method=<TAR,ZIP>");
-        } else {
-            requestedDeliveryMethod = requestedDeliveryMethodValues[0];
-            if (!PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.containsKey(requestedDeliveryMethod.toUpperCase())) {
-                throw new IllegalArgumentException("Unknown method " + requestedDeliveryMethod + ". Use "
-                                                   + Arrays.toString(PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.keySet().toArray(new String[0])));
-            }
+        final String contentType = getContentType();
+        if (!StringUtil.hasText(contentType)) {
+            throw new IllegalStateException("Poorly configured package type (no content type specified)");
         }
 
-        payload.put(PackageServlet.RESPONSE_FORMAT_PAYLOAD_KEY, PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.get(requestedDeliveryMethod.toUpperCase()));
+        payload.put(PackageServlet.RESPONSE_FORMAT_PAYLOAD_KEY, contentType);
 
-        // Add whatever is leftover.
-        requestParameters.keySet().stream()
-                         .filter(key -> !Arrays.asList(PackageServlet.REQUEST_PARAM_METHOD_KEY, PackageServlet.REQUEST_PARAM_URI_KEY).contains(key))
-                         .forEach(key -> payload.put(key, requestParameters.get(key)));
+        if (StringUtil.hasText(downloadRequest.runID)) {
+            payload.put(PackageServlet.RUN_ID_PAYLOAD_KEY, downloadRequest.runID);
+        }
 
         return payload;
     }
@@ -119,4 +114,17 @@ public class PackageServlet extends HttpServlet {
         final AuthMethod authMethod = currentSubject == null ? AuthMethod.ANON : AuthenticationUtil.getAuthMethod(currentSubject);
         return registryClient.getServiceURL(packageServiceURI, Standards.PKG_10, authMethod);
     }
+
+    private DownloadRequest getDownloadRequest(final HttpServletRequest request) {
+        final DownloadRequest downloadReq = (DownloadRequest) request.getAttribute("downloadRequest");
+        downloadReq.runID = (String) request.getAttribute("runid");
+
+        return downloadReq;
+    }
+
+    /**
+     * Pull the specific content type to set in the payload.
+     * @return      String content-type, never null.
+     */
+    abstract String getContentType();
 }
