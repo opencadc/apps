@@ -24,12 +24,15 @@ dependencies {
     implementation 'org.opencadc:cadc-registry:[1.5,2.0)'
     implementation 'org.opencadc:cadc-util:[1.6,2.0)'
     implementation 'org.opencadc:cadc-uws:[1.0,2.0)'
-    implementation 'org.opencadc:cadc-vos:[1.2.2,2.0)'
+
+    // Locking down cadc-vos to a version that is JDK 1.8 compatible.
+    // Use version >= 2.x when JDK 11 is supported.
+    implementation 'org.opencadc:cadc-vos:1.2.3'
 
     // cadc-uws-server used only for a random string generator
     testImplementation 'org.opencadc:cadc-uws-server:[1.1,)'
     testImplementation 'junit:junit:[4.0,)'
-    testImplementation 'org.easymock:easymock:3.6'
+    testImplementation 'org.easymock:easymock:[5.4,6.0)'
 }
 
 // exclude stuff not needed for a client application but pulled in by cadc-util

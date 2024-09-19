@@ -114,6 +114,8 @@ public class DispatcherServlet extends HttpServlet {
     public static String HTMLLIST = "HTML List";
     public static String WEBSTART = "Java Webstart";
     public static String SHELL_SCRIPT = "Shell Script";
+    public static String TAR_PACKAGE = "TAR";
+    public static String ZIP_PACKAGE = "ZIP";
 
 
     /// Used during JSP compilation
@@ -139,6 +141,10 @@ public class DispatcherServlet extends HttpServlet {
                 target = "/wget.jsp";
             } else if (SHELL_SCRIPT.equals(method)) {
                 target = ShellScriptServlet.SCRIPT_TARGET;
+            } else if (DispatcherServlet.TAR_PACKAGE.equals(method)) {
+                target = TARPackageServlet.TAR_PACKAGE_TARGET;
+            } else if (DispatcherServlet.ZIP_PACKAGE.equals(method)) {
+                target = ZIPPackageServlet.ZIP_PACKAGE_TARGET;
             } else {
                 return null;
             }
@@ -194,8 +200,7 @@ public class DispatcherServlet extends HttpServlet {
             throw ex;
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
-                RuntimeException rex = (RuntimeException) e;
-                throw rex;
+                throw (RuntimeException) e;
             }
         } finally {
             Long dt = System.currentTimeMillis() - start;
@@ -205,7 +210,7 @@ public class DispatcherServlet extends HttpServlet {
     }
 
 
-    private class DownloadAction implements PrivilegedExceptionAction<Object> {
+    private static class DownloadAction implements PrivilegedExceptionAction<Object> {
         HttpServletRequest request;
         HttpServletResponse response;
 
@@ -218,14 +223,14 @@ public class DispatcherServlet extends HttpServlet {
             // forward
             DownloadRequest downloadReq = (DownloadRequest) request.getAttribute(INTERNAL_FORWARD_PARAMETER);
 
-            // Set up input handling
-            DLMInputHandler inputHandler = new DLMInputHandler(request);
-
             if (downloadReq == null) {
+                // Set up input handling
+                DLMInputHandler inputHandler = new DLMInputHandler(request);
+
                 // external post
                 inputHandler.parseInput();
 
-                downloadReq = inputHandler.getDownloadRequest();
+                downloadReq = DLMInputHandler.getDownloadRequest();
                 Set<DownloadTuple> tupleList = downloadReq.getTuples();
                 List<Exception> validationErrList = downloadReq.getValidationErrors();
 

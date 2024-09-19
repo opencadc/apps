@@ -88,8 +88,6 @@
     Set<DownloadTuple> tupleList = downloadReq.getTuples();
     List<Exception> validationErrList = downloadReq.getValidationErrors();
 
-    String runid = downloadReq.runID;
-
     String requestHeaderLang = request.getHeader("Content-Language");
     if (requestHeaderLang == null) {
         requestHeaderLang = "en";
@@ -156,7 +154,7 @@ var="langBundle" scope="request"/>
     <br/>
 
 <%-- Display any validation errors found --%>
-<%     if ( validationErrList.size() > 0 ) {
+<%     if (!validationErrList.isEmpty()) {
 
 %>
     <p class="grid-12 color-attention">
@@ -176,7 +174,6 @@ var="langBundle" scope="request"/>
 %>
 
     <form action="<fmt:message key="DOWNLOAD_LINK" bundle="${langBundle}"/>" method="POST">
-
         <c:forEach var="tuple" items="<%= tupleList %>">
             <input type="hidden" name="tuple" value="${dtFormat.format(tuple)}" />
         </c:forEach>
@@ -186,6 +183,24 @@ var="langBundle" scope="request"/>
         </c:if>
 
         <div class="grid-12">
+            <div class="span-4">
+                <button class="button font-medium" name="method" value="<%= DispatcherServlet.TAR_PACKAGE %>" type="submit"><fmt:message key="TAR_PACKAGE_BUTTON" bundle="${langBundle}"/></button>
+            </div>
+            <div class="span-6">
+                <fmt:message key="TAR_PACKAGE_DESCRIPTION" bundle="${langBundle}"/>
+            </div>
+            <div class="span-2"></div>
+            <div class="clear"></div>
+            <br/>
+            <div class="span-4">
+                <button class="button font-medium" name="method" value="<%= DispatcherServlet.ZIP_PACKAGE %>" type="submit"><fmt:message key="ZIP_PACKAGE_BUTTON" bundle="${langBundle}"/></button>
+            </div>
+            <div class="span-6">
+                <fmt:message key="ZIP_PACKAGE_DESCRIPTION" bundle="${langBundle}"/>
+            </div>
+            <div class="span-2"></div>
+            <div class="clear"></div>
+            <br/>
             <c:if test="<%=enableWebstart%>" >
                 <div class="span-4">
                     <button class="button font-medium" name="method" value="<%= DispatcherServlet.WEBSTART %>" type="submit"><%= DispatcherServlet.WEBSTART %></button>
