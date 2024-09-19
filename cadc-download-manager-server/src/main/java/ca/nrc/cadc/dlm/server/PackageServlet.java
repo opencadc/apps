@@ -28,6 +28,7 @@ public class PackageServlet extends HttpServlet {
     private static final Map<String, String> METHOD_TO_CONTENT_TYPE_MAP = new HashMap<>();
 
     private final ApplicationConfiguration configuration = new ApplicationConfiguration(DispatcherServlet.DEFAULT_CONFIG_FILE_PATH);
+
     static {
         PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.put(DispatcherServlet.TAR_PACKAGE, "application/x-tar");
         PackageServlet.METHOD_TO_CONTENT_TYPE_MAP.put(DispatcherServlet.ZIP_PACKAGE, "application/zip");
