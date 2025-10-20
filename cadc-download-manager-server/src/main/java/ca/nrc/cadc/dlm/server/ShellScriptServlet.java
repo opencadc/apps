@@ -165,7 +165,7 @@ public class ShellScriptServlet extends HttpServlet {
 
     private String getToken(final Subject subject) throws Exception {
         final LocalAuthority localAuthority = new LocalAuthority();
-        final URI oAuthServiceURI = localAuthority.getServiceURI(Standards.SECURITY_METHOD_OPENID.toString());
+        final URI oAuthServiceURI = localAuthority.getResourceID(Standards.SECURITY_METHOD_OPENID);
         final RegistryClient registryClient = new RegistryClient();
         final URL baseOAuthServiceURL = registryClient.getServiceURL(oAuthServiceURI, Standards.SECURITY_METHOD_OPENID,
                                                                      AuthMethod.COOKIE);
