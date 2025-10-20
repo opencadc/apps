@@ -68,7 +68,7 @@
 
 package ca.nrc.cadc.dlm;
 
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Shape;
 import java.net.URI;
 
@@ -79,7 +79,7 @@ public class DownloadTuple {
 
     // These values can all be null
     public Shape posCutout;
-    public DoubleInterval bandCutout;
+    public Interval<Double> bandCutout;
     public String pixelCutout;
     public String label;
 
@@ -106,7 +106,7 @@ public class DownloadTuple {
      * @param pixelCutout (Optional) String to be used for pixel cutout (passed through without validation)
      * @param label (Optional) sent as LABEL parameter to SODA calls
      */
-    public DownloadTuple(URI id, Shape posCutout, DoubleInterval bandCutout, String pixelCutout, String label) {
+    public DownloadTuple(URI id, Shape posCutout, Interval<Double> bandCutout, String pixelCutout, String label) {
         if (id == null) {
             throw new IllegalArgumentException("id can not be null");
         }

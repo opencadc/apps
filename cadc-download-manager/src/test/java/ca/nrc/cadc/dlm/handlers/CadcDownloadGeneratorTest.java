@@ -32,6 +32,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.dlm.DownloadDescriptor;
@@ -41,13 +42,16 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 /**
@@ -59,11 +63,19 @@ public class CadcDownloadGeneratorTest {
         Log4jInit.setLevel("ca.nrc.cadc.dlm.handlers", Level.DEBUG);
     }
 
-    URL baseURL;
+    @Before
+    public void setUp() {
+        System.setProperty(RegistryClient.class.getName() + ".host", "ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca");
+    }
 
-    public CadcDownloadGeneratorTest() {
+    @After
+    public void tearDown() {
+        System.clearProperty(RegistryClient.class.getName() + ".host");
+    }
+
+    private static URL getBaseURL() {
         final RegistryClient rc = new RegistryClient();
-        this.baseURL = rc.getServiceURL(CadcResolver.STORAGE_INVENTORY_URI, Standards.SI_FILES, AuthMethod.ANON);
+        return rc.getServiceURL(CadcResolver.STORAGE_INVENTORY_URI, Standards.SI_FILES, AuthMethod.ANON);
     }
 
     @Test
@@ -78,6 +90,7 @@ public class CadcDownloadGeneratorTest {
             Assert.assertTrue(descriptorIterator.hasNext());
 
             final DownloadDescriptor dd = descriptorIterator.next();
+            final URL baseURL = CadcDownloadGeneratorTest.getBaseURL();
 
             Assert.assertEquals("uri", uri.toASCIIString(), dd.uri);
             Assert.assertEquals("protocol", baseURL.getProtocol(), dd.url.getProtocol());
@@ -110,6 +123,7 @@ public class CadcDownloadGeneratorTest {
             log.debug(dd.status);
             Assert.assertEquals(DownloadDescriptor.OK, dd.status);
 
+            final URL baseURL = CadcDownloadGeneratorTest.getBaseURL();
             Assert.assertEquals("uri", uri.toASCIIString(), dd.uri);
             Assert.assertEquals("protocol", baseURL.getProtocol(), dd.url.getProtocol());
             Assert.assertEquals("hostname", baseURL.getHost(), dd.url.getHost());
@@ -141,6 +155,8 @@ public class CadcDownloadGeneratorTest {
             log.debug(dd.status);
             Assert.assertEquals(DownloadDescriptor.OK, dd.status);
 
+            final URL baseURL = CadcDownloadGeneratorTest.getBaseURL();
+
             Assert.assertEquals("uri", uri.toASCIIString(), dd.uri);
             Assert.assertEquals("protocol", baseURL.getProtocol(), dd.url.getProtocol());
             Assert.assertEquals("hostname", baseURL.getHost(), dd.url.getHost());
@@ -162,7 +178,7 @@ public class CadcDownloadGeneratorTest {
             final URI uri = URI.create("cadc:archiveName/file_1.fits");
 
             final DownloadTuple dt = new DownloadTuple(uri);
-            dt.bandCutout = new DoubleInterval(14.6D, 64.1D);
+            dt.bandCutout = new Interval<>(14.6D, 64.1D);
 
             final Polygon polygon = new Polygon();
             polygon.getVertices().add(new Point(10.0D, 10.0D));
@@ -179,6 +195,8 @@ public class CadcDownloadGeneratorTest {
             DownloadDescriptor dd = descriptorIterator.next();
             log.debug(dd.status);
             Assert.assertEquals(DownloadDescriptor.OK, dd.status);
+
+            final URL baseURL = CadcDownloadGeneratorTest.getBaseURL();
 
             Assert.assertEquals("uri", uri.toASCIIString(), dd.uri);
             Assert.assertEquals("protocol", baseURL.getProtocol(), dd.url.getProtocol());
@@ -219,10 +237,6 @@ public class CadcDownloadGeneratorTest {
     }
 
     private static String encodeString(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException ignore) {
-        }
-        return null;
+        return URLEncoder.encode(str, StandardCharsets.UTF_8);
     }
 }
