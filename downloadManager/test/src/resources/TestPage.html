@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+
+  <h2>DataLink Service: caom scheme</h2>
+
+  <!-- only one test without RUNID to make sure it is not required -->
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:IRIS/f232h000/IRAS-25um" />
+      <input type="submit" value="caom scheme" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:IRIS/f232h000/IRAS-25um" />
+      <input type="hidden" name="runid" value="TEST" />
+      <input type="submit" value="caom scheme, runid" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:IRIS/f232h000/IRAS-25um" />
+      <input type="hidden" name="runid" value="TEST" />
+      <input type="hidden" name="cutout" value="CIRCLE ICRS 340.6 0.27 1.0" /> <!-- currently STC -->
+
+      <input type="submit" value="caom scheme, runid, position cutout" />
+  </form>
+
+ <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:CFHTTERAPIX/CFHTLS_W_220930+002300/CFHTLS_W_z_220930+002300_T0007_MEDIAN" />
+      <input type="hidden" name="runid" value="TEST" />
+      <input type="submit" value="caom scheme, + sign in URI" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:CFHTTERAPIX/CFHTLS_W_220930+002300/CFHTLS_W_z_220930+002300_T0007_MEDIAN" />
+      <input type="hidden" name="runid" value="TEST" />
+      <input type="hidden" name="cutout" value="Circle ICRS 332.37 0.38 0.1" />
+      <input type="submit" value="caom scheme, + sign in URI, position cutout" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:IRIS/f232h000/IRAS-25um" />
+      <input type="hidden" name="cutout" value="CIRCLE ICRS 12 34 1.0" />
+      <input type="submit" value="caom scheme, position cutout miss" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+        <input type="hidden" name="uri" value="caom:CGPS/MA1_DRAO-ST/HI-line" />
+        <input type="hidden" name="cutout" value="Circle ICRS 25.0 60.0 0.5 SpectralInterval 211.0 211.05 mm" />
+        <input type="submit" value="caom scheme, position+energy cutout" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="caom:IRIS/f232h000/IRAS-25um" />
+      <input type="hidden" name="uri" value="caom:BLAST/BLASTabell31122006-12-21/REDUCED_250_2009-03-06" />
+      <input type="hidden" name="productType" value="science" />
+
+      <input type="submit" value="caom scheme, science only" />
+  </form>
+
+  <h2>VOSpace manifest tests</h2>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="/vospace/nodes/path/to/testdir?view=manifest" />
+      <input type="submit" value="manifest test" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="/dlm-test.manifest" />
+      <input type="submit" value="BROKEN: manifest test - no dest" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="/dlm-test-dest.manifest" />
+      <input type="submit" value="BROKEN: manifest test - with dest" />
+  </form>
+  
+  <h2>OLA en/fr tests</h2>
+
+  <form action="/en/download" method="POST">
+      <input type="hidden" name="uri" value="ad:IRIS/I232B2H0" />
+      <input type="submit" value="en" />
+  </form>
+
+  <form action="/fr/telecharger" method="POST">
+      <input type="hidden" name="uri" value="ad:IRIS/I232B2H0" />
+      <input type="submit" value="fr" />
+  </form>
+
+  <h2>Data web service: ad scheme</h2>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="ad:IRIS/I232B2H0" />
+      <input type="submit" value="ad scheme" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="fileClass" value="FOO1" />
+      <input type="hidden" name="fileClass" value="FOO2" />
+      <input type="hidden" name="FOO1" value="ad:HSTCA/J8FU02030_DRZ" />
+      <input type="hidden" name="FOO2" value="ad:HST/U27R9G01B.1" />
+      <input type="hidden" name="FOO3" value="ad:HST/U27R9G01B.2" />
+      <input type="hidden" name="uri" value="ad:CFHT/535741p" />
+      <input type="submit" value="fileClass + URIs" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="fileClass" value="FOO1" />
+      <input type="hidden" name="FOO1" value="HSTCA/J8FU02030_DRZ" />
+      <input type="hidden" name="FOO2" value="CFHT/535741p" />
+      <input type="submit" value="1 fileClass with 2 files" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="ad:HSTCA/J8FU02030_DRZ" />
+      <input type="hidden" name="uri" value="ad:HST/U27R9G01B.2,ad:HST/U27R9G01B.3" />
+      <input type="hidden" name="uri" value="ad:CFHT/535741p" />
+      <input type="submit" value="4 uris in 3 uri params, comma-separated compatibility test" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="fileId" value="HSTCA/J8FU02030_DRZ,HLA/HST_01070_01_WFPC2_F555W_PC_01_512.JPG" />
+      <input type="hidden" name="fileId" value="HST/U27R9G01B.2,HST/U27R9G01B.3" />
+      <input type="hidden" name="fileId" value="CFHT/535741p" />
+      <input type="hidden" name="fileId" value="FOO/bogusfile" />
+      <input type="hidden" name="logkey" value="testkey" />
+      <input type="hidden" name="logvalue" value="testvalue" />
+
+      <input type="submit" value="fileID, logkey, logvalue compatibility test" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="fileId" value="ad:CFHT/535741p" /> <!-- fileId with ad scheme -->
+      <input type="hidden" name="uri" value="CFHT/535741p" />       <!-- no scheme -->
+      <input type="hidden" name="uri" value="ad:FOO/bogusfile" />   <!-- unknown archive -->
+      <input type="hidden" name="uri" value="scheme:foo/bar" />     <!-- unknown scheme -->
+      <input type="submit" value="various errors" />
+  </form>
+ 
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="ad:CFHTSG/D1U.2008A#cutout=%5B5000%3A6000%2C5000%3a6000%5D" />
+      <input type="submit" value="uri with embedded cutout fragment" />
+  </form>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="ad:CFHTSG/D1U.2008A" />
+      <input type="hidden" name="fragment" value="cutout=[5000,6000;5000,6000]" />
+      <input type="submit" value="uri with fragment=cutout" />
+  </form>
+  
+  
+  <!--
+  need a proprietary test file here
+  -->
+  
+  <form action="http://scapa/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="ad:CFHT/1425638o" />
+      <input type="submit" value="proprietary data" />
+  </form>
+  
+  
+  <h2>miscellaneous tests</h2>
+  
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="http://www.google.com/" />
+
+      <input type="submit" value="http scheme in URI" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="hidden" name="uri" value="baz:foo/bar" />
+
+      <input type="submit" value="unknown scheme in URI" />
+  </form>
+
+  <form action="/downloadManager/download" method="POST">
+      <input type="submit" value="empty submit" />
+  </form>
+
+  </body>
+</html>

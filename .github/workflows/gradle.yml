@@ -10,21 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v3
+    - uses: actions/checkout@v5
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
       with:
-        java-version: 8
+        java-version: 21
         distribution: temurin
 
-    - name: build and test cadc-app-kit
-      run: cd cadc-app-kit && ../gradlew --info clean build javadoc checkstyleMain install
-    
     - name: build and test cadc-download-manager
       run: cd cadc-download-manager && ../gradlew --info clean build javadoc checkstyleMain install
 
-    - name: build and test cadc-upload-manager
-      run: cd cadc-upload-manager && ../gradlew --info clean build javadoc checkstyleMain install
-      
     - name: build and test cadc-download-manager-server
-      run: cd cadc-download-manager-server && ../gradlew --info clean build javadoc checkstyleMain install 
+      run: cd cadc-download-manager-server && ../gradlew --info clean build javadoc checkstyleMain install
+
+    - name: build and test downloadManager application
+      run: cd downloadManager && ../gradlew --info clean build javadoc checkstyleMain

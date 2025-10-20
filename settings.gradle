@@ -1,2 +1,2 @@
 rootProject.name = 'apps'
-include('cadc-app-kit', 'cadc-download-manager', 'cadc-download-manager-server', 'cadc-upload-manager')
+include('cadc-download-manager', 'cadc-download-manager-server',  'downloadManager')

@@ -1,0 +1,109 @@
+<web-app id="downloadManager" version="2.5"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+  <display-name>downloadManager</display-name>
+
+  <servlet>
+    <servlet-name>logControl</servlet-name>
+    <servlet-class>ca.nrc.cadc.log.LogControlServlet</servlet-class>
+    <init-param>
+      <param-name>logLevel</param-name>
+      <param-value>info</param-value>
+    </init-param>
+    <init-param>
+      <param-name>logLevelPackages</param-name>
+      <param-value>
+        ca.nrc.cadc.dali
+        ca.nrc.cadc.tap
+        org.opencadc.alma
+        org.opencadc.tap
+        ca.nrc.cadc.rest
+        ca.nrc.cadc.uws
+      </param-value>
+    </init-param>
+    <init-param>
+      <param-name>logControlProperties</param-name>
+      <param-value>dlm-logControl.properties</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <!-- the standard servlet from OpenCADC -->
+  <servlet>
+    <servlet-name>download</servlet-name>
+    <servlet-class>ca.nrc.cadc.dlm.server.DispatcherServlet</servlet-class>
+    <load-on-startup>2</load-on-startup>
+  </servlet>
+
+  <servlet>
+    <servlet-name>JavaWebstart</servlet-name>
+    <servlet-class>ca.nrc.cadc.dlm.server.JavaWebStartServlet</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>TARPackageServlet</servlet-name>
+    <servlet-class>ca.nrc.cadc.dlm.server.TARPackageServlet</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>ZIPPackageServlet</servlet-name>
+    <servlet-class>ca.nrc.cadc.dlm.server.ZIPPackageServlet</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>urlList</servlet-name>
+    <servlet-class>ca.nrc.cadc.dlm.server.UrlListServlet</servlet-class>
+  </servlet>
+
+  <servlet>
+    <servlet-name>shellScript</servlet-name>
+    <servlet-class>ca.nrc.cadc.dlm.server.ShellScriptServlet</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>download</servlet-name>
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>JavaWebstart</servlet-name>
+    <url-pattern>/javaWebstart</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>JavaWebstart</servlet-name>
+    <url-pattern>/DownloadManager.jnlp</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>default</servlet-name>
+    <url-pattern>/codebase/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>TARPackageServlet</servlet-name>
+    <url-pattern>/tar-package</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>ZIPPackageServlet</servlet-name>
+    <url-pattern>/zip-package</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>urlList</servlet-name>
+    <url-pattern>/urlList</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>shellScript</servlet-name>
+    <url-pattern>/shellScript</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>logControl</servlet-name>
+    <url-pattern>/logControl</url-pattern>
+  </servlet-mapping>
+
+</web-app>

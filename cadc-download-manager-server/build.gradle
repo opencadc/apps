@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'maven'
     id 'maven-publish'
     id 'checkstyle'
 }
@@ -12,11 +11,14 @@ repositories {
 
 version = '1.6.0'
 group = 'org.opencadc'
-sourceCompatibility = 1.8
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 description = 'OpenCADC DownloadManager server library'
 def git_url = 'https://github.com/opencadc/apps'
-
 
 
 dependencies {
