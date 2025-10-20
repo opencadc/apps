@@ -62,66 +62,31 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 4 $
  *
  ************************************************************************
  */
 
-package ca.nrc.cadc.dlm;
+package ca.nrc.cadc.dlm.server;
 
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.dali.Shape;
-import java.net.URI;
+/**
+ * Use variables in this class to set headers and footers for the
+ * Download Manager JSP pages.
+ * If skinURL is provided, it must utilize the following structure:
+ * - skinURL/htmlHead
+ * - skinURL/bodyHeader
+ * - skinURL/bodyFooter
+ * If not empty, headerURL and footerURL take precedence over skinURL.
+ * TODO: Likely not used.  Could be destroyed.
+ */
+public class SkinUtil {
+    public static String skinURL = "";
 
-public class DownloadTuple {
-
-    // Only value that is required is the id.
-    private final URI id;
-
-    // These values can all be null
-    public Shape posCutout;
-    public Interval<Double> bandCutout;
-    public String pixelCutout;
-    public String label;
-
-    /**
-     * ctor
-     * @param id URI of download
+    /*
+     * TODO: need to get LastChangedDate and requestHeaderLang filtered in
+     * TODO: String headerURL = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/" + requestHeaderLang
+     * TODO: + "/_page_header.html?LAST_MOD=$LastChangedDate$";
      */
-    public DownloadTuple(URI id) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        this.id = id;
-        this.posCutout = null;
-        this.bandCutout = null;
-        this.pixelCutout = null;
-        this.label = null;
-    }
-
-    /**
-     * ctor
-     * @param id URI of download
-     * @param posCutout (Optional) DALI Shape to be used for position cutout (POS parameter)
-     * @param bandCutout (Optional) DoubleInterval to be used for band cutout (BAND parameter)
-     * @param pixelCutout (Optional) String to be used for pixel cutout (passed through without validation)
-     * @param label (Optional) sent as LABEL parameter to SODA calls
-     */
-    public DownloadTuple(URI id, Shape posCutout, Interval<Double> bandCutout, String pixelCutout, String label) {
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
-        }
-        if (label != null && posCutout == null) {
-            throw new IllegalArgumentException("cutout can not be null if label is defined.");
-        }
-        this.id = id;
-        this.posCutout = posCutout;
-        this.bandCutout = bandCutout;
-        this.pixelCutout = pixelCutout;
-        this.label = label;
-    }
-
-    public URI getID() {
-        return id;
-    }
-
+    public static String headerURL = "https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/en/_page_header.html?LAST_MOD=$LastChangedDate$";
+    public static String footerURL = "https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/includes/_page_footer_js.html";
 }

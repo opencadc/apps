@@ -1,0 +1,72 @@
+plugins {
+    id 'war'
+    id 'checkstyle'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+    providedCompile 'javax.servlet:javax.servlet-api:3.1.+'
+
+    implementation 'org.apache.commons:commons-configuration2:[2.7,3.0)'
+    implementation 'org.apache.commons:commons-lang3:[3.18,4.0)'
+    implementation 'org.opencadc:cadc-access-control-identity:[1.1.0,2.0)'
+    implementation 'org.opencadc:cadc-dali:[1.2.15,2.0)'
+    implementation 'org.opencadc:cadc-download-manager-server:[1.6.0,)'
+    implementation 'org.opencadc:cadc-log:[1.1.1,)'
+    implementation 'org.opencadc:cadc-util:[1.6.0,2.0)'
+
+    runtimeOnly 'org.opencadc:cadc-access-control-identity:[1.1.0,)'
+    runtimeOnly 'org.opencadc:cadc-download-manager:1.5.2'
+    runtimeOnly 'jstl:jstl:1.2'
+
+    testImplementation 'org.opencadc:cadc-download-manager:1.5.2'
+    testImplementation 'junit:junit:4.+'
+}
+
+ext {
+    intTest_default_web_app_url = 'https://rc-www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca'
+    intTest_default_web_app_endpoint = '/download'
+}
+
+war {
+    from(file('build/tmp')) {
+        include 'codebase/*.jar'
+    }
+}
+
+tasks.register('duplicateENWar', Copy) {
+    from 'build/libs/downloadManager.war'
+    into 'build/libs'
+    rename('downloadManager.war', 'en#download.war')
+}
+
+tasks.register('duplicateFRWar', Copy) {
+    from 'build/libs/downloadManager.war'
+    into 'build/libs'
+    rename('downloadManager.war', 'fr#telecharger.war')
+}
+
+configurations {
+    intTestImplementation.extendsFrom testImplementation
+    intTestRuntime.extendsFrom testRuntime
+}
+
+tasks.register('compileDeps', DependencyReportTask) {
+    configurations = [project.configurations.implementation] as Set
+}
+
+duplicateFRWar.dependsOn(duplicateENWar)
+
+build.finalizedBy(duplicateENWar, duplicateFRWar)
+assemble.finalizedBy(duplicateENWar, duplicateFRWar)
+
+apply from: '../opencadc.gradle'

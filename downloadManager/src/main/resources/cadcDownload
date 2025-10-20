@@ -1,0 +1,216 @@
+#!/bin/bash
+
+VERBOSE=1
+
+usage()
+{
+    echo "cadcDownload 0.1 (c) Canadian Astronomy Data Centre"
+    echo
+    echo "This is a simple download script that uses curl to download a file"
+    echo "and md5sum to verify the downloaded file. The md5 check is performed"
+    echo "if the --md5 option is given and the http headers include a"
+    echo "Content-MD5 value. The script can also read a list of URLs from a text"
+    echo "file and download all the files."
+    echo
+    echo "* Usage: "
+    echo "       cadcDownload [--md5] <url>"
+    echo "       cadcDownload [--md5] <file with urls>"
+    echo
+    echo "* Output: "
+    echo "        <url> <filename> [<md5 from http header>]" 
+    echo "        <url> FAIL <reason>"
+    echo "        <url> <filename> [<md5 from http header>] FAIL <reason>"
+    echo 
+    echo "When doing bulk downloads (many files), it is best to redirect the output"
+    echo "to a file (output described abvoe). To retry the failed downloads, simply"
+    echo "extract the URLs that FAILED to create a new manifest file, e.g.:"
+    echo
+    echo "> cadcDownload --md5 manifest1.txt > output1.log"
+    echo
+    echo "## maybe examine output1.log to see what kinds of failures occurred ##"
+    echo
+    echo "> grep FAIL output1.log | awk '{print \$1}' > manifest2.txt" 
+    echo
+    echo "> cadcDownload --md5 manifest2.txt > output2.log"
+    echo
+    echo "* Authentication: "
+    echo
+    echo "The cadcDownload script calls curl with the --netrc file option. This"
+    echo "means that if challenged for username and password, curl will read the"
+    echo "username and password for the server from this file (see: man netrc)."
+    echo "To download data from CADC (including VOSpace) you will need the following"
+    echo "servers in your .netrc:"
+    echo
+    echo "machine www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca login <cadc userid> password <cadc password>"
+    echo "machine www.canfar.phys.uvic.ca login <cadc userid> password <cadc password>"
+    echo 
+    echo "* Exit status: 0 == OK"
+    echo "               1 == invalid command-line"
+    echo "               2 == could not find curl executable"
+    echo "               3 == server responded with 401 or 403 (authentication)"
+    echo "               4 == other fatal error"
+    echo "               5 == MD5 mismatch"
+    echo "               9 == server responded with a 503 (retry)"
+    echo
+}
+
+# $1 == URL
+doDownload()
+{
+    URL="$1"
+    META="tmp-meta.$$"
+    DATA="tmp-data.$$"
+
+    # Download the file with curl, writing the HTTP header to $META and
+    # the bytes to $DATA
+    # --netrc to support username/password auth using $HOME/.netrc (man netrc)
+    # --silent so we don't put extra stuff to stdout/stderr
+    # --location to follow any redirects we might get
+    # --retry=4 for up to 4 retries on transient errors
+    ACTUAL_MD5=""
+    declare -i CURL_STATUS=0
+    if [ -z $MD5SUM ]; then 
+        # normal download
+        $CURL --netrc --silent --location $URL -D $META -o $DATA
+        CURL_STATUS=$?
+    else 
+        # use tee to send byte stream to file and through md5sum
+        MD5OUT=$($CURL --netrc --silent --location $URL -D $META | tee $DATA | $MD5SUM)
+        CURL_STATUS=$?
+        ACTUAL_MD5=$(echo $MD5OUT | awk '{print $1}')
+    fi
+
+    ## TODO: check the CURL_STATUS before looking at the headers since failures during
+    ## download will only show up in the status code
+
+    # use the HTTP headers in $META to determine success/fail
+    # tail -1 to get the last HTTP status code in case of redirects
+    # awk -f '[\r]' to strip carriage return
+    # cut 2- to pick up 2nd and succeeding tokens since message maybe be multiple words
+    MSG=$(grep '^HTTP/' $META | tail -1 | awk -F '[\r]' '{print $1 $2}' | cut -d' ' -f 2-)
+
+    declare -i STATUS=$(echo $MSG | awk '{print $1}')
+
+    if [ $STATUS != 200 ]; then
+        EXIT_VALUE=4
+        if [ $STATUS == 503 ]; then
+            echo "$URL FAIL transient error: $MSG"
+            EXIT_VALUE=9
+        elif [ $STATUS == 401 ]; then
+            echo "$URL FAIL auth error: $MSG"
+            EXIT_VALUE=3
+        elif [ $STATUS == 403 ]; then
+            echo "$URL FAIL auth error: $MSG"
+            EXIT_VALUE=3
+        else
+            echo "$URL FAIL error: $MSG"
+        fi
+        \rm $META $DATA
+        return $EXIT_VALUE
+    fi
+
+    # use the HTTP headers in $META to determine filename
+    # split on = since the filename is to the right (assuming the whole line is correctly formed)
+    # awk -F '[\r]' to strip carriage return
+    FNAME=$(grep '^Content-Disposition' $META | awk -F '=' '{print $2}' | awk -F '[\r]' '{print $1}')
+    if [ -z $FNAME ]; then
+        FNAME=$DATA
+    fi
+
+    ## CADC data web service always sets Content-Disposition so the following is not needed but if
+    ## you want to use this script with other sites one of these might help...
+
+    # some extra magic to get a filename when Content-Disposition is missing, instead of just using $DATA
+    # this one keeps the query string and converts special characters into underscores:
+    #if [ -z $FNAME ]; then
+    #    FNAME=$(echo $URL  | awk -F '/' '{print $NF}' | sed 's/[?&]/_/g')
+    #fi
+
+    # some extra magic to get a filename when Content-Disposition is missing, instead of just using $DATA
+    # this one drops any query string and uses the base: not that useful if the query string is the only
+    # differentiating part:
+    #if [ -z $FNAME ]; then
+    #    FNAME=$(echo $URL  | awk -F '/' '{print $NF}' | awk -F '?' '{print $1}')
+    #fi
+
+    # awk -F '[\r]' to strip carriage return
+    MD5=$(grep '^Content-MD5' $META | awk '{print $2}' | awk -F '[\r]' '{print $1}')
+    if [ ! -z $ACTUAL_MD5 ]; then
+        if [ -z $MD5 ]; then
+            test $VERBOSE == 1 && echo "no MD5 in http header... skipping check"
+        else
+            if [ $MD5 != $ACTUAL_MD5 ]; then
+                echo "$URL $FNAME $MD5 [FAIL] actual md5: $ACTUAL_MD5"
+                return 5
+            fi
+        fi
+    fi
+
+    if [ $DATA != "$FNAME" ]; then
+        \mv $DATA "$FNAME"
+    fi
+
+    \rm $META
+    echo "${URL}" ${FNAME} ${MD5}
+}
+
+## start main part of script
+
+if [ -z "$1" ]; then
+    usage
+    exit 1
+fi
+
+# find curl executable or fail
+CURL=$(which curl)
+if [ $? == 0 ]; then
+    test $VERBOSE == 1 && echo "found: $CURL"
+else
+    echo "not found: curl"
+    exit 2
+fi
+MD5SUM=""
+
+# process command-line args
+INPUT="$1"
+
+if [ "$1" == "--md5" ]; then
+    # find md5sum executable or fail
+    INPUT="$2"
+    MD5SUM=$(which md5sum)
+    if [ $? == 0 ]; then
+        test $VERBOSE == 1 && echo "found: $MD5SUM"
+    else
+        echo "not found: md5sum"
+        exit 2
+    fi
+fi
+
+if [ -z "$INPUT" ]; then
+    usage
+    exit 1
+fi
+
+# if input is a file, read URLs from it
+if [ -f "$INPUT" ]; then
+    while read line 
+    do
+            # awk -F '[\r]' to strip carriage return
+            URL=$(echo $line | awk -F '[\r]' '{print $1}')
+            doDownload "$URL"
+            #EV=$?
+            #if [ $EV = 9 ]; then
+            #    test -f retry-list.$$ || touch retry-list.$$
+            #fi
+    done < ${INPUT}
+else
+    # assume INPUT is a single URL
+    doDownload "$INPUT"
+fi
+
+
+
+
+
+
+
