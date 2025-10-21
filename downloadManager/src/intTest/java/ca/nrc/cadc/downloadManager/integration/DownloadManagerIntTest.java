@@ -76,9 +76,7 @@ import ca.nrc.cadc.auth.CookiePrincipal;
 import ca.nrc.cadc.auth.PrincipalExtractor;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.X509CertificateChain;
-import ca.nrc.cadc.dlm.DownloadTuple;
 import ca.nrc.cadc.dlm.server.DispatcherServlet;
-import ca.nrc.cadc.dlm.server.ServerUtil;
 import ca.nrc.cadc.net.ContentType;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
@@ -86,15 +84,10 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.xml.JsonInputter;
-import ca.nrc.cadc.xml.XmlUtil;
-import java.nio.charset.Charset;
+import ca.nrc.cadc.util.StringUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -105,14 +98,13 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
+
 
 /**
  * @author pdowler
@@ -134,18 +126,14 @@ public class DownloadManagerIntTest {
     // - if this test is failing, we may need to find another proprietary plane
     private final static String PROP_CAOM_URI = "ivo://cadc.nrc.ca/JCMT?scuba2_00024_20121023T034337/raw-850um";
 
-    private final static String PUBLIC_SUBARU_URI = "ivo://cadc.nrc.ca/maq/SUBARU?SUPE01334570/SUPA0133457X";
+    private final static String PUBLIC_SUBARU_URI = "ivo://cadc.nrc.ca/SUBARU?CIAE00184551/CIAA00184551";
 
     // For testing JSON payload to web service
-    private static String URI_STR = "test://mysite.ca/path/1";
-    private static String SHAPE_STR = "polygon 0 0 0 0";
-    private static String LABEL_STR = "label";
+    private static final String URI_STR = "test://mysite.ca/path/1";
+    private static final String SHAPE_STR = "polygon 0 0 0 0";
+    private static final String LABEL_STR = "label";
 
-    // Using Badgerfish json so that JsonInputter can read it correctly
-    private static String TUPLE_JSON_URI = "{\"tupleID\":\"{\"$\":\"" + URI_STR + "\"}}";
-    private static String TUPLE_JSON_SHAPE = "{\"tupleID\":\"{\"$\":\"" + URI_STR + "\"},\"shape\":\"{\"$\":\"" + SHAPE_STR + "\"}}";
-
-    private static String TUPLE_JSON = "{\"tuple\":{\"tupleID\":{\"$\":\"" + URI_STR + "\"}," +
+    private static final String TUPLE_JSON = "{\"tuple\":{\"tupleID\":{\"$\":\"" + URI_STR + "\"}," +
         "\"shape\":{\"$\":\"" + SHAPE_STR + "\"}," +
         "\"label\":{\"$\":\"" + LABEL_STR + "\"}}}";
 
@@ -158,7 +146,7 @@ public class DownloadManagerIntTest {
         anonSubject = AuthenticationUtil.getSubject(new PrincipalExtractor() {
 
             public Set<Principal> getPrincipals() {
-                return new TreeSet<>();
+                return new HashSet<>();
             }
 
             public X509CertificateChain getCertificateChain() {
@@ -167,10 +155,10 @@ public class DownloadManagerIntTest {
         });
 
         authSubject = AuthenticationUtil.getSubject(new PrincipalExtractor() {
-            Principal cookie = getSSOCookie();
+            final Principal cookie = getSSOCookie();
 
             public Set<Principal> getPrincipals() {
-                Set<Principal> ret = new HashSet<Principal>();
+                Set<Principal> ret = new HashSet<>();
                 ret.add(cookie);
                 return ret;
             }
@@ -186,7 +174,7 @@ public class DownloadManagerIntTest {
                 params.put("password", "qS1U42Y");
 
                 LocalAuthority localAuthority = new LocalAuthority();
-                URI serviceURI = localAuthority.getServiceURI(Standards.UMS_LOGIN_01.toString());
+                URI serviceURI = localAuthority.getResourceID(Standards.UMS_LOGIN_10);
                 log.debug("login uri: " + serviceURI.toString());
                 URL url = reg.getServiceURL(serviceURI, Standards.UMS_LOGIN_01, AuthMethod.ANON);
                 log.debug("login url: " + url.toExternalForm());
@@ -203,37 +191,39 @@ public class DownloadManagerIntTest {
         });
     }
 
-    public String getDomainName(String hostname)
-    {
-        String s = hostname;
-        s = s.trim();
-        int i = s.indexOf('.');
-        if (i > 0)
-            return s.substring(i+1);
-        else
-            return s;
+    private URL getTargetURL() throws Exception {
+        final String configuredURL = System.getenv("DOWNLOAD_MANAGER_TEST_URL");
+        final URL serviceURL;
+        if (StringUtil.hasText(configuredURL)) {
+            serviceURL = URI.create(configuredURL).toURL();
+        } else {
+            final URL downloadManagerBase =
+                    reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
+            serviceURL = URI.create(downloadManagerBase.getProtocol() + "://" + downloadManagerBase.getHost()
+                    + "/downloadManager/download").toURL();
+        }
+
+        log.debug("target URL: " + serviceURL.toExternalForm());
+        return serviceURL;
     }
 
     @Test
     public void testAnonHTML() {
         try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+            URL url = getTargetURL();
 
-            Map<String, Object> params = new TreeMap<String, Object>();
+            Map<String, Object> params = new TreeMap<>();
             params.put("uri", PUBLIC_CAOM_URI);
             params.put("method", DispatcherServlet.HTMLLIST);
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpPost post = new HttpPost(url, params, bos);
             post.setFollowRedirects(false);
-            Subject.doAs(anonSubject, new RunnableAction(post));
+            post.prepare();
 
-            Assert.assertNull(post.getThrowable());
-            Assert.assertEquals("response code", 200, post.getResponseCode());
-
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
+            final String contentType = post.getResponseHeader("content-type");
+            Assert.assertNotNull(contentType);
+            ContentType ct = new ContentType(contentType);
             Assert.assertEquals("text/html", ct.getBaseType());
 
             String html = bos.toString();
@@ -250,10 +240,9 @@ public class DownloadManagerIntTest {
     @Test
     public void testAnonStorageInventory() {
         try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+            URL url = getTargetURL();
 
-            Map<String, Object> params = new TreeMap<String, Object>();
+            Map<String, Object> params = new TreeMap<>();
             params.put("uri", SI_JCMT_URI);
             params.put("method", DispatcherServlet.SHELL_SCRIPT);
 
@@ -265,8 +254,9 @@ public class DownloadManagerIntTest {
             Assert.assertNull(post.getThrowable());
             Assert.assertEquals("response code", 200, post.getResponseCode());
 
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
+            final String contentType = post.getResponseHeader("content-type");
+            Assert.assertNotNull(contentType);
+            ContentType ct = new ContentType(contentType);
             Assert.assertEquals("text/x-shellscript", ct.getBaseType());
 
             String shellScript = bos.toString();
@@ -298,8 +288,9 @@ public class DownloadManagerIntTest {
             Assert.assertNull(post.getThrowable());
             Assert.assertEquals("response code", 200, post.getResponseCode());
 
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
+            final String contentType = post.getResponseHeader("content-type");
+            Assert.assertNotNull(contentType);
+            ContentType ct = new ContentType(contentType);
             Assert.assertEquals("text/html", ct.getBaseType());
 
             String html = bos.toString();
@@ -331,8 +322,9 @@ public class DownloadManagerIntTest {
             Assert.assertNull(post.getThrowable());
             Assert.assertEquals("response code", 200, post.getResponseCode());
 
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
+            final String contentType = post.getResponseHeader("content-type");
+            Assert.assertNotNull(contentType);
+            ContentType ct = new ContentType(contentType);
             Assert.assertEquals("text/plain", ct.getBaseType());
 
             String doc = bos.toString();
@@ -378,8 +370,9 @@ public class DownloadManagerIntTest {
             Assert.assertNull(post.getThrowable());
             Assert.assertEquals("response code", 200, post.getResponseCode());
 
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
+            final String contentType = post.getResponseHeader("content-type");
+            Assert.assertNotNull(contentType);
+            ContentType ct = new ContentType(contentType);
             Assert.assertEquals("text/plain", ct.getBaseType());
 
             String doc = bos.toString();
@@ -399,26 +392,6 @@ public class DownloadManagerIntTest {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
-    }
-
-    private void assertValidURL(String line, String uri) {
-        String[] tokens = line.split("[\\s]");
-        try {
-            URL u = new URL(tokens[0]);
-            log.debug("valid: " + u);
-        } catch (MalformedURLException bad) {
-            Assert.fail("invalid URL: " + tokens[0] + " " + bad);
-        }
-    }
-
-    private void assertUnauthorized(final String line, final String uri) {
-        String[] tokens = line.split("[\\t]");
-        Assert.assertEquals("tokens on line", 3, tokens.length);
-        Assert.assertEquals("ERROR", tokens[0]);
-        Assert.assertEquals(uri, tokens[1]);
-        // 2-3 is the error message from the datalink service
-        Assert.assertEquals("failed to resolve URI: authentication failed (401) Unauthorized", tokens[2]);
-//        Assert.assertEquals(uri, tokens[3]);
     }
 
     private void assertNotFoundError(String line, String uri) {
@@ -450,8 +423,9 @@ public class DownloadManagerIntTest {
             Assert.assertNull(post.getThrowable());
             Assert.assertEquals("response code", 200, post.getResponseCode());
 
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
+            final String contentType = post.getResponseHeader("content-type");
+            Assert.assertNotNull(contentType);
+            ContentType ct = new ContentType(contentType);
             Assert.assertEquals("text/plain", ct.getBaseType());
 
             String doc = bos.toString();
@@ -472,141 +446,8 @@ public class DownloadManagerIntTest {
     }
 
     @Test
-    public void testAnonJNLP() {
-        try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
-
-            Map<String, Object> params = new TreeMap<String, Object>();
-            params.put("uri", PUBLIC_CAOM_URI);
-            params.put("method", DispatcherServlet.WEBSTART);
-
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpPost post = new HttpPost(url, params, bos);
-            post.setFollowRedirects(false);
-            Subject.doAs(anonSubject, new RunnableAction(post));
-
-            Assert.assertNull(post.getThrowable());
-            Assert.assertEquals("response code", 200, post.getResponseCode());
-
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
-            Assert.assertEquals("application/x-java-jnlp-file", ct.getBaseType());
-
-            // DownloadManager.jsp processing puts some extraneous whitespace at
-            // the beginning of the document which is technically not allowed by XML,
-            // so: trim()
-            String xml = bos.toString().trim();
-            log.debug("testAnonJNLP:\n" + xml);
-
-            // TODO: parse and verify URI
-            Document doc = XmlUtil.buildDocument(xml);
-            Assert.assertNotNull("document", doc);
-            Element jnlp = doc.getRootElement();
-            Assert.assertNotNull("jnlp", jnlp);
-            Element app = jnlp.getChild("application-desc");
-            Assert.assertNotNull("Application-desc", app);
-            List<Element> args = app.getChildren("argument");
-
-            // Uncomment to force an empty argument failure
-            //args.add(new Element("argument"));
-            Assert.assertNotNull("arguments", args);
-            Assert.assertFalse("empty args", args.isEmpty());
-
-            String[] cmdlineArgs = new String[args.size()];
-            for (int i = 0; i < args.size(); i++) {
-                String arg = args.get(i).getTextTrim();
-                Assert.assertFalse("empty argument", arg.isEmpty());
-                cmdlineArgs[i] = arg;
-            }
-            ArgumentMap am = new ArgumentMap(cmdlineArgs);
-            boolean verbose = am.isSet("verbose");
-            boolean cookie = am.isSet("ssocookie");
-            boolean domain = am.isSet("ssocookiedomain");
-            Assert.assertTrue("verbose", verbose);
-            Assert.assertFalse("ssocookie", cookie);
-            Assert.assertFalse("ssocookiedomain", domain);
-
-            // URIs now passed as plain positional args
-            //Assert.assertEquals(PUBLIC_CAOM_URI, am.getValue("uris"));
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    /**
-     * Only works in Production.
-     * @throws Exception        Anything went wrong.
-     */
-    @Test
-    public void testAuthJNLP() throws Exception {
-        try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
-
-            if (!url.getHost().equals("www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca")) {
-                log.warn("Skipping testAuthJNLP due to Access Control issue when not running on Production.");
-                return;
-            }
-
-            Map<String, Object> params = new TreeMap<String, Object>();
-            params.put("uri", PROP_CAOM_URI);
-            params.put("method", DispatcherServlet.WEBSTART);
-
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpPost post = new HttpPost(url, params, bos);
-            post.setFollowRedirects(false);
-            Subject.doAs(authSubject, new RunnableAction(post));
-
-            Assert.assertNull(post.getThrowable());
-            Assert.assertEquals("response code", 200, post.getResponseCode());
-
-            Assert.assertNotNull(post.getResponseContentType());
-            ContentType ct = new ContentType(post.getResponseContentType());
-            Assert.assertEquals("application/x-java-jnlp-file", ct.getBaseType());
-
-            // trim() : see above
-            String xml = bos.toString().trim();
-            log.debug("testAnonJNLP:\n" + xml);
-
-            // TODO: parse and verify URI
-            Document doc = XmlUtil.buildDocument(xml);
-            Assert.assertNotNull("document", doc);
-            Element jnlp = doc.getRootElement();
-            Assert.assertNotNull("jnlp", jnlp);
-            Element app = jnlp.getChild("application-desc");
-            Assert.assertNotNull("Application-desc", app);
-            List<Element> args = app.getChildren("argument");
-            Assert.assertNotNull("arguments", args);
-            Assert.assertFalse("empty args", args.isEmpty());
-
-            String[] cmdlineArgs = new String[args.size()];
-            for (int i = 0; i < args.size(); i++) {
-                cmdlineArgs[i] = args.get(i).getTextTrim();
-            }
-            ArgumentMap am = new ArgumentMap(cmdlineArgs);
-            boolean verbose = am.isSet("verbose");
-            boolean cookie = am.isSet("ssocookie");
-            boolean domain = am.isSet("ssocookiedomain");
-            Assert.assertTrue("verbose", verbose);
-            Assert.assertTrue("ssocookie", cookie);
-            Assert.assertTrue("ssocookiedomain", domain);
-
-            // URIs now passed as plain positional args
-            //Assert.assertEquals(PROP_CAOM_URI, am.getValue("uris"));
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            throw unexpected;
-        }
-    }
-
-    @Test
     public void testResolveSUBARU() throws Exception {
-        final URL serviceURL = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-        final URL url = new URL(serviceURL.getProtocol() + "://" + serviceURL.getHost()
-                                    + "/downloadManager/download");
+        final URL url = getTargetURL();
 
         Map<String, Object> params = new TreeMap<>();
         params.put("uri", PUBLIC_SUBARU_URI);
@@ -615,23 +456,24 @@ public class DownloadManagerIntTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpPost post = new HttpPost(url, params, bos);
         post.setFollowRedirects(false);
-        post.run();
+        Subject.doAs(anonSubject, new RunnableAction(post));
 
         Assert.assertNull(post.getThrowable());
         Assert.assertEquals("response code", 200, post.getResponseCode());
 
-        Assert.assertNotNull(post.getResponseContentType());
-        ContentType ct = new ContentType(post.getResponseContentType());
+        final String contentType = post.getResponseHeader("content-type");
+        Assert.assertNotNull(contentType);
+        ContentType ct = new ContentType(contentType);
         Assert.assertEquals("text/plain", ct.getBaseType());
 
         String doc = bos.toString();
-        log.debug("testAuthTextPlain:\n" + doc);
+        log.debug("testAnonTextPlain:\n" + doc);
 
         LineNumberReader r = new LineNumberReader(new StringReader(doc));
         String line = r.readLine();
 
         if (line == null) {
-            Assert.fail("Should have content.");
+            Assert.fail("Should have content for SUBARU URI: " + PUBLIC_SUBARU_URI);
         } else {
             while (line != null) {
                 line = line.trim();
@@ -645,10 +487,9 @@ public class DownloadManagerIntTest {
     @Test
     public void testLoadChooserURIs() {
         try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+            URL url = getTargetURL();
 
-            Map<String, Object> params = new TreeMap<String, Object>();
+            Map<String, Object> params = new TreeMap<>();
             params.put("uri", PUBLIC_CAOM_URI);
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -669,10 +510,9 @@ public class DownloadManagerIntTest {
     @Test
     public void testLoadChooserURIsPlusPOSCutout() {
         try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+            URL url = getTargetURL();
 
-            Map<String, Object> params = new TreeMap<String, Object>();
+            Map<String, Object> params = new TreeMap<>();
             params.put("uri", PUBLIC_CAOM_URI);
             params.put("pos", NetUtil.encode("circle 9.0 8.0 0.5"));
 
@@ -694,10 +534,9 @@ public class DownloadManagerIntTest {
     @Test
     public void testLoadChooserURIsPlusPixelCutout() {
         try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+            URL url = getTargetURL();
 
-            Map<String, Object> params = new TreeMap<String, Object>();
+            Map<String, Object> params = new TreeMap<>();
             params.put("uri", PUBLIC_CAOM_URI);
             params.put("cutout", NetUtil.encode("[2]"));
 
@@ -719,8 +558,7 @@ public class DownloadManagerIntTest {
 
     @Test
     public void testJSONTupleInput() throws Exception {
-        URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-        url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+        URL url = getTargetURL();
 
         // pass in just tuples, this can/should be supported as well as multi-part data by the
         // underlying SyncInput class
@@ -729,7 +567,7 @@ public class DownloadManagerIntTest {
         String jsonTuples = "{\"tupleList\":{\"$\":[" + TUPLE_JSON + "]}}";
         log.debug("jsonTuples string:" + jsonTuples);
 
-        HttpPost post = new HttpPost(url, new FileContent(jsonTuples, "application/json", Charset.forName("UTF-8")), false);
+        HttpPost post = new HttpPost(url, new FileContent(jsonTuples, "application/json", StandardCharsets.UTF_8), false);
         Subject.doAs(anonSubject, new RunnableAction(post));
 
         Assert.assertNull(post.getThrowable());
@@ -740,8 +578,7 @@ public class DownloadManagerIntTest {
     @Test
     public void testAnonTextPlainJSON() {
         try {
-            URL url = reg.getAccessURL(RegistryClient.Query.APPLICATIONS, DownloadManagerIntTest.DOWNLOAD_URI);
-            url = new URL(url.getProtocol() + "://" + url.getHost() + "/downloadManager/download");
+            URL url = getTargetURL();
 
             Map<String, Object> params = new TreeMap<>();
             params.put("method", DispatcherServlet.URLS);
@@ -751,7 +588,7 @@ public class DownloadManagerIntTest {
             // Build an array of one
             String jsonTuples = "{\"tupleList\":{\"$\":[" + TUPLE_JSON + "]}}";
             log.debug("jsonTuples string:" + jsonTuples);
-            params.put("jsonTuples", new FileContent(jsonTuples, "application/json", Charset.forName("UTF-8")));
+            params.put("jsonTuples", new FileContent(jsonTuples, "application/json", StandardCharsets.UTF_8));
 
             HttpPost post = new HttpPost(url, params, false);
             Subject.doAs(anonSubject, new RunnableAction(post));

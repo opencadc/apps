@@ -1,9 +1,9 @@
-<web-app id="downloadManager" version="2.5"
-         xmlns="http://java.sun.com/xml/ns/javaee"
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
 
-  <display-name>downloadManager</display-name>
+  <display-name>Download Manager</display-name>
 
   <servlet>
     <servlet-name>logControl</servlet-name>
@@ -22,10 +22,6 @@
         ca.nrc.cadc.rest
         ca.nrc.cadc.uws
       </param-value>
-    </init-param>
-    <init-param>
-      <param-name>logControlProperties</param-name>
-      <param-value>dlm-logControl.properties</param-value>
     </init-param>
     <load-on-startup>1</load-on-startup>
   </servlet>
