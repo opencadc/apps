@@ -81,6 +81,7 @@ import ca.nrc.cadc.net.ContentType;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.net.NetrcFile;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -96,6 +97,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -169,10 +171,6 @@ public class DownloadManagerIntTest {
 
             // obsolete
             private CookiePrincipal getSSOCookie() {
-                Map<String, Object> params = new TreeMap<>();
-                params.put("username", "cadcregtest1");
-                params.put("password", "qS1U42Y");
-
                 LocalAuthority localAuthority = new LocalAuthority();
                 URI serviceURI = localAuthority.getResourceID(Standards.UMS_LOGIN_10);
                 log.debug("login uri: " + serviceURI.toString());
@@ -180,7 +178,7 @@ public class DownloadManagerIntTest {
                 log.debug("login url: " + url.toExternalForm());
 
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                HttpPost login = new HttpPost(url, params, bos);
+                HttpPost login = new HttpPost(url, loginParameters(url), bos);
                 login.run();
                 if (login.getThrowable() != null) {
                     throw new RuntimeException("login failed: " + login.getResponseCode(), login.getThrowable());
@@ -189,6 +187,21 @@ public class DownloadManagerIntTest {
                 return new CookiePrincipal("CADC_SSO", token);
             }
         });
+    }
+
+    private Map<String, Object> loginParameters(final URL loginURL) {
+        final NetrcFile netrcFile = new NetrcFile();
+        final PasswordAuthentication passwordAuthentication = netrcFile.getCredentials(loginURL.getHost(), false);
+
+        if (passwordAuthentication == null) {
+            throw new RuntimeException("No credentials found for " + loginURL.getHost() + " in .netrc.");
+        }
+
+        final Map<String, Object> params = new TreeMap<>();
+        params.put("username", passwordAuthentication.getUserName());
+        params.put("password", new String(passwordAuthentication.getPassword()));
+
+        return params;
     }
 
     private URL getTargetURL() throws Exception {
