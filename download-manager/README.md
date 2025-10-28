@@ -50,6 +50,16 @@ ivo://ivoa.net/sso#tls-with-password = ivo://cadc.nrc.ca/gms
 ivo://ivoa.net/std/GMS#groups-1.0 = ivo://cadc.nrc.ca/gms
 ```
 
+Sample `catalina.properties`:
+```properties
+tomcat.connector.scheme=https
+tomcat.connector.proxyName=<proxy hostname>
+tomcat.connector.proxyPort=443
+
+# auth needs to know what's validating certs and cookies
+ca.nrc.cadc.auth.IdentityManager=ca.nrc.cadc.ac.ACIdentityManager
+```
+
 A file that contains the public key to verify Cookie tokens called `RsaSignaturePub.key` is also required. This file should be placed in `$CATALINA_BASE/config/`.  See the existing configuration.
 
 ## Testing it
